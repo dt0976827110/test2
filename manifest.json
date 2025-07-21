@@ -1,9 +1,9 @@
 {
-  "name": "我的PWA",
-  "short_name": "PWA",
+  "name": "@fishsiao_ 連結頁",
+  "short_name": "fishsiao_",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4caf50",
+  "theme_color": "#f9dfe5",
   "icons": []
 }
