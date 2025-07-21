@@ -77,23 +77,36 @@
 
   <button id="installBtn">📲 加入主畫面</button>
   <div id="iosTip">📱 iPhone 使用者請點底部「分享」→ 選擇「加入主畫面」安裝 App</div>
+  <div id="loading" style="display: none;">
+    <div style="position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:9999; display: flex; justify-content: center; align-items: center;">
+      <img src="loading.gif" alt="載入中" style="width: 80px; height: 80px;" />
+    </div>
+  </div>
 
   <script src="install.js"></script>
 <!-- ✅ 下拉刷新邏輯（只在頂部下滑時生效） -->
-  <script>
-    let touchStartY = 0;
-    let touchEndY = 0;
+<script>
+  let touchStartY = 0;
+  let touchEndY = 0;
 
-    window.addEventListener('touchstart', function(e) {
-      touchStartY = e.touches[0].clientY;
-    }, false);
+  window.addEventListener('touchstart', function(e) {
+    touchStartY = e.touches[0].clientY;
+  }, false);
 
-    window.addEventListener('touchend', function(e) {
-      touchEndY = e.changedTouches[0].clientY;
-      if (touchEndY - touchStartY > 100 && window.scrollY === 0) {
-        location.reload(); // 📲 下拉重新整理
-      }
-    }, false);
-  </script>
+  window.addEventListener('touchend', function(e) {
+    touchEndY = e.changedTouches[0].clientY;
+    const delta = touchEndY - touchStartY;
+
+    if (delta > 100 && window.scrollY === 0) {
+      // 顯示 loading.gif
+      document.getElementById('loading').style.display = 'block';
+
+      // 稍微延遲讓 loading 圖片顯示出來
+      setTimeout(() => {
+        location.reload();
+      }, 300);
+    }
+  }, false);
+</script>
 </body>
 </html>
