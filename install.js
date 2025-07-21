@@ -15,6 +15,9 @@ document.getElementById('installBtn').addEventListener('click', async () => {
   }
 });
 
-if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+if (isIOS && !isInStandaloneMode) {
   document.getElementById('iosTip').style.display = 'block';
 }
