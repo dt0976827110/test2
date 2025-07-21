@@ -80,6 +80,27 @@
 
 
   <script src="install.js"></script>
+<button onclick="requestNotification()" id="notifyBtn" style="padding:12px 24px; font-size:16px; background:#ff9800; color:white; border:none; border-radius:8px; margin-top:20px;">
+  🔔 開啟通知功能
+</button>
+
+<script>
+  function requestNotification() {
+    if ('Notification' in window && Notification.requestPermission) {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          alert('✅ 你已允許通知！');
+        } else if (permission === 'denied') {
+          alert('❌ 你拒絕了通知，可到設定中手動開啟');
+        } else {
+          alert('⚠️ 通知權限尚未決定');
+        }
+      });
+    } else {
+      alert('❌ 這個瀏覽器不支援 Web 推播');
+    }
+  }
+</script>
 
 </body>
 </html>
