@@ -1,9 +1,15 @@
 {
-  "name": "@fishsiao_ 連結頁",
-  "short_name": "fishsiao_",
-  "start_url": "./index.html",
+  "name": "超聯集",
+  "short_name": "超聯集",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#f9dfe5",
-  "icons": []
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "title.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
 }
