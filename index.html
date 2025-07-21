@@ -3,126 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@fishsiao_</title>
+  <title>超聯集</title>
   <link rel="manifest" href="manifest.json" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6srrR4Mg18cBDavmzJ4PDg4uFPPYPXbc",
+      authDomain: "superunion-pwa.firebaseapp.com",
+      projectId: "superunion-pwa",
+      storageBucket: "superunion-pwa.appspot.com",
+      messagingSenderId: "959968900132",
+      appId: "1:959968900132:web:4403e5ab3685ded0ae94b1",
+      measurementId: "G-YETG8ZKD1G"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    async function requestPermission() {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const token = await messaging.getToken({ vapidKey: 'BliqDR7GGbD2Y5ufR5TtWEDuN4dqMxjox6tAJNsF0ci-54Xnt29J9aNCeUKfAAdmUgTWZkt19uy7K0qrv6eQjHM' });
+          console.log('推播 Token:', token);
+          alert('推播已啟用');
+        } else {
+          alert('推播被拒絕');
+        }
+      } catch (err) {
+        console.error('推播錯誤:', err);
+      }
     }
   </script>
-  <style>
-    body {
-      background-color: #f9dfe5;
-      font-family: "Segoe UI", sans-serif;
-      text-align: center;
-      padding: 30px 15px;
-    }
-    img {
-      width: 120px;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 4px solid white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-bottom: 15px;
-    }
-    h1 {
-      font-size: 20px;
-      margin: 5px 0 25px;
-      color: #333;
-    }
-    .btn {
-      display: block;
-      margin: 10px auto;
-      width: 90%;
-      max-width: 350px;
-      padding: 15px 20px;
-      font-size: 16px;
-      background-color: white;
-      color: #333;
-      text-decoration: none;
-      border-radius: 999px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: all 0.2s ease;
-    }
-    .btn:hover {
-      background-color: #f2f2f2;
-    }
-    #installBtn {
-      display: none;
-      margin: 20px auto;
-      padding: 12px 24px;
-      font-size: 16px;
-      background: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #iosTip {
-      display: none;
-      background: #fff3cd;
-      color: #856404;
-      padding: 12px;
-      border-radius: 8px;
-      margin: 20px 0;
-    }
-  </style>
 </head>
 <body>
-  <img src="top.jpg" alt="頭像" />
-  <h1>@fishsiao_</h1>
-  <a class="btn" href="https://www.instagram.com/fishsiao_/?hl=zh-tw" target="_blank">IG</a>
-  <a class="btn" href="https://savina.1shop.tw/" target="_blank">1shop</a>
-
-  <button id="installBtn">📲 加入主畫面</button>
-  <div id="iosTip">📱 iPhone 使用者請點底部「分享」→ 選擇「加入主畫面」安裝 App</div>
-
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-messaging-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyD6srRt4Mg18cBDavmzJ4PDg4uFPPYPXbc",
-    authDomain: "superunion-pwa.firebaseapp.com",
-    projectId: "superunion-pwa",
-    storageBucket: "superunion-pwa.appspot.com",
-    messagingSenderId: "959968900132",
-    appId: "1:959968900132:web:4403e5ab3685ded0ae94b1",
-    measurementId: "G-YET6BZKD1G"
-  };
-
-  // 初始化 Firebase
-  firebase.initializeApp(firebaseConfig);
-  const messaging = firebase.messaging();
-
-  // 取得通知權限
-  function requestPermission() {
-    Notification.requestPermission().then(permission => {
-      if (permission === 'granted') {
-        messaging.getToken({ vapidKey: '你剛剛的金鑰組公鑰' }).then(token => {
-          console.log("✅ Token:", token);
-          // 可以存在資料庫、或自己記錄起來測試推播
-        });
-      } else {
-        console.warn("🚫 使用者拒絕通知權限");
-      }
-    });
-  }
-
-  // 註冊 firebase-messaging-sw.js
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('firebase-messaging-sw.js')
-      .then(registration => {
-        messaging.useServiceWorker(registration);
-      });
-  }
-</script>
-
-<!-- 啟動通知按鈕 -->
-<button onclick="requestPermission()">🔔 開啟通知</button>
-
+  <h1>超聯集｜推播測試頁</h1>
+  <button onclick="requestPermission()">啟用通知</button>
 </body>
 </html>
