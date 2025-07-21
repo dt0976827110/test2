@@ -79,28 +79,50 @@
   <div id="iosTip">📱 iPhone 使用者請點底部「分享」→ 選擇「加入主畫面」安裝 App</div>
 
 
-  <script src="install.js"></script>
-<button onclick="requestNotification()" id="notifyBtn" style="padding:12px 24px; font-size:16px; background:#ff9800; color:white; border:none; border-radius:8px; margin-top:20px;">
-  🔔 開啟通知功能
-</button>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-messaging-compat.js"></script>
 
 <script>
-  function requestNotification() {
-    if ('Notification' in window && Notification.requestPermission) {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          alert('✅ 你已允許通知！');
-        } else if (permission === 'denied') {
-          alert('❌ 你拒絕了通知，可到設定中手動開啟');
-        } else {
-          alert('⚠️ 通知權限尚未決定');
-        }
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6srRt4Mg18cBDavmzJ4PDg4uFPPYPXbc",
+    authDomain: "superunion-pwa.firebaseapp.com",
+    projectId: "superunion-pwa",
+    storageBucket: "superunion-pwa.appspot.com",
+    messagingSenderId: "959968900132",
+    appId: "1:959968900132:web:4403e5ab3685ded0ae94b1",
+    measurementId: "G-YET6BZKD1G"
+  };
+
+  // 初始化 Firebase
+  firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
+
+  // 取得通知權限
+  function requestPermission() {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        messaging.getToken({ vapidKey: '你剛剛的金鑰組公鑰' }).then(token => {
+          console.log("✅ Token:", token);
+          // 可以存在資料庫、或自己記錄起來測試推播
+        });
+      } else {
+        console.warn("🚫 使用者拒絕通知權限");
+      }
+    });
+  }
+
+  // 註冊 firebase-messaging-sw.js
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('firebase-messaging-sw.js')
+      .then(registration => {
+        messaging.useServiceWorker(registration);
       });
-    } else {
-      alert('❌ 這個瀏覽器不支援 Web 推播');
-    }
   }
 </script>
+
+<!-- 啟動通知按鈕 -->
+<button onclick="requestPermission()">🔔 開啟通知</button>
 
 </body>
 </html>
