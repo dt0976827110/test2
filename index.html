@@ -79,5 +79,21 @@
   <div id="iosTip">📱 iPhone 使用者請點底部「分享」→ 選擇「加入主畫面」安裝 App</div>
 
   <script src="install.js"></script>
+<!-- ✅ 下拉刷新邏輯（只在頂部下滑時生效） -->
+  <script>
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    window.addEventListener('touchstart', function(e) {
+      touchStartY = e.touches[0].clientY;
+    }, false);
+
+    window.addEventListener('touchend', function(e) {
+      touchEndY = e.changedTouches[0].clientY;
+      if (touchEndY - touchStartY > 100 && window.scrollY === 0) {
+        location.reload(); // 📲 下拉重新整理
+      }
+    }, false);
+  </script>
 </body>
 </html>
