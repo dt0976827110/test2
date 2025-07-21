@@ -3,13 +3,13 @@
   "short_name": "超聯集",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#f9dfe5",
+  "theme_color": "#f9dfe5",
   "icons": [
     {
-      "src": "title.png",
+      "src": "title.jpg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpeg"
     }
   ]
 }

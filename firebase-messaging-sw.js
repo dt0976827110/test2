@@ -7,14 +7,11 @@ firebase.initializeApp({
   projectId: "superunion-pwa",
   storageBucket: "superunion-pwa.appspot.com",
   messagingSenderId: "959968900132",
-  appId: "1:959968900132:web:4403e5ab3685ded0ae94b1",
-  measurementId: "G-YETG8ZKD1G"
+  appId: "1:959968900132:web:4403e5ab3685ded0ae94b1"
 });
 
 const messaging = firebase.messaging();
-
 messaging.onBackgroundMessage(function(payload) {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,

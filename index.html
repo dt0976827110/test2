@@ -5,39 +5,148 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>超聯集</title>
   <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="title.jpg" type="image/jpeg" />
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+  <style>
+    body {
+      background-color: #f9dfe5;
+      font-family: "Segoe UI", sans-serif;
+      text-align: center;
+      padding: 30px 15px;
+    }
+    img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin-bottom: 15px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 5px 0 25px;
+      color: #333;
+    }
+    .btn {
+      display: block;
+      margin: 10px auto;
+      width: 90%;
+      max-width: 350px;
+      padding: 15px 20px;
+      font-size: 16px;
+      background-color: white;
+      color: #333;
+      text-decoration: none;
+      border-radius: 999px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background-color: #f2f2f2;
+    }
+    #installBtn {
+      display: none;
+      margin: 20px auto;
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #iosTip {
+      display: none;
+      background: #fff3cd;
+      color: #856404;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    #loading {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div style="position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:9999; display: flex; justify-content: center; align-items: center;">
+      <img src="loading.gif" alt="載入中" style="width: 80px; height: 80px;" />
+    </div>
+  </div>
+
+  <img src="top.jpg" alt="頭像" />
+  <h1>@fishsiao_</h1>
+  <a class="btn" href="https://www.instagram.com/fishsiao_/?hl=zh-tw" target="_blank">IG</a>
+  <a class="btn" href="https://savina.1shop.tw/" target="_blank">1shop</a>
+  <button class="btn" onclick="requestPermission()">🔔 啟用通知</button>
+  <button id="installBtn">📲 加入主畫面</button>
+  <div id="iosTip">📱 iPhone 使用者請點底部「分享」→ 選擇「加入主畫面」安裝 App</div>
+
   <script>
-    const firebaseConfig = {
+    // Firebase 初始化
+    firebase.initializeApp({
       apiKey: "AIzaSyD6srrR4Mg18cBDavmzJ4PDg4uFPPYPXbc",
       authDomain: "superunion-pwa.firebaseapp.com",
       projectId: "superunion-pwa",
       storageBucket: "superunion-pwa.appspot.com",
       messagingSenderId: "959968900132",
-      appId: "1:959968900132:web:4403e5ab3685ded0ae94b1",
-      measurementId: "G-YETG8ZKD1G"
-    };
-    firebase.initializeApp(firebaseConfig);
+      appId: "1:959968900132:web:4403e5ab3685ded0ae94b1"
+    });
     const messaging = firebase.messaging();
 
     async function requestPermission() {
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-          const token = await messaging.getToken({ vapidKey: 'BliqDR7GGbD2Y5ufR5TtWEDuN4dqMxjox6tAJNsF0ci-54Xnt29J9aNCeUKfAAdmUgTWZkt19uy7K0qrv6eQjHM' });
+          const token = await messaging.getToken({ vapidKey: 'BliqDR7GGbD2Y5ufR5TWeDuN4dqMxjox6tAJNsF0ci-54Xnt29J9aNCeUKfAAdmUgTWzkt19uy7K0qrv6eQjHM' });
           console.log('推播 Token:', token);
           alert('推播已啟用');
         } else {
-          alert('推播被拒絕');
+          alert('通知權限被拒絕');
         }
       } catch (err) {
         console.error('推播錯誤:', err);
       }
     }
+
+    // PWA 安裝提示
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBtn').style.display = 'block';
+    });
+    document.getElementById('installBtn').addEventListener('click', () => {
+      deferredPrompt.prompt();
+    });
+
+    // iOS 加入主畫面提示
+    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    const isInStandaloneMode = ('standalone' in window.navigator) && window.navigator.standalone;
+    if (isIos && !isInStandaloneMode) {
+      document.getElementById('iosTip').style.display = 'block';
+    }
+
+    // 註冊 Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+
+    // 下拉刷新
+    let startY = 0;
+    document.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+    document.addEventListener('touchend', e => {
+      const endY = e.changedTouches[0].clientY;
+      if (endY - startY > 100) {
+        document.getElementById('loading').style.display = 'block';
+        location.reload();
+      }
+    });
   </script>
-</head>
-<body>
-  <h1>超聯集｜推播測試頁</h1>
-  <button onclick="requestPermission()">啟用通知</button>
 </body>
 </html>
