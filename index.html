@@ -81,36 +81,10 @@
   <h1>@fishsiao_</h1>
   <a class="btn" href="https://www.instagram.com/fishsiao_/?hl=zh-tw" target="_blank">IG:@fishsiao_</a>
   <a class="btn" href="https://savina.1shop.tw/" target="_blank">1shop</a>
-  //<button class="btn" onclick="requestPermission()">🔔 啟用通知</button>
-  <button id="installBtn">📲 加入主畫面</button>
-  <div id="iosTip">📱 iPhone 使用者請點底部「分享」→ 選擇「加入主畫面」安裝 App</div>
+
 
   <script>
-    // Firebase 初始化
-    firebase.initializeApp({
-      apiKey: "AIzaSyD6srrR4Mg18cBDavmzJ4PDg4uFPPYPXbc",
-      authDomain: "superunion-pwa.firebaseapp.com",
-      projectId: "superunion-pwa",
-      storageBucket: "superunion-pwa.appspot.com",
-      messagingSenderId: "959968900132",
-      appId: "1:959968900132:web:4403e5ab3685ded0ae94b1"
-    });
-    const messaging = firebase.messaging();
 
-    async function requestPermission() {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          const token = await messaging.getToken({ vapidKey: 'BliqDR7GGbD2Y5ufR5TWeDuN4dqMxjox6tAJNsF0ci-54Xnt29J9aNCeUKfAAdmUgTWzkt19uy7K0qrv6eQjHM' });
-          console.log('推播 Token:', token);
-          alert('推播已啟用');
-        } else {
-          alert('通知權限被拒絕');
-        }
-      } catch (err) {
-        console.error('推播錯誤:', err);
-      }
-    }
 
     // PWA 安裝提示
     let deferredPrompt;
@@ -123,12 +97,7 @@
       deferredPrompt.prompt();
     });
 
-    // iOS 加入主畫面提示
-    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-    const isInStandaloneMode = ('standalone' in window.navigator) && window.navigator.standalone;
-    if (isIos && !isInStandaloneMode) {
-      document.getElementById('iosTip').style.display = 'block';
-    }
+
 
     // 註冊 Service Worker
     if ('serviceWorker' in navigator) {
