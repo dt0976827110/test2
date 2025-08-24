@@ -1,121 +1,74 @@
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>小魚Savina</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="title.jpg" type="image/jpeg" />
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>小魚 SAVINA 個人連結頁</title>
   <style>
     body {
-      background-color: #f9dfe5;
-      font-family: "Segoe UI", sans-serif;
+      font-family: 'Arial', sans-serif;
+      background: #ae936e;
+      color: white;
+      margin: 0;
+      padding: 0;
       text-align: center;
-      padding: 30px 15px;
     }
-    img {
+    .container {
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+    .avatar {
       width: 120px;
       height: 120px;
-      object-fit: cover;
       border-radius: 50%;
+      object-fit: cover;
       border: 4px solid white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
     h1 {
-      font-size: 20px;
-      margin: 5px 0 25px;
-      color: #333;
+      margin: 5px 0;
+      font-size: 24px;
+    }
+    .email {
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .buttons {
+      margin-top: 30px;
     }
     .btn {
       display: block;
-      margin: 10px auto;
-      width: 90%;
-      max-width: 350px;
-      padding: 15px 20px;
-      font-size: 16px;
-      background-color: white;
-      color: #333;
-      text-decoration: none;
-      border-radius: 999px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: all 0.2s ease;
-    }
-    .btn:hover {
-      background-color: #f2f2f2;
-    }
-    #installBtn {
-      display: none;
-      margin: 20px auto;
-      padding: 12px 24px;
-      font-size: 16px;
-      background: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #iosTip {
-      display: none;
-      background: #fff3cd;
-      color: #856404;
+      background-color: #fcb72b;
+      color: #000;
       padding: 12px;
       border-radius: 8px;
-      margin: 20px 0;
+      margin: 12px 0;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+      transition: all 0.2s ease-in-out;
     }
-    #loading {
-      display: none;
+    .btn:hover {
+      background-color: #f4a300;
+      transform: scale(1.02);
     }
   </style>
 </head>
 <body>
-  <div id="loading">
-    <div style="position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:9999; display: flex; justify-content: center; align-items: center;">
-      <img src="loading.gif" alt="載入中" style="width: 80px; height: 80px;" />
+  <div class="container">
+    <img src="top.jpg" alt="頭像" class="avatar" />
+    <h1>小魚 Savina</h1>
+    <div class="email">@fishsiao_</div>
+
+    <div class="buttons">
+      <a href="#" class="btn">🧊冰絲涼感BRA TOP限時團購中</a>
+      <a href="#" class="btn">🩰小魚循環衣櫥二手衣</a>
+      <a href="https://instagram.com/fishsiao_" class="btn" target="_blank">🏷️小魚instagram</a>
     </div>
   </div>
-
-  <img src="top.jpg" alt="頭像" />
-  <h1>@fishsiao_</h1>
-  <a class="btn" href="https://www.instagram.com/fishsiao_/?hl=zh-tw" target="_blank">IG:@fishsiao_</a>
-  <a class="btn" href="https://savina.1shop.tw/" target="_blank">1shop</a>
-
-
-  <script>
-
-
-    // PWA 安裝提示
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      document.getElementById('installBtn').style.display = 'block';
-    });
-    document.getElementById('installBtn').addEventListener('click', () => {
-      deferredPrompt.prompt();
-    });
-
-
-
-    // 註冊 Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js');
-      });
-    }
-
-    // 下拉刷新
-    let startY = 0;
-    document.addEventListener('touchstart', e => startY = e.touches[0].clientY);
-    document.addEventListener('touchend', e => {
-      const endY = e.changedTouches[0].clientY;
-      if (endY - startY > 100) {
-        document.getElementById('loading').style.display = 'block';
-        location.reload();
-      }
-    });
-  </script>
 </body>
 </html>
