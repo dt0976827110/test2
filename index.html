@@ -262,6 +262,17 @@
     let running = false;
     let paused = false;
 
+    function resetAll() {
+      timer = 0;
+      distance = 0;
+      fare = 0;
+      lastPosition = null;
+      timerEl.textContent = "00:00";
+      distanceEl.textContent = "0.00";
+      amountEl.textContent = "$0";
+      fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
+    }
+
     function formatTime(sec) {
       const m = String(Math.floor(sec / 60)).padStart(2, '0');
       const s = String(sec % 60).padStart(2, '0');
@@ -308,13 +319,13 @@
     startBtn.addEventListener('click', () => {
       if (!running) {
         // 開始計費
+        resetAll();
         running = true;
         paused = false;
         startBtn.textContent = "停止計費";
         pauseBtn.disabled = false;
         fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
 
-        // 鎖定資費設定
         fareInputs.forEach(input => input.disabled = true);
 
         timerInterval = setInterval(() => {
@@ -336,8 +347,8 @@
         pauseBtn.disabled = true;
         pauseBtn.classList.remove("active");
         startBtn.classList.remove("disabled");
+        startBtn.disabled = false;
 
-        // 解鎖資費設定
         fareInputs.forEach(input => input.disabled = false);
 
         const minFare = parseFloat(document.getElementById('minFare').value) || 0;
@@ -353,14 +364,12 @@
 
     pauseBtn.addEventListener('click', () => {
       if (!paused) {
-        // 進入暫停狀態
         paused = true;
         pauseBtn.textContent = "繼續計費";
         pauseBtn.classList.add("active");
-        startBtn.classList.add("disabled"); // 停止按鈕變灰色
+        startBtn.classList.add("disabled");
         startBtn.disabled = true;
       } else {
-        // 恢復計費
         paused = false;
         pauseBtn.textContent = "暫停計費";
         pauseBtn.classList.remove("active");
