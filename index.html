@@ -30,7 +30,6 @@
   </script>
 
   <style>
-    /* 網頁背景 */
     body {
       margin: 0;
       padding: 0;
@@ -42,7 +41,6 @@
       background: linear-gradient(180deg, #121212, #2a2a2a 60%, #2c0000);
     }
 
-    /* 主容器 */
     .container {
       width: 350px;
       background: rgba(0, 0, 0, 0.3);
@@ -53,14 +51,12 @@
       text-align: center;
     }
 
-    /* 標題 */
     .container h1 {
       margin: 0 0 10px;
       font-size: 22px;
       letter-spacing: 1px;
     }
 
-    /* 車資框 */
     .fare-box {
       background: linear-gradient(145deg, rgba(255, 77, 77, 0.8), rgba(153, 0, 0, 0.7));
       backdrop-filter: blur(6px);
@@ -86,7 +82,6 @@
       margin-top: 5px;
     }
 
-    /* 計時與距離 */
     .info {
       display: flex;
       justify-content: space-between;
@@ -115,7 +110,6 @@
       font-weight: bold;
     }
 
-    /* 按鈕 */
     .buttons {
       display: flex;
       flex-direction: column;
@@ -133,19 +127,27 @@
       transition: 0.2s;
     }
 
+    /* 停止/開始計費按鈕 */
     .start {
       background: linear-gradient(135deg, #ff4d4d, #cc0000);
     }
 
+    /* 停止計費禁用樣式 */
+    .start.disabled {
+      background: rgba(255, 255, 255, 0.15);
+      cursor: not-allowed;
+    }
+
+    /* 暫停按鈕灰色 */
     .pause {
       background: rgba(255, 255, 255, 0.15);
     }
 
-    .pause:hover {
-      background: rgba(255, 255, 255, 0.25);
+    /* 暫停狀態下的「繼續計費」紅色 */
+    .pause.active {
+      background: linear-gradient(135deg, #ff4d4d, #cc0000);
     }
 
-    /* 資費設定外框 */
     .settings {
       margin-top: 15px;
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
@@ -164,7 +166,6 @@
       margin-bottom: 10px;
     }
 
-    /* 每一行設定 */
     .settings .row {
       display: flex;
       justify-content: space-between;
@@ -243,7 +244,6 @@
     </div>
   </div>
 
-  <!-- ✅ JS 功能邏輯 -->
   <script>
     const amountEl = document.querySelector('.amount');
     const timerEl = document.getElementById('timer');
@@ -251,6 +251,7 @@
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const fareBox = document.querySelector('.fare-box');
+    const fareInputs = document.querySelectorAll('.settings input');
 
     let timer = 0;
     let distance = 0;
@@ -313,6 +314,9 @@
         pauseBtn.disabled = false;
         fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
 
+        // 鎖定資費設定
+        fareInputs.forEach(input => input.disabled = true);
+
         timerInterval = setInterval(() => {
           if (!paused) {
             timer++;
@@ -330,6 +334,11 @@
         clearInterval(gpsInterval);
         startBtn.textContent = "開始計費";
         pauseBtn.disabled = true;
+        pauseBtn.classList.remove("active");
+        startBtn.classList.remove("disabled");
+
+        // 解鎖資費設定
+        fareInputs.forEach(input => input.disabled = false);
 
         const minFare = parseFloat(document.getElementById('minFare').value) || 0;
         if (fare < minFare) {
@@ -344,16 +353,24 @@
 
     pauseBtn.addEventListener('click', () => {
       if (!paused) {
+        // 進入暫停狀態
         paused = true;
         pauseBtn.textContent = "繼續計費";
+        pauseBtn.classList.add("active");
+        startBtn.classList.add("disabled"); // 停止按鈕變灰色
+        startBtn.disabled = true;
       } else {
+        // 恢復計費
         paused = false;
         pauseBtn.textContent = "暫停計費";
+        pauseBtn.classList.remove("active");
+        startBtn.classList.remove("disabled");
+        startBtn.disabled = false;
       }
     });
   </script>
 
-  <!-- ✅ 內嵌 PWA Service Worker -->
+  <!-- ✅ PWA Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
