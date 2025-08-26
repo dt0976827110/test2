@@ -380,17 +380,26 @@
 
     pauseBtn.addEventListener('click', () => {
       if (!paused) {
+        // ✅ 暫停計費
         paused = true;
         pauseBtn.textContent = "繼續計費";
         pauseBtn.classList.add("active");
         startBtn.classList.add("disabled");
         startBtn.disabled = true;
+
+        // ✅ 暫停 GPS
+        clearInterval(gpsInterval);
+        gpsInterval = null;
       } else {
+        // ✅ 繼續計費
         paused = false;
         pauseBtn.textContent = "暫停計費";
         pauseBtn.classList.remove("active");
         startBtn.classList.remove("disabled");
         startBtn.disabled = false;
+
+        // ✅ 重新啟動 GPS
+        startGPS();
       }
     });
   </script>
