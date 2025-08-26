@@ -3,7 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#121212" />
   <title>跳錶器</title>
+
+  <!-- ✅ 內嵌 PWA manifest -->
+  <link rel="manifest" id="manifest-placeholder">
+  <script>
+    // 動態產生 manifest.json
+    const manifest = {
+      name: "跳錶器",
+      short_name: "跳錶器",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#121212",
+      theme_color: "#121212",
+      icons: [
+        {
+          src: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/taxi.svg",
+          sizes: "192x192",
+          type: "image/svg+xml"
+        }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+    const manifestURL = URL.createObjectURL(blob);
+    document.getElementById("manifest-placeholder").setAttribute("href", manifestURL);
+  </script>
+
   <style>
     /* 網頁背景 */
     body {
@@ -224,5 +250,28 @@
       </div>
     </div>
   </div>
+
+  <!-- ✅ 內嵌 PWA Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        const swCode = `
+          self.addEventListener('install', e => {
+            e.waitUntil(
+              caches.open('app-cache').then(cache => cache.addAll(['./']))
+            );
+          });
+          self.addEventListener('fetch', e => {
+            e.respondWith(
+              caches.match(e.request).then(res => res || fetch(e.request))
+            );
+          });
+        `;
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swURL = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swURL);
+      });
+    }
+  </script>
 </body>
 </html>
