@@ -9,7 +9,6 @@
   <!-- ✅ 內嵌 PWA manifest -->
   <link rel="manifest" id="manifest-placeholder">
   <script>
-    // 動態產生 manifest.json
     const manifest = {
       name: "跳錶器",
       short_name: "跳錶器",
@@ -31,7 +30,6 @@
   </script>
 
   <style>
-    /* 網頁背景 */
     body {
       margin: 0;
       padding: 0;
@@ -43,7 +41,6 @@
       background: linear-gradient(180deg, #121212, #2a2a2a 60%, #2c0000);
     }
 
-    /* 主容器 */
     .container {
       width: 350px;
       background: rgba(0, 0, 0, 0.3);
@@ -54,7 +51,6 @@
       text-align: center;
     }
 
-    /* 標題 */
     .container h1 {
       margin: 0 0 10px;
       font-size: 22px;
@@ -72,6 +68,7 @@
       margin-bottom: 15px;
       box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.15),
                   0 6px 15px rgba(0, 0, 0, 0.4);
+      transition: background 0.5s ease;
     }
 
     .fare-box p {
@@ -136,7 +133,6 @@
     .start {
       background: linear-gradient(135deg, #ff4d4d, #cc0000);
     }
-
     .start:hover {
       background: linear-gradient(135deg, #ff5c5c, #e60000);
     }
@@ -144,19 +140,14 @@
     .pause {
       background: rgba(255, 255, 255, 0.15);
     }
-
     .pause:hover {
       background: rgba(255, 255, 255, 0.25);
     }
 
-    /* 資費設定外框 */
+    /* 資費設定 */
     .settings {
       margin-top: 15px;
-      background: linear-gradient(
-        145deg,
-        rgba(255, 255, 255, 0.08),
-        rgba(255, 255, 255, 0.03)
-      );
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       padding: 16px;
@@ -172,7 +163,6 @@
       margin-bottom: 10px;
     }
 
-    /* 每一行設定 */
     .settings .row {
       display: flex;
       justify-content: space-between;
@@ -209,69 +199,120 @@
   <div class="container">
     <h1>跳錶器</h1>
 
-    <div class="fare-box">
+    <div class="fare-box" id="fareBox">
       <p>車資</p>
-      <div class="amount">$0</div>
+      <div class="amount" id="fareAmount">$0</div>
     </div>
 
     <div class="info">
       <div class="block">
         <p>計時</p>
-        <span>00:00</span>
+        <span id="time">00:00</span>
       </div>
       <div class="block">
         <p>KM</p>
-        <span>0.00</span>
+        <span id="distance">0.00</span>
       </div>
     </div>
 
     <div class="buttons">
-      <button class="start">開始計費</button>
-      <button class="pause">暫停計費</button>
+      <button class="start" id="startBtn">開始計費</button>
+      <button class="pause" id="pauseBtn">暫停計費</button>
     </div>
 
     <div class="settings">
       <div class="settings-title">資費設定</div>
       <div class="row">
         <label>基本車資</label>
-        <input type="number" value="50">
+        <input type="number" id="baseFare" value="50">
       </div>
       <div class="row">
         <label>距離定價</label>
-        <input type="number" value="20">
+        <input type="number" id="farePerKm" value="20">
       </div>
       <div class="row">
         <label>分鐘價格</label>
-        <input type="number" value="2">
+        <input type="number" id="farePerMin" value="2">
       </div>
       <div class="row">
         <label>最低車資</label>
-        <input type="number" value="80">
+        <input type="number" id="minFare" value="80">
       </div>
     </div>
   </div>
 
-  <!-- ✅ 內嵌 PWA Service Worker -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        const swCode = `
-          self.addEventListener('install', e => {
-            e.waitUntil(
-              caches.open('app-cache').then(cache => cache.addAll(['./']))
-            );
-          });
-          self.addEventListener('fetch', e => {
-            e.respondWith(
-              caches.match(e.request).then(res => res || fetch(e.request))
-            );
-          });
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swURL = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swURL);
-      });
+    const startBtn = document.getElementById("startBtn");
+    const fareBox = document.getElementById("fareBox");
+    const fareAmount = document.getElementById("fareAmount");
+    const timeEl = document.getElementById("time");
+    const distanceEl = document.getElementById("distance");
+
+    let startTime, timerInterval;
+    let watchId, lastCoords;
+    let distance = 0;
+    let running = false;
+
+    function updateFare() {
+      const baseFare = parseFloat(document.getElementById("baseFare").value);
+      const farePerKm = parseFloat(document.getElementById("farePerKm").value);
+      const farePerMin = parseFloat(document.getElementById("farePerMin").value);
+      const minFare = parseFloat(document.getElementById("minFare").value);
+
+      const elapsedMinutes = (Date.now() - startTime) / 60000;
+      let fare = baseFare + distance * farePerKm + elapsedMinutes * farePerMin;
+
+      // 車資計算 + 顏色控制
+      if (!running) {
+        if (fare < minFare) {
+          fare = minFare;
+          fareBox.style.background = "linear-gradient(145deg, #4a90e2, #0033cc)"; // 深藍
+        } else {
+          fareBox.style.background = "linear-gradient(145deg, #4caf50, #006400)"; // 深綠
+        }
+      } else {
+        fareBox.style.background = "linear-gradient(145deg, rgba(255, 77, 77, 0.8), rgba(153, 0, 0, 0.7))"; // 深紅
+      }
+
+      fareAmount.textContent = `$${fare.toFixed(0)}`;
     }
+
+    function startFare() {
+      if (running) {
+        running = false;
+        clearInterval(timerInterval);
+        navigator.geolocation.clearWatch(watchId);
+        updateFare();
+        startBtn.textContent = "開始計費";
+      } else {
+        running = true;
+        startTime = Date.now();
+        lastCoords = null;
+        distance = 0;
+        watchId = navigator.geolocation.watchPosition(pos => {
+          if (lastCoords) {
+            const dx = pos.coords.latitude - lastCoords.lat;
+            const dy = pos.coords.longitude - lastCoords.lng;
+            const delta = Math.sqrt(dx*dx + dy*dy) * 111.32; // 粗略換算 KM
+            distance += delta;
+            distanceEl.textContent = distance.toFixed(2);
+          }
+          lastCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        });
+
+        timerInterval = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          const mins = String(Math.floor(elapsed / 60000)).padStart(2, "0");
+          const secs = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, "0");
+          timeEl.textContent = `${mins}:${secs}`;
+          updateFare();
+        }, 1000);
+
+        startBtn.textContent = "停止計費";
+      }
+    }
+
+    startBtn.addEventListener("click", startFare);
   </script>
 </body>
 </html>
