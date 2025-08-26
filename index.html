@@ -4,8 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>跳錶器</title>
+  
+  <!-- PWA 設定 -->
+  <link rel="manifest" id="manifestPlaceholder">
+  <meta name="theme-color" content="#ff4b4b">
+
+  <!-- iOS 安裝支援 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="跳錶器">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0..."> <!-- 192x192 圖示 Base64，可換自己的 -->
+
   <style>
-    /* 全局樣式 */
     body {
       font-family: 'Noto Sans TC', sans-serif;
       background: linear-gradient(180deg, #111, #1a1a1a 30%, #2c2c2c 100%);
@@ -15,8 +25,6 @@
       height: 100vh;
       margin: 0;
     }
-
-    /* 外框 */
     .container {
       width: 340px;
       padding: 24px;
@@ -27,15 +35,11 @@
       color: #fff;
       backdrop-filter: blur(8px);
     }
-
-    /* 標題 */
     .title {
       margin-bottom: 16px;
       font-size: 24px;
       font-weight: bold;
     }
-
-    /* 車資顯示 */
     .fare-box {
       background: linear-gradient(145deg, #e64a4a, #b52020);
       border-radius: 16px;
@@ -53,8 +57,6 @@
       font-size: 44px;
       font-weight: bold;
     }
-
-    /* 計時與距離 */
     .info-box {
       display: flex;
       justify-content: space-between;
@@ -78,8 +80,6 @@
       font-weight: bold;
       margin-top: 4px;
     }
-
-    /* 按鈕 */
     button {
       width: 100%;
       padding: 14px;
@@ -106,8 +106,6 @@
       transform: scale(1.02);
       box-shadow: 0 4px 12px rgba(255,255,255,0.2);
     }
-
-    /* 資費設定 */
     .settings {
       margin-top: 24px;
       text-align: left;
@@ -141,32 +139,23 @@
 </head>
 <body>
   <div class="container">
-    <!-- 標題 -->
     <h1 class="title">跳錶器</h1>
-
-    <!-- 車資顯示 -->
     <div class="fare-box">
       <span class="fare-label">車資</span>
-      <span class="fare-amount" id="fare">$550</span>
+      <span class="fare-amount" id="fare">$0</span>
     </div>
-
-    <!-- 計時與距離 -->
     <div class="info-box">
       <div class="info-item">
         <span class="info-label">計時</span>
-        <span class="info-value" id="timer">08:48</span>
+        <span class="info-value" id="timer">00:00</span>
       </div>
       <div class="info-item">
         <span class="info-label">KM</span>
-        <span class="info-value" id="distance">2.33</span>
+        <span class="info-value" id="distance">0.00</span>
       </div>
     </div>
-
-    <!-- 控制按鈕 -->
     <button id="start-btn">開始計費</button>
     <button id="pause-btn" class="secondary">暫停計費</button>
-
-    <!-- 費率設定 -->
     <div class="settings">
       <h2 class="settings-title">資費設定</h2>
       <div class="settings-row">
@@ -187,5 +176,46 @@
       </div>
     </div>
   </div>
+
+  <script>
+    // 1. 動態建立 manifest.json
+    const manifest = {
+      name: "跳錶器",
+      short_name: "跳錶器",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#111111",
+      theme_color: "#ff4b4b",
+      icons: [
+        {
+          src: "data:image/png;base64,iVBORw0...", /* 建議換自己的 icon Base64 */
+          sizes: "192x192",
+          type: "image/png"
+        }
+      ]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    document.getElementById('manifestPlaceholder').setAttribute('href', manifestURL);
+
+    // 2. 動態註冊 Service Worker
+    const swCode = `
+      const CACHE_NAME = 'taxi-meter-pwa-v1';
+      const urlsToCache = ['.'];
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(
+          caches.match(e.request).then(resp => resp || fetch(e.request))
+        );
+      });
+    `;
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    const swURL = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(swURL).then(() => console.log("PWA 已啟用"));
+    }
+  </script>
 </body>
 </html>
