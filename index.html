@@ -8,7 +8,7 @@
     /* 全局樣式 */
     body {
       font-family: 'Noto Sans TC', sans-serif;
-      background: linear-gradient(180deg, #1f1f1f, #2d2d2d);
+      background: linear-gradient(180deg, #111, #1a1a1a 30%, #2c2c2c 100%);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -18,35 +18,39 @@
 
     /* 外框 */
     .container {
-      width: 320px;
-      padding: 20px;
-      background: #1a1a1a;
-      border-radius: 20px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      width: 340px;
+      padding: 24px;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 24px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.7), inset 0 0 30px rgba(255,255,255,0.05);
       text-align: center;
       color: #fff;
+      backdrop-filter: blur(8px);
     }
 
     /* 標題 */
     .title {
-      margin-bottom: 10px;
-      font-size: 22px;
+      margin-bottom: 16px;
+      font-size: 24px;
+      font-weight: bold;
     }
 
     /* 車資顯示 */
     .fare-box {
-      background: linear-gradient(180deg, #c33, #933);
-      border-radius: 12px;
-      padding: 10px;
-      margin-bottom: 20px;
+      background: linear-gradient(145deg, #e64a4a, #b52020);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 24px;
       color: #fff;
+      box-shadow: 0 6px 15px rgba(255, 0, 0, 0.3);
     }
     .fare-label {
       display: block;
       font-size: 14px;
+      opacity: 0.8;
     }
     .fare-amount {
-      font-size: 36px;
+      font-size: 44px;
       font-weight: bold;
     }
 
@@ -54,76 +58,83 @@
     .info-box {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     .info-item {
       flex: 1;
-      background: #2a2a2a;
-      padding: 10px;
-      margin: 0 5px;
-      border-radius: 8px;
+      background: rgba(40, 40, 40, 0.9);
+      padding: 12px;
+      margin: 0 6px;
+      border-radius: 12px;
+      box-shadow: inset 0 0 6px rgba(255,255,255,0.05);
     }
     .info-label {
       display: block;
       font-size: 14px;
-      opacity: 0.8;
+      opacity: 0.7;
     }
     .info-value {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
+      margin-top: 4px;
     }
 
     /* 按鈕 */
     button {
       width: 100%;
-      padding: 12px;
-      margin: 6px 0;
+      padding: 14px;
+      margin: 8px 0;
       border: none;
-      border-radius: 8px;
-      font-size: 16px;
+      border-radius: 12px;
+      font-size: 18px;
       font-weight: bold;
       cursor: pointer;
-      background: #ff4b4b;
+      background: linear-gradient(145deg, #ff4b4b, #d63030);
       color: #fff;
-      transition: 0.2s;
+      box-shadow: 0 4px 12px rgba(255, 0, 0, 0.25);
+      transition: 0.25s;
     }
     button:hover {
-      background: #ff6666;
+      transform: scale(1.02);
+      box-shadow: 0 6px 18px rgba(255, 0, 0, 0.4);
     }
     button.secondary {
-      background: #444;
+      background: linear-gradient(145deg, #3b3b3b, #2a2a2a);
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.05);
     }
     button.secondary:hover {
-      background: #555;
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(255,255,255,0.2);
     }
 
     /* 資費設定 */
     .settings {
-      margin-top: 20px;
+      margin-top: 24px;
       text-align: left;
     }
     .settings-title {
       font-size: 14px;
       opacity: 0.7;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .settings-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .settings-row label {
-      font-size: 14px;
+      font-size: 15px;
     }
     .settings-row input {
-      width: 80px;
-      padding: 5px;
-      border-radius: 6px;
+      width: 100px;
+      padding: 6px;
+      border-radius: 8px;
       border: none;
-      background: #2a2a2a;
+      background: rgba(255,255,255,0.05);
+      box-shadow: inset 0 0 5px rgba(255,255,255,0.1);
       color: #fff;
-      font-size: 14px;
+      font-size: 15px;
       text-align: center;
     }
   </style>
@@ -136,18 +147,18 @@
     <!-- 車資顯示 -->
     <div class="fare-box">
       <span class="fare-label">車資</span>
-      <span class="fare-amount" id="fare">$0</span>
+      <span class="fare-amount" id="fare">$550</span>
     </div>
 
     <!-- 計時與距離 -->
     <div class="info-box">
       <div class="info-item">
         <span class="info-label">計時</span>
-        <span class="info-value" id="timer">00:00</span>
+        <span class="info-value" id="timer">08:48</span>
       </div>
       <div class="info-item">
         <span class="info-label">KM</span>
-        <span class="info-value" id="distance">0.00</span>
+        <span class="info-value" id="distance">2.33</span>
       </div>
     </div>
 
@@ -176,10 +187,5 @@
       </div>
     </div>
   </div>
-
-  <script>
-    // 目前功能暫不實作，之後可在這裡加計時 / GPS / 計費
-    console.log("計費器 UI 已載入");
-  </script>
 </body>
 </html>
