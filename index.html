@@ -6,10 +6,9 @@
   <meta name="theme-color" content="#121212" />
   <title>跳錶器</title>
 
-  <!-- ✅ PWA manifest -->
+  <!-- ✅ 內嵌 PWA manifest -->
   <link rel="manifest" id="manifest-placeholder">
   <script>
-    // 動態生成 manifest
     const manifest = {
       name: "跳錶器",
       short_name: "跳錶器",
@@ -128,27 +127,30 @@
       transition: 0.2s;
     }
 
+    /* 停止/開始計費按鈕 */
     .start {
       background: linear-gradient(135deg, #ff4d4d, #cc0000);
     }
 
-    .start:hover {
-      background: linear-gradient(135deg, #ff5c5c, #e60000);
+    /* 停止計費禁用樣式 */
+    .start.disabled {
+      background: rgba(255, 255, 255, 0.15);
+      cursor: not-allowed;
     }
 
+    /* 暫停按鈕灰色 */
     .pause {
       background: rgba(255, 255, 255, 0.15);
     }
 
-    .pause:hover {
-      background: rgba(255, 255, 255, 0.25);
+    /* 暫停狀態下的「繼續計費」紅色 */
+    .pause.active {
+      background: linear-gradient(135deg, #ff4d4d, #cc0000);
     }
 
     .settings {
       margin-top: 15px;
-      background: linear-gradient(145deg,
-        rgba(255, 255, 255, 0.08),
-        rgba(255, 255, 255, 0.03));
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       padding: 16px;
@@ -194,21 +196,15 @@
       background: rgba(255, 255, 255, 0.18);
       box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
     }
-
-    button.disabled {
-      background: rgba(255,255,255,0.1) !important;
-      color: rgba(255,255,255,0.4) !important;
-      cursor: not-allowed;
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>跳錶器</h1>
 
-    <div class="fare-box" id="fareBox">
+    <div class="fare-box">
       <p>車資</p>
-      <div class="amount" id="fareAmount">$0</div>
+      <div class="amount">$0</div>
     </div>
 
     <div class="info">
@@ -224,73 +220,84 @@
 
     <div class="buttons">
       <button id="startBtn" class="start">開始計費</button>
-      <button id="pauseBtn" class="pause disabled" disabled>暫停計費</button>
+      <button id="pauseBtn" class="pause" disabled>暫停計費</button>
     </div>
 
-    <div class="settings" id="settings">
+    <div class="settings">
       <div class="settings-title">資費設定</div>
       <div class="row">
         <label>基本車資</label>
-        <input id="baseFare" type="number" value="50">
+        <input type="number" id="baseFare" value="50">
       </div>
       <div class="row">
         <label>距離定價</label>
-        <input id="distancePrice" type="number" value="20">
+        <input type="number" id="distanceFare" value="20">
       </div>
       <div class="row">
         <label>分鐘價格</label>
-        <input id="minutePrice" type="number" value="2">
+        <input type="number" id="timeFare" value="2">
       </div>
       <div class="row">
         <label>最低車資</label>
-        <input id="minFare" type="number" value="80">
+        <input type="number" id="minFare" value="80">
       </div>
     </div>
   </div>
 
   <script>
-    let timerInterval, gpsInterval;
-    let elapsedSeconds = 0;
+    const amountEl = document.querySelector('.amount');
+    const timerEl = document.getElementById('timer');
+    const distanceEl = document.getElementById('distance');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const fareBox = document.querySelector('.fare-box');
+    const fareInputs = document.querySelectorAll('.settings input');
+
+    let timer = 0;
     let distance = 0;
+    let fare = 0;
+    let timerInterval = null;
+    let watchId = null;
     let lastPosition = null;
-    let isRunning = false;
-    let isPaused = false;
+    let running = false;
+    let paused = false;
 
-    const SPEED_THRESHOLD = 3; // km/h
-    const MIN_DISTANCE_THRESHOLD = 0.005; // 5公尺
-    const MAX_ACCURACY = 15; // 精度15m內才算
+    const SPEED_THRESHOLD = 1;       // km/h ✅ 低於此速度視為飄移
+    const DISTANCE_THRESHOLD = 0.005; // km ✅ 單次距離小於 5 公尺忽略
 
-    const fareAmountEl = document.getElementById("fareAmount");
-    const timerEl = document.getElementById("timer");
-    const distanceEl = document.getElementById("distance");
-    const fareBox = document.getElementById("fareBox");
-    const startBtn = document.getElementById("startBtn");
-    const pauseBtn = document.getElementById("pauseBtn");
-    const settingsInputs = document.querySelectorAll("#settings input");
-
-    function startTimer() {
-      timerInterval = setInterval(() => {
-        elapsedSeconds++;
-        const min = String(Math.floor(elapsedSeconds / 60)).padStart(2, "0");
-        const sec = String(elapsedSeconds % 60).padStart(2, "0");
-        timerEl.textContent = `${min}:${sec}`;
-        calcFare();
-      }, 1000);
+    function resetAll() {
+      timer = 0;
+      distance = 0;
+      fare = 0;
+      lastPosition = null;
+      timerEl.textContent = "00:00";
+      distanceEl.textContent = "0.00";
+      amountEl.textContent = "$0";
+      fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
     }
 
-    function stopTimer() {
-      clearInterval(timerInterval);
+    function formatTime(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function calcFare() {
+      const base = parseFloat(document.getElementById('baseFare').value) || 0;
+      const distPrice = parseFloat(document.getElementById('distanceFare').value) || 0;
+      const timePrice = parseFloat(document.getElementById('timeFare').value) || 0;
+      fare = base + (distance * distPrice) + ((timer / 60) * timePrice);
+      amountEl.textContent = `$${fare.toFixed(0)}`;
     }
 
     function startGPS() {
       if (!navigator.geolocation) {
-        alert("此裝置不支援 GPS 定位");
+        alert("無法使用 GPS 計算距離");
         return;
       }
-      gpsInterval = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(pos => {
-          if (pos.coords.accuracy > MAX_ACCURACY) return;
 
+      watchId = navigator.geolocation.watchPosition(
+        pos => {
           const current = {
             lat: pos.coords.latitude,
             lon: pos.coords.longitude,
@@ -299,115 +306,97 @@
 
           if (lastPosition) {
             const R = 6371;
-            const dLat = (current.lat - lastPosition.coords.latitude) * Math.PI / 180;
-            const dLon = (current.lon - lastPosition.coords.longitude) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 +
-                      Math.cos(lastPosition.coords.latitude * Math.PI / 180) *
-                      Math.cos(current.lat * Math.PI / 180) *
-                      Math.sin(dLon / 2) ** 2;
+            const dLat = (current.lat - lastPosition.lat) * Math.PI / 180;
+            const dLon = (current.lon - lastPosition.lon) * Math.PI / 180;
+            const a =
+              Math.sin(dLat / 2) ** 2 +
+              Math.cos(lastPosition.lat * Math.PI / 180) *
+              Math.cos(current.lat * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const d = R * c;
+            const d = R * c; // km
 
-            if (d < MIN_DISTANCE_THRESHOLD) return;
-
-            const dt = (current.timestamp - lastPosition.timestamp) / 1000 / 3600;
+            const dt = (current.timestamp - lastPosition.timestamp) / 1000 / 3600; // 小時
             const speed = dt > 0 ? d / dt : 0;
 
-            if (speed < SPEED_THRESHOLD) return;
-
-            distance += d;
-            distanceEl.textContent = distance.toFixed(2);
-            calcFare();
+            // ✅ 過濾 GPS 飄移
+            if (speed >= SPEED_THRESHOLD && d >= DISTANCE_THRESHOLD) {
+              distance += d;
+              distanceEl.textContent = distance.toFixed(2);
+              calcFare();
+            }
           }
 
-          lastPosition = pos;
-        });
-      }, 2000);
+          lastPosition = current;
+        },
+        err => console.error("GPS 錯誤:", err),
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
     }
 
-    function stopGPS() {
-      clearInterval(gpsInterval);
-    }
-
-    function calcFare() {
-      const baseFare = parseFloat(document.getElementById("baseFare").value) || 0;
-      const distancePrice = parseFloat(document.getElementById("distancePrice").value) || 0;
-      const minutePrice = parseFloat(document.getElementById("minutePrice").value) || 0;
-      const minFare = parseFloat(document.getElementById("minFare").value) || 0;
-
-      let fare = baseFare + distance * distancePrice + (elapsedSeconds / 60) * minutePrice;
-      fareAmountEl.textContent = `$${fare.toFixed(0)}`;
-    }
-
-    function finishFare() {
-      stopTimer();
-      stopGPS();
-
-      const baseFare = parseFloat(document.getElementById("baseFare").value) || 0;
-      const distancePrice = parseFloat(document.getElementById("distancePrice").value) || 0;
-      const minutePrice = parseFloat(document.getElementById("minutePrice").value) || 0;
-      const minFare = parseFloat(document.getElementById("minFare").value) || 0;
-
-      let fare = baseFare + distance * distancePrice + (elapsedSeconds / 60) * minutePrice;
-      if (fare < minFare) {
-        fare = minFare;
-        fareAmountEl.textContent = `$${fare.toFixed(0)}`;
-        fareBox.style.background = "linear-gradient(145deg, rgba(0, 102, 204, 0.8), rgba(0, 51, 153, 0.7))"; // 深藍
-      } else {
-        fareAmountEl.textContent = `$${fare.toFixed(0)}`;
-        fareBox.style.background = "linear-gradient(145deg, rgba(0, 204, 102, 0.8), rgba(0, 102, 51, 0.7))"; // 深綠
-      }
-
-      startBtn.textContent = "重新開始";
-      pauseBtn.disabled = true;
-      pauseBtn.classList.add("disabled");
-      settingsInputs.forEach(i => i.disabled = false);
-      isRunning = false;
-      isPaused = false;
-    }
-
-    startBtn.addEventListener("click", () => {
-      if (!isRunning) {
-        // 開始計費
-        isRunning = true;
-        isPaused = false;
-        elapsedSeconds = 0;
-        distance = 0;
-        lastPosition = null;
-
-        fareBox.style.background = "linear-gradient(145deg, rgba(255, 77, 77, 0.8), rgba(153, 0, 0, 0.7))";
-        fareAmountEl.textContent = "$0";
-        timerEl.textContent = "00:00";
-        distanceEl.textContent = "0.00";
-
-        startTimer();
-        startGPS();
-        settingsInputs.forEach(i => i.disabled = true);
-
+    startBtn.addEventListener('click', () => {
+      if (!running) {
+        resetAll();
+        running = true;
+        paused = false;
         startBtn.textContent = "停止計費";
         pauseBtn.disabled = false;
-        pauseBtn.classList.remove("disabled");
+        fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
+
+        fareInputs.forEach(input => input.disabled = true);
+
+        timerInterval = setInterval(() => {
+          if (!paused) {
+            timer++;
+            timerEl.textContent = formatTime(timer);
+            calcFare();
+          }
+        }, 1000);
+
+        startGPS();
       } else {
-        // 停止計費
-        finishFare();
+        running = false;
+        paused = false;
+        clearInterval(timerInterval);
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        startBtn.textContent = "開始計費";
+        pauseBtn.disabled = true;
+        pauseBtn.classList.remove("active");
+        startBtn.classList.remove("disabled");
+        startBtn.disabled = false;
+
+        fareInputs.forEach(input => input.disabled = false);
+
+        const minFare = parseFloat(document.getElementById('minFare').value) || 0;
+        if (fare < minFare) {
+          fare = minFare;
+          fareBox.style.background = "linear-gradient(145deg, #4a90e2, #005bea)";
+        } else {
+          fareBox.style.background = "linear-gradient(145deg, #34d399, #059669)";
+        }
+        amountEl.textContent = `$${fare.toFixed(0)}`;
       }
     });
 
-    pauseBtn.addEventListener("click", () => {
-      if (!isRunning || isPaused) {
-        // 繼續計費
-        isPaused = false;
-        startTimer();
-        startGPS();
-        pauseBtn.textContent = "暫停計費";
-        pauseBtn.style.background = "rgba(255, 255, 255, 0.15)";
-      } else {
-        // 暫停計費
-        isPaused = true;
-        stopTimer();
-        stopGPS();
+    pauseBtn.addEventListener('click', () => {
+      if (!paused) {
+        paused = true;
         pauseBtn.textContent = "繼續計費";
-        pauseBtn.style.background = "linear-gradient(135deg, #ff4d4d, #cc0000)";
+        pauseBtn.classList.add("active");
+        startBtn.classList.add("disabled");
+        startBtn.disabled = true;
+
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      } else {
+        paused = false;
+        pauseBtn.textContent = "暫停計費";
+        pauseBtn.classList.remove("active");
+        startBtn.classList.remove("disabled");
+        startBtn.disabled = false;
+
+        startGPS();
       }
     });
   </script>
