@@ -1,74 +1,185 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>小魚 SAVINA 個人連結頁</title>
+  <title>跳錶器</title>
   <style>
+    /* 全局樣式 */
     body {
-      font-family: 'Arial', sans-serif;
-      background: #ae936e;
-      color: white;
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(180deg, #1f1f1f, #2d2d2d);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-      padding: 0;
-      text-align: center;
     }
+
+    /* 外框 */
     .container {
+      width: 320px;
       padding: 20px;
-      max-width: 500px;
-      margin: auto;
+      background: #1a1a1a;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      text-align: center;
+      color: #fff;
     }
-    .avatar {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid white;
+
+    /* 標題 */
+    .title {
+      margin-bottom: 10px;
+      font-size: 22px;
+    }
+
+    /* 車資顯示 */
+    .fare-box {
+      background: linear-gradient(180deg, #c33, #933);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    .fare-label {
+      display: block;
+      font-size: 14px;
+    }
+    .fare-amount {
+      font-size: 36px;
+      font-weight: bold;
+    }
+
+    /* 計時與距離 */
+    .info-box {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .info-item {
+      flex: 1;
+      background: #2a2a2a;
+      padding: 10px;
+      margin: 0 5px;
+      border-radius: 8px;
+    }
+    .info-label {
+      display: block;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    .info-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    /* 按鈕 */
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #ff4b4b;
+      color: #fff;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #ff6666;
+    }
+    button.secondary {
+      background: #444;
+    }
+    button.secondary:hover {
+      background: #555;
+    }
+
+    /* 資費設定 */
+    .settings {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .settings-title {
+      font-size: 14px;
+      opacity: 0.7;
       margin-bottom: 10px;
     }
-    h1 {
-      margin: 5px 0;
-      font-size: 24px;
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
     }
-    .email {
+    .settings-row label {
+      font-size: 14px;
+    }
+    .settings-row input {
+      width: 80px;
+      padding: 5px;
+      border-radius: 6px;
+      border: none;
+      background: #2a2a2a;
       color: #fff;
       font-size: 14px;
-      margin-bottom: 15px;
-    }
-    .buttons {
-      margin-top: 30px;
-    }
-    .btn {
-      display: block;
-      background-color: #fcb72b;
-      color: #000;
-      padding: 12px;
-      border-radius: 8px;
-      margin: 12px 0;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 16px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-      transition: all 0.2s ease-in-out;
-    }
-    .btn:hover {
-      background-color: #f4a300;
-      transform: scale(1.02);
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="top.jpg" alt="頭像" class="avatar" />
-    <h1>小魚 Savina</h1>
-    <div class="email">@fishsiao_</div>
+    <!-- 標題 -->
+    <h1 class="title">跳錶器</h1>
 
-    <div class="buttons">
-      <a href="#" class="btn">🧊冰絲涼感BRA TOP限時團購中</a>
-      <a href="#" class="btn">🩰小魚循環衣櫥二手衣</a>
-      <a href="https://instagram.com/fishsiao_" class="btn" target="_blank">🏷️小魚instagram</a>
+    <!-- 車資顯示 -->
+    <div class="fare-box">
+      <span class="fare-label">車資</span>
+      <span class="fare-amount" id="fare">$0</span>
+    </div>
+
+    <!-- 計時與距離 -->
+    <div class="info-box">
+      <div class="info-item">
+        <span class="info-label">計時</span>
+        <span class="info-value" id="timer">00:00</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">KM</span>
+        <span class="info-value" id="distance">0.00</span>
+      </div>
+    </div>
+
+    <!-- 控制按鈕 -->
+    <button id="start-btn">開始計費</button>
+    <button id="pause-btn" class="secondary">暫停計費</button>
+
+    <!-- 費率設定 -->
+    <div class="settings">
+      <h2 class="settings-title">資費設定</h2>
+      <div class="settings-row">
+        <label>基本車資</label>
+        <input type="number" id="baseFare" value="50">
+      </div>
+      <div class="settings-row">
+        <label>距離定價</label>
+        <input type="number" id="perKm" value="20">
+      </div>
+      <div class="settings-row">
+        <label>分鐘價格</label>
+        <input type="number" id="perMin" value="2">
+      </div>
+      <div class="settings-row">
+        <label>最低車資</label>
+        <input type="number" id="minFare" value="80">
+      </div>
     </div>
   </div>
+
+  <script>
+    // 目前功能暫不實作，之後可在這裡加計時 / GPS / 計費
+    console.log("計費器 UI 已載入");
+  </script>
 </body>
 </html>
