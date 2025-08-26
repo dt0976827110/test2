@@ -41,11 +41,21 @@
       font-weight: bold;
     }
     .fare-box {
-      background: linear-gradient(145deg, #e64a4a, #b52020);
+      background: linear-gradient(
+        145deg,
+        rgba(230, 74, 74, 0.7),   /* 左上角：紅色，70% 不透明 */
+        rgba(181, 32, 32, 0.7)    /* 右下角：深紅，70% 不透明 */
+      );
       border-radius: 16px;
       padding: 12px;
       margin-bottom: 24px;
       color: #fff;
+    
+      /* 玻璃擬物效果 */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    
+      /* 陰影建議也半透明 */
       box-shadow: 0 6px 15px rgba(255, 0, 0, 0.3);
     }
     .fare-label {
