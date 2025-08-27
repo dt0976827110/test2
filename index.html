@@ -260,7 +260,7 @@
     let watchId = null;
     let lastPosition = null;
     let running = false;
-    let paused = false;
+
 
     const SPEED_THRESHOLD = 0.1;       // km/h ✅ 低於此速度視為飄移
     const DISTANCE_THRESHOLD = 0.001; // km ✅ 單次距離小於 5 公尺忽略
@@ -338,7 +338,7 @@
       if (!running) {
         resetAll();
         running = true;
-        paused = false;
+
         startBtn.textContent = "停止計費";
 
         fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
@@ -346,17 +346,17 @@
         fareInputs.forEach(input => input.disabled = true);
 
         timerInterval = setInterval(() => {
-          if (!paused) {
+          
             timer++;
             timerEl.textContent = formatTime(timer);
             calcFare();
-          }
+          
         }, 1000);
 
         startGPS();
       } else {
         running = false;
-        paused = false;
+
         clearInterval(timerInterval);
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
