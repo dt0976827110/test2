@@ -186,6 +186,25 @@
       background: rgba(255, 255, 255, 0.18);
       box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
     }
+    .debug {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.1);
+}
+.debug p {
+  margin: 4px 0;
+}
+.debug span {
+  color: #fff;
+  font-weight: bold;
+}
+
   </style>
 </head>
 <body>
@@ -232,6 +251,12 @@
       </div>
     </div>
   </div>
+  <div id="debugInfo" class="debug">
+  <p>GPS座標: <span id="gpsCoords">--</span></p>
+  <p>速度(KM/H): <span id="gpsSpeed">--</span></p>
+  <p>更新頻率: <span id="gpsUpdate">--</span></p>
+</div>
+
 
   <script>
     const amountEl = document.querySelector('.amount');
@@ -278,47 +303,68 @@
     }
 
     function startGPS() {
-      if (!navigator.geolocation) {
-        alert("無法使用 GPS 計算距離");
-        return;
+  if (!navigator.geolocation) {
+    alert("無法使用 GPS 計算距離");
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      const current = {
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        timestamp: pos.timestamp
+      };
+
+      // 更新 GPS 座標
+      if (gpsCoordsEl) {
+        gpsCoordsEl.textContent = `${current.lat.toFixed(6)}, ${current.lon.toFixed(6)}`;
       }
 
-      watchId = navigator.geolocation.watchPosition(
-        pos => {
-          const current = {
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-            timestamp: pos.timestamp
-          };
+      // 計算距離與速度
+      if (lastPosition) {
+        const R = 6371; // 地球半徑(km)
+        const dLat = (current.lat - lastPosition.lat) * Math.PI / 180;
+        const dLon = (current.lon - lastPosition.lon) * Math.PI / 180;
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(lastPosition.lat * Math.PI / 180) *
+          Math.cos(current.lat * Math.PI / 180) *
+          Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // km
 
-          if (lastPosition) {
-            const R = 6371;
-            const dLat = (current.lat - lastPosition.lat) * Math.PI / 180;
-            const dLon = (current.lon - lastPosition.lon) * Math.PI / 180;
-            const a =
-              Math.sin(dLat / 2) ** 2 +
-              Math.cos(lastPosition.lat * Math.PI / 180) *
-              Math.cos(current.lat * Math.PI / 180) *
-              Math.sin(dLon / 2) ** 2;
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const d = R * c; // km
+        // 計算時間差(小時) → 用於算速度
+        const dt = (current.timestamp - lastPosition.timestamp) / 1000 / 3600;
+        const speed = dt > 0 ? d / dt : 0;
 
-            const dt = (current.timestamp - lastPosition.timestamp) / 1000 / 3600; // 小時
-            const speed = dt > 0 ? d / dt : 0;
+        // 更新 GPS 速度
+        if (gpsSpeedEl) {
+          gpsSpeedEl.textContent = speed.toFixed(2);
+        }
 
-            if (speed >= SPEED_THRESHOLD && d >= DISTANCE_THRESHOLD) {
-              distance += d;
-              distanceEl.textContent = distance.toFixed(2);
-              calcFare();
-            }
-          }
+        // 檢查速度閾值 + 距離閾值
+        if (speed >= SPEED_THRESHOLD && d >= DISTANCE_THRESHOLD) {
+          distance += d;
+          distanceEl.textContent = distance.toFixed(2);
+          calcFare();
+        }
+      }
 
-          lastPosition = current;
-        },
-        err => console.error("GPS 錯誤:", err),
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-      );
-    }
+      // 更新更新頻率
+      if (lastUpdateTime && gpsUpdateEl) {
+        const diff = (current.timestamp - lastUpdateTime) / 1000; // 秒
+        gpsUpdateEl.textContent = `${diff.toFixed(1)} 秒`;
+      }
+      lastUpdateTime = current.timestamp;
+
+      lastPosition = current;
+    },
+    err => console.error("GPS 錯誤:", err),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+  );
+}
+
 
     startBtn.addEventListener('click', () => {
       if (!running) {
