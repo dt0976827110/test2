@@ -50,6 +50,18 @@
       color: #fff;
       text-align: center;
     }
+    .debug {
+      margin-top: 20px;       /* 跟上面內容有間距 */
+      padding: 12px;
+      width: 100%;
+      max-width: 360px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      text-align: left;
+      color: #fff;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
 
     .container h1 {
       margin: 0 0 10px;
@@ -251,12 +263,13 @@
       </div>
     </div>
   </div>
-  <div id="debugInfo" class="debug">
-  <p>GPS座標: <span id="gpsCoords">--</span></p>
-  <p>速度(KM/H): <span id="gpsSpeed">--</span></p>
-  <p>更新頻率: <span id="gpsUpdate">--</span></p>
-</div>
-
+    <!-- 🚩 把 GPS 資訊放在 container 的最底部 -->
+    <div id="debugInfo" class="debug">
+      <p>GPS座標: <span id="gpsCoords">--</span></p>
+      <p>速度(KM/H): <span id="gpsSpeed">--</span></p>
+      <p>更新頻率: <span id="gpsUpdate">--</span></p>
+    </div>
+  </div>
 
   <script>
     const amountEl = document.querySelector('.amount');
