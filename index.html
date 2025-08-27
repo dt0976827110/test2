@@ -220,7 +220,7 @@
 
     <div class="buttons">
       <button id="startBtn" class="start">開始計費</button>
-      <button id="pauseBtn" class="pause" disabled>暫停計費</button>
+      
     </div>
 
     <div class="settings">
@@ -249,7 +249,7 @@
     const timerEl = document.getElementById('timer');
     const distanceEl = document.getElementById('distance');
     const startBtn = document.getElementById('startBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
+    
     const fareBox = document.querySelector('.fare-box');
     const fareInputs = document.querySelectorAll('.settings input');
 
@@ -262,8 +262,8 @@
     let running = false;
     let paused = false;
 
-    const SPEED_THRESHOLD = 1;       // km/h ✅ 低於此速度視為飄移
-    const DISTANCE_THRESHOLD = 0.005; // km ✅ 單次距離小於 5 公尺忽略
+    const SPEED_THRESHOLD = 0.1;       // km/h ✅ 低於此速度視為飄移
+    const DISTANCE_THRESHOLD = 0.001; // km ✅ 單次距離小於 5 公尺忽略
 
     function resetAll() {
       timer = 0;
@@ -340,7 +340,7 @@
         running = true;
         paused = false;
         startBtn.textContent = "停止計費";
-        pauseBtn.disabled = false;
+
         fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
 
         fareInputs.forEach(input => input.disabled = true);
@@ -361,8 +361,7 @@
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
         startBtn.textContent = "開始計費";
-        pauseBtn.disabled = true;
-        pauseBtn.classList.remove("active");
+
         startBtn.classList.remove("disabled");
         startBtn.disabled = false;
 
@@ -379,25 +378,7 @@
       }
     });
 
-    pauseBtn.addEventListener('click', () => {
-      if (!paused) {
-        paused = true;
-        pauseBtn.textContent = "繼續計費";
-        pauseBtn.classList.add("active");
-        startBtn.classList.add("disabled");
-        startBtn.disabled = true;
-
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-      } else {
-        paused = false;
-        pauseBtn.textContent = "暫停計費";
-        pauseBtn.classList.remove("active");
-        startBtn.classList.remove("disabled");
-        startBtn.disabled = false;
-
-        startGPS();
-      }
+    
     });
   </script>
 
