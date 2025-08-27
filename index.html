@@ -39,6 +39,8 @@
       align-items: center;
       min-height: 100vh;
       background: linear-gradient(180deg, #121212, #2a2a2a 60%, #2c0000);
+      /* 🔒 防止 iOS Safari 雙指縮放 */
+      touch-action: pan-x pan-y;
     }
 
     .container {
@@ -398,6 +400,17 @@
         amountEl.textContent = `$${fare.toFixed(0)}`;
       }
     });
+
+    /* 🔒 防止雙指縮放：iOS / Android / PWA 都適用 */
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    document.addEventListener('gesturechange', e => e.preventDefault());
+    document.addEventListener('gestureend', e => e.preventDefault());
+
+    document.addEventListener('touchmove', function (e) {
+      if (e.scale !== 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
   </script>
 
   <!-- ✅ PWA Service Worker -->
