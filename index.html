@@ -138,16 +138,6 @@
       cursor: not-allowed;
     }
 
-    /* 暫停按鈕灰色 */
-    .pause {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    /* 暫停狀態下的「繼續計費」紅色 */
-    .pause.active {
-      background: linear-gradient(135deg, #ff4d4d, #cc0000);
-    }
-
     .settings {
       margin-top: 15px;
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
@@ -220,7 +210,6 @@
 
     <div class="buttons">
       <button id="startBtn" class="start">開始計費</button>
-      
     </div>
 
     <div class="settings">
@@ -249,7 +238,6 @@
     const timerEl = document.getElementById('timer');
     const distanceEl = document.getElementById('distance');
     const startBtn = document.getElementById('startBtn');
-    
     const fareBox = document.querySelector('.fare-box');
     const fareInputs = document.querySelectorAll('.settings input');
 
@@ -261,9 +249,8 @@
     let lastPosition = null;
     let running = false;
 
-
     const SPEED_THRESHOLD = 0.1;       // km/h ✅ 低於此速度視為飄移
-    const DISTANCE_THRESHOLD = 0.001; // km ✅ 單次距離小於 5 公尺忽略
+    const DISTANCE_THRESHOLD = 0.001; // km ✅ 單次距離小於 1 公尺忽略
 
     function resetAll() {
       timer = 0;
@@ -319,7 +306,6 @@
             const dt = (current.timestamp - lastPosition.timestamp) / 1000 / 3600; // 小時
             const speed = dt > 0 ? d / dt : 0;
 
-            // ✅ 過濾 GPS 飄移
             if (speed >= SPEED_THRESHOLD && d >= DISTANCE_THRESHOLD) {
               distance += d;
               distanceEl.textContent = distance.toFixed(2);
@@ -338,33 +324,22 @@
       if (!running) {
         resetAll();
         running = true;
-
         startBtn.textContent = "停止計費";
-
-        fareBox.style.background = "linear-gradient(145deg, rgba(255,77,77,0.8), rgba(153,0,0,0.7))";
-
         fareInputs.forEach(input => input.disabled = true);
 
         timerInterval = setInterval(() => {
-          
-            timer++;
-            timerEl.textContent = formatTime(timer);
-            calcFare();
-          
+          timer++;
+          timerEl.textContent = formatTime(timer);
+          calcFare();
         }, 1000);
 
         startGPS();
       } else {
         running = false;
-
         clearInterval(timerInterval);
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
         startBtn.textContent = "開始計費";
-
-        startBtn.classList.remove("disabled");
-        startBtn.disabled = false;
-
         fareInputs.forEach(input => input.disabled = false);
 
         const minFare = parseFloat(document.getElementById('minFare').value) || 0;
@@ -376,9 +351,6 @@
         }
         amountEl.textContent = `$${fare.toFixed(0)}`;
       }
-    });
-
-    
     });
   </script>
 
