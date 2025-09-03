@@ -135,10 +135,19 @@
       align-items: center;
       font-size: 12px;
       color: #555;
+      cursor: pointer;
     }
-    .bottom-nav img {
+    .bottom-nav svg {
       width: 22px;
+      height: 22px;
       margin-bottom: 4px;
+      fill: #aaa; /* 預設灰色 */
+      transition: fill 0.3s;
+    }
+    .bottom-nav .active svg,
+    .bottom-nav .active span {
+      fill: #007BFF; /* 藍色 */
+      color: #007BFF;
     }
   </style>
 </head>
@@ -179,11 +188,23 @@
     </div>
   </div>
 
-  <!-- 底部導航列 -->
+  <!-- 底部導航列 (SVG Icon) -->
   <div class="bottom-nav">
-    <div class="nav-item"><img src="home(1).png" alt="Dashboard"><span>總覽</span></div>
-    <div class="nav-item"><img src="home(2).png" alt="Historical"><span>歷史績效</span></div>
-    <div class="nav-item"><img src="home(5).png" alt="Export"><span>匯出績效</span></div>
+    <div class="nav-item active">
+      <!-- Home SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg>
+      <span>總覽</span>
+    </div>
+    <div class="nav-item">
+      <!-- Historical SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-3-8h-2v5h-2v-3H9v-2h7z"/></svg>
+      <span>歷史績效</span>
+    </div>
+    <div class="nav-item">
+      <!-- Export SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18l-5.5 5.5 1.41 1.41L11 6.83V16h2V6.83l3.09 3.09 1.41-1.41L12 2z"/></svg>
+      <span>匯出績效</span>
+    </div>
   </div>
 
   <script>
@@ -213,6 +234,15 @@
           y: { display: false }
         }
       }
+    });
+
+    // 底部導航列點擊切換 active 狀態
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
     });
   </script>
 </body>
