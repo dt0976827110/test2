@@ -64,7 +64,12 @@
     .balance { margin: 10px 0 20px; font-size: 26px; font-weight: bold; color: #000; }
 
     /* 圖表容器 */
-    #chart-container { width: 90%; max-width: 400px; }
+    #chart-container {
+      width: 90%;
+      max-width: 400px;
+      height: 200px;  /* 固定高度，避免被壓縮 */
+      margin-bottom: 20px;
+    }
 
     /* 交易紀錄 */
     .transactions { width: 100%; max-width: 400px; margin-top: 20px; text-align: left; }
@@ -165,9 +170,9 @@
   <!-- 底部導航列 -->
   <div class="bottom-nav">
     <div class="nav-item"><img src="home(1).png" alt="Home"><span>Home</span></div>
-    <div class="nav-item"><img src="home(1).png" alt="My Cards"><span>My Cards</span></div>
-    <div class="nav-item"><img src="home(1).png" alt="Statistics"><span>Statistics</span></div>
-    <div class="nav-item"><img src="home(1).png" alt="Settings"><span>Settings</span></div>
+    <div class="nav-item"><img src="home(2).png" alt="My Cards"><span>My Cards</span></div>
+    <div class="nav-item"><img src="home(3).png" alt="Statistics"><span>Statistics</span></div>
+    <div class="nav-item"><img src="home(4).png" alt="Settings"><span>Settings</span></div>
   </div>
 
   <script>
@@ -180,4 +185,24 @@
         datasets: [{
           label: "Balance",
           data: [7000, 7600, 8200, 8545, 8300, 8800],
-          borderColor: "#007BFF",
+          borderColor: "#1E2A38",  // 深藍線條
+          backgroundColor: "rgba(30,42,56,0.1)", // 深藍透明填充
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#007BFF",
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false, // 讓圖表填滿容器
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { display: false }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
