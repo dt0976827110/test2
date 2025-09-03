@@ -60,14 +60,24 @@
     }
     @keyframes showApp { to { opacity: 1; } }
 
-    .balance-title { color: #888; font-size: 14px; }
-    .balance { margin: 10px 0 20px; font-size: 26px; font-weight: bold; color: #000; }
+    /* 標題區 */
+    .brand-title {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 5px;
+    }
+    .balance {
+      font-size: 28px;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 20px;
+    }
 
     /* 圖表容器 */
     #chart-container {
       width: 90%;
       max-width: 400px;
-      height: 200px;  /* 固定高度，避免壓縮 */
+      height: 200px;
       margin-bottom: 20px;
     }
 
@@ -141,13 +151,15 @@
 
   <!-- 第二畫面 -->
   <div id="app">
-    <p class="balance-title">WealthNova</p>
+    <p class="brand-title">WealthNova</p>
     <div class="balance">$8,545.00</div>
 
     <!-- 折線圖 -->
     <div id="chart-container">
       <canvas id="balanceChart"></canvas>
     </div>
+
+    <p style="align-self:flex-start; margin:10px 0; font-weight:bold;">過去30天</p>
 
     <!-- 單行交易卡片清單 -->
     <div class="transaction-row">
@@ -184,8 +196,8 @@
         datasets: [{
           label: "Balance",
           data: [7000, 7600, 8200, 8545, 8300, 8800],
-          borderColor: "#1E2A38",  // 深藍線條
-          backgroundColor: "rgba(30,42,56,0.1)", // 深藍透明填充
+          borderColor: "#007BFF",
+          backgroundColor: "rgba(0,123,255,0.1)",
           fill: true,
           tension: 0.4,
           pointBackgroundColor: "#007BFF",
@@ -194,7 +206,7 @@
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false, // 讓圖表填滿容器
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { display: false } },
