@@ -67,37 +67,45 @@
     #chart-container {
       width: 90%;
       max-width: 400px;
-      height: 200px;  /* 固定高度，避免被壓縮 */
+      height: 200px;  /* 固定高度，避免壓縮 */
       margin-bottom: 20px;
     }
 
-    /* 交易紀錄 */
-    .transactions { width: 100%; max-width: 400px; margin-top: 20px; text-align: left; }
-    .transactions h2 { font-size: 16px; margin: 10px 0; font-weight: bold; }
-    .card {
+    /* 單行交易卡片 */
+    .transaction-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #f9f9f9;
+      background: #fff;
       border: 1px solid #ddd;
-      border-radius: 15px;
+      border-radius: 20px;
       padding: 10px 15px;
-      margin-bottom: 10px;
+      margin: 8px 0;
+      max-width: 400px;
+      width: 100%;
     }
-    .card-left { display: flex; align-items: center; }
-    .icon {
+    .transaction-row .icon {
       width: 35px; height: 35px;
       border-radius: 50%;
-      background: #eee;
+      background: #f1f1f1;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-right: 10px;
     }
-    .icon img { width: 20px; }
-    .details { display: flex; flex-direction: column; font-size: 12px; }
-    .details span:first-child { font-weight: bold; font-size: 14px; }
-    .amount { font-weight: bold; font-size: 14px; }
+    .transaction-row .icon img { width: 20px; }
+    .transaction-row .title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1E2A38;
+      margin-left: 10px;
+      text-align: left;
+    }
+    .transaction-row .amount {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1E2A38;
+    }
 
     /* --- 底部導航列 --- */
     .bottom-nav {
@@ -141,29 +149,21 @@
       <canvas id="balanceChart"></canvas>
     </div>
 
-    <!-- 過去30天 -->
-    <div class="transactions">
-      <h2>過去30天</h2>
-      <div class="card">
-        <div class="card-left">
-          <div class="icon"><img src="apple.png" alt="Apple"></div>
-          <div class="details">
-            <span>Apple Store</span>
-            <span>Entertainment</span>
-          </div>
-        </div>
-        <div class="amount">- $5.99</div>
-      </div>
-      <div class="card">
-        <div class="card-left">
-          <div class="icon"><img src="apple.png" alt="Apple"></div>
-          <div class="details">
-            <span>Apple Store</span>
-            <span>Entertainment</span>
-          </div>
-        </div>
-        <div class="amount">- $5.99</div>
-      </div>
+    <!-- 單行交易卡片清單 -->
+    <div class="transaction-row">
+      <div class="icon"><img src="apple.png" alt="Apple"></div>
+      <span class="title">Apple Store</span>
+      <span class="amount">- $5.99</span>
+    </div>
+    <div class="transaction-row">
+      <div class="icon"><img src="apple.png" alt="Apple"></div>
+      <span class="title">Spotify</span>
+      <span class="amount">- $12.99</span>
+    </div>
+    <div class="transaction-row">
+      <div class="icon"><img src="apple.png" alt="Apple"></div>
+      <span class="title">Grocery</span>
+      <span class="amount">- $88.00</span>
     </div>
   </div>
 
