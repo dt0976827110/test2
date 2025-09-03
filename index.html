@@ -44,7 +44,7 @@
     @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
     /* --- 各頁面 --- */
-    #app, #history {
+    #app, #history, .product-detail {
       width: 100%;
       height: 100%;
       background: #fff;
@@ -80,7 +80,7 @@
     }
 
     /* 圖表容器 */
-    #chart-container {
+    .chart-container {
       width: 90%;
       max-width: 400px;
       height: 200px;
@@ -99,6 +99,7 @@
       margin: 8px 0;
       max-width: 400px;
       width: 100%;
+      cursor: pointer;
     }
     .transaction-row .icon {
       width: 35px; height: 35px;
@@ -169,8 +170,7 @@
     <p class="brand-title">WealthNova</p>
     <div class="balance">$8,545.00</div>
 
-    <!-- 折線圖 -->
-    <div id="chart-container">
+    <div class="chart-container">
       <canvas id="balanceChart"></canvas>
     </div>
 
@@ -198,21 +198,33 @@
     <p class="brand-title">歷史績效</p>
     <h2 class="page-title">選擇商品</h2>
 
-    <div class="transaction-row">
+    <div class="transaction-row" data-target="tx">
       <div class="icon"><img src="2.png" alt="TX"></div>
       <span class="title">台指期</span>
       <span class="amount">+ 12.5%</span>
     </div>
-    <div class="transaction-row">
+    <div class="transaction-row" data-target="dj">
       <div class="icon"><img src="3.png" alt="DJ"></div>
       <span class="title">小道瓊</span>
       <span class="amount">+ 8.3%</span>
     </div>
-    <div class="transaction-row">
+    <div class="transaction-row" data-target="nq">
       <div class="icon"><img src="4.png" alt="NQ"></div>
       <span class="title">小那指</span>
       <span class="amount">+ 15.7%</span>
     </div>
+  </div>
+
+  <!-- 商品詳情頁 (三個共用) -->
+  <div id="product-detail" class="product-detail">
+    <p class="brand-title" id="product-name"></p>
+    <div class="balance" id="product-balance"></div>
+
+    <div class="chart-container">
+      <canvas id="productChart"></canvas>
+    </div>
+
+    <div id="product-list"></div>
   </div>
 
   <!-- 底部導航列 -->
@@ -243,7 +255,7 @@
   </div>
 
   <script>
-    // Chart.js Balance Chart
+    // Chart.js Balance Chart (Dashboard)
     const ctx = document.getElementById('balanceChart').getContext('2d');
     new Chart(ctx, {
       type: 'line',
@@ -282,7 +294,8 @@
     const pages = {
       app: document.getElementById('app'),
       history: document.getElementById('history'),
-      export: document.createElement("div") // 匯出績效暫時空頁
+      product: document.getElementById('product-detail'),
+      export: document.createElement("div")
     };
     pages.export.innerHTML = '<p class="page-title">匯出績效 (開發中)</p>';
     document.body.appendChild(pages.export);
@@ -296,6 +309,68 @@
         const target = item.getAttribute("data-target");
         if (target && pages[target]) {
           pages[target].style.display = "flex";
+        }
+      });
+    });
+
+    // 商品詳情頁切換邏輯
+    const productData = {
+      tx: { name: "台指期", balance: "$9,200.00", icon: "2.png" },
+      dj: { name: "小道瓊", balance: "$8,545.00", icon: "3.png" },
+      nq: { name: "小那指", balance: "$10,120.00", icon: "4.png" }
+    };
+
+    document.querySelectorAll("#history .transaction-row").forEach(row => {
+      row.addEventListener("click", () => {
+        const target = row.getAttribute("data-target");
+        if (target && productData[target]) {
+          // 顯示商品頁
+          Object.values(pages).forEach(p => p.style.display = "none");
+          pages.product.style.display = "flex";
+
+          // 更新標題與金額
+          document.getElementById("product-name").textContent = productData[target].name;
+          document.getElementById("product-balance").textContent = productData[target].balance;
+
+          // 更新月份績效清單 (假資料)
+          const list = document.getElementById("product-list");
+          list.innerHTML = "";
+          ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(m => {
+            list.innerHTML += `
+              <div class="transaction-row">
+                <div class="icon"><img src="${productData[target].icon}" alt="${productData[target].name}"></div>
+                <span class="title">${m}</span>
+                <span class="amount">- $5.99</span>
+              </div>`;
+          });
+
+          // 更新圖表
+          const productCtx = document.getElementById('productChart').getContext('2d');
+          new Chart(productCtx, {
+            type: 'line',
+            data: {
+              labels: ["Apr","May","Jun","Jul","Aug"],
+              datasets: [{
+                label: productData[target].name,
+                data: [5000, 6000, 7000, 8545, 9200],
+                borderColor: "#007BFF",
+                backgroundColor: "rgba(0,123,255,0.1)",
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: "#007BFF",
+                pointRadius: 5
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { display: false }
+              }
+            }
+          });
         }
       });
     });
