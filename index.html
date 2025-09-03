@@ -43,26 +43,19 @@
     @keyframes fadeIn { to { opacity: 1; } }
     @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
-    /* --- 頁面容器 --- */
+    /* --- 各頁面 --- */
     #app, #history {
       width: 100%;
       height: 100%;
       background: #fff;
-      display: flex;
+      display: none; /* 預設隱藏 */
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
       padding: 20px;
-      padding-bottom: 70px; /* 預留空間給導航列 */
+      padding-bottom: 70px;
       overflow-y: auto;
     }
-    #app {
-      opacity: 0;
-      animation: showApp 1s ease 3.2s forwards;
-    }
-    #history { display: none; }
-
-    @keyframes showApp { to { opacity: 1; } }
 
     /* 標題區 */
     .brand-title {
@@ -154,12 +147,12 @@
       width: 22px;
       height: 22px;
       margin-bottom: 4px;
-      fill: #aaa; /* 預設灰色 */
+      fill: #aaa;
       transition: fill 0.3s;
     }
     .bottom-nav .active svg,
     .bottom-nav .active span {
-      fill: #007BFF; /* 藍色 */
+      fill: #007BFF;
       color: #007BFF;
     }
   </style>
@@ -183,7 +176,6 @@
 
     <p style="align-self:flex-start; margin:10px 0; font-weight:bold;">過去30天</p>
 
-    <!-- 單行交易卡片清單 -->
     <div class="transaction-row">
       <div class="icon"><img src="2.png" alt="TX"></div>
       <span class="title">台指期</span>
@@ -223,9 +215,8 @@
     </div>
   </div>
 
-  <!-- 底部導航列 (SVG Icon) -->
+  <!-- 底部導航列 -->
   <div class="bottom-nav">
-    <!-- Home1 -->
     <div class="nav-item active" data-target="app">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path d="M15.3003 15.9182H8.56433" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -233,8 +224,6 @@
       </svg>
       <span>總覽頁面</span>
     </div>
-
-    <!-- Home2 -->
     <div class="nav-item" data-target="history">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 6C6.358 6 3 9.358 3 13.5C3 17.642 6.358 21 10.5 21C14.642 21 18 17.642 18 13.5H10.5V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -242,9 +231,7 @@
       </svg>
       <span>歷史績效</span>
     </div>
-
-    <!-- Home3 -->
-    <div class="nav-item">
+    <div class="nav-item" data-target="export">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path d="M11 3.01254C10.9983 2.46026 11.4446 2.01114 11.9969 2.00941C12.5492 2.00768 12.9983 2.45399 13 3.00627L11 3.01254Z"/>
         <path d="M14.3158 10.2951L13.0269 11.592L13 3.00627L11 3.01254L11.0269 11.5983L9.73003 10.3095C9.33828 9.92018 8.7051 9.92214 8.3158 10.3139C7.9265 10.7056 7.92849 11.3388 8.32024 11.7281L8.32275 11.7306L8.32374 11.7316L12.039 15.4236L15.7206 11.7187L15.7262 11.7131L15.727 11.7123L15.7278 11.7115L15.7337 11.7056L15.7344 11.7049L14.3158 10.2951Z"/>
@@ -284,22 +271,32 @@
       }
     });
 
-    // 底部導航列點擊切換 active 狀態 + 頁面切換
+    // 開場動畫結束後 → 進入總覽頁
+    setTimeout(() => {
+      document.getElementById("splash").style.display = "none";
+      document.getElementById("app").style.display = "flex";
+    }, 4000);
+
+    // 頁面切換
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
     const pages = {
       app: document.getElementById('app'),
-      history: document.getElementById('history')
+      history: document.getElementById('history'),
+      export: document.createElement("div") // 匯出績效暫時空頁
     };
+    pages.export.innerHTML = '<p class="page-title">匯出績效 (開發中)</p>';
+    document.body.appendChild(pages.export);
+    pages.export.style.display = "none";
 
     navItems.forEach(item => {
       item.addEventListener('click', () => {
         navItems.forEach(i => i.classList.remove('active'));
         item.classList.add('active');
-
-        // 切換頁面
         Object.values(pages).forEach(p => p.style.display = "none");
         const target = item.getAttribute("data-target");
-        if(target && pages[target]) pages[target].style.display = "block";
+        if (target && pages[target]) {
+          pages[target].style.display = "flex";
+        }
       });
     });
   </script>
