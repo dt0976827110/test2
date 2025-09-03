@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WealthNova | 財富新星</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -48,14 +49,8 @@
       from { transform: scale(0.6); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
-
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-
-    @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
-    }
+    @keyframes fadeIn { to { opacity: 1; } }
+    @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
     /* --- 第二畫面 (Dashboard) --- */
     #app {
@@ -69,62 +64,158 @@
       padding: 20px;
       opacity: 0;
       animation: showApp 1s ease 3.2s forwards;
+      overflow-y: auto;
     }
+    @keyframes showApp { to { opacity: 1; } }
 
-    @keyframes showApp {
-      to { opacity: 1; }
+    .balance-title {
+      color: #888;
+      font-size: 14px;
     }
-
     .balance {
-      margin: 20px 0;
+      margin: 10px 0 20px;
       font-size: 26px;
       font-weight: bold;
       color: #000;
     }
 
-    .transactions {
+    /* 圖表容器 */
+    #chart-container {
       width: 90%;
+      max-width: 400px;
+    }
+
+    /* 交易紀錄 */
+    .transactions {
+      width: 100%;
+      max-width: 400px;
+      margin-top: 20px;
       text-align: left;
     }
     .transactions h2 {
       font-size: 16px;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    .card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 15px;
+      padding: 10px 15px;
       margin-bottom: 10px;
     }
-    .transactions ul {
-      list-style: none;
-    }
-    .transactions li {
+    .card-left {
       display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
+      align-items: center;
+    }
+    .icon {
+      width: 35px; height: 35px;
+      border-radius: 50%;
+      background: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-right: 10px;
+    }
+    .icon img { width: 20px; }
+    .details {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+    }
+    .details span:first-child {
+      font-weight: bold;
       font-size: 14px;
     }
-    .transactions li span:first-child { font-weight: bold; }
+    .amount {
+      font-weight: bold;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <!-- 開啟畫面 -->
   <div id="splash">
-    <img src="logo(3).png" alt="WealthNova Logo">
+    <img src="logo.png" alt="WealthNova Logo">
     <h1>WealthNova | 財富新星</h1>
   </div>
 
   <!-- 第二畫面 -->
   <div id="app">
-    <p>Current Balance</p>
+    <p class="balance-title">Current Balance</p>
     <div class="balance">$8,545.00</div>
 
+    <!-- 折線圖 -->
+    <div id="chart-container">
+      <canvas id="balanceChart"></canvas>
+    </div>
+
+    <!-- 過去30天 -->
     <div class="transactions">
-      <h2>Transaction</h2>
-      <ul>
-        <li><span>Apple Store</span><span>- $5.99</span></li>
-        <li><span>Spotify</span><span>- $12.99</span></li>
-        <li><span>Money Transfer</span><span style="color:#007BFF;">$300</span></li>
-        <li><span>Grocery</span><span>- $88</span></li>
-        <li><span>Apple Store</span><span>- $5.99</span></li>
-      </ul>
+      <h2>過去30天</h2>
+      <div class="card">
+        <div class="card-left">
+          <div class="icon"><img src="apple.png" alt="Apple"></div>
+          <div class="details">
+            <span>Apple Store</span>
+            <span>Entertainment</span>
+          </div>
+        </div>
+        <div class="amount">- $5.99</div>
+      </div>
+      <div class="card">
+        <div class="card-left">
+          <div class="icon"><img src="apple.png" alt="Apple"></div>
+          <div class="details">
+            <span>Apple Store</span>
+            <span>Entertainment</span>
+          </div>
+        </div>
+        <div class="amount">- $5.99</div>
+      </div>
+      <div class="card">
+        <div class="card-left">
+          <div class="icon"><img src="apple.png" alt="Apple"></div>
+          <div class="details">
+            <span>Apple Store</span>
+            <span>Entertainment</span>
+          </div>
+        </div>
+        <div class="amount">- $5.99</div>
+      </div>
     </div>
   </div>
+
+  <script>
+    // Chart.js Balance Chart
+    const ctx = document.getElementById('balanceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ["Oct","Nov","Dec","Jan","Feb","Mar"],
+        datasets: [{
+          label: "Balance",
+          data: [7000, 7600, 8200, 8545, 8300, 8800],
+          borderColor: "#007BFF",
+          backgroundColor: "rgba(0,123,255,0.1)",
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#007BFF",
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { display: false }
+        }
+      }
+    });
+  </script>
 </body>
 </html>
