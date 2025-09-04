@@ -245,6 +245,10 @@
       <p style="font-size:18px; font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p> <!-- 新增 -->
       <p style="font-size:16px; color:#666; line-height:2;">在瀏覽器選單中點選「加入主畫面」<br>需安裝成 App 才可使用</p> <!-- 新增 -->
     </div> <!-- 新增 -->
+    <!-- 🚨 新增無網路提示 -->
+    <div id="offline-hint" style="display:none; margin-top:20px; text-align:center;">
+      <p style="font-size:16px; color:#e74c3c;">⚠️ 無網路中…</p>
+    </div>
   </div>
 
   <!-- 總覽頁面 -->
@@ -463,19 +467,34 @@
     // ========================
     // 判斷是否從主畫面開啟 // 新增
     // ========================
-    function isStandalone() { // 新增
-      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); // 新增
-    } // 新增
-  
-    setTimeout(() => { // 新增
-      if (isStandalone()) { // 新增
-        document.getElementById("splash").style.display = "none"; // 新增
-        document.getElementById("app").style.display = "flex"; // 新增
+    function isStandalone() { 
+      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); 
+    } 
+    // 顯示無網路提示
+    function showOffline() {
+      const splash = document.getElementById("splash");
+      splash.style.display = "flex";
+      splash.style.opacity = "1";
+      splash.style.animation = "none";
+      document.getElementById("offline-hint").style.display = "block";
+    }
+    // 監聽網路狀態
+    window.addEventListener("offline", () => { showOffline(); });
+    window.addEventListener("online", () => { window.location.reload(); });
+    
+    setTimeout(() => { 
+        if (!navigator.onLine) {
+          showOffline();
+          return;
+        }
+      if (isStandalone()) {
+        document.getElementById("splash").style.display = "none";
+        document.getElementById("app").style.display = "flex";
         document.querySelector(".bottom-nav").style.display = "flex"; // ✅ 顯示導覽列
       } else { // 新增
         splash.style.animation = "none";  // 停止動畫 ✅
         splash.style.opacity = "1";       // 保持顯示 ✅
-        document.getElementById("install-hint").style.display = "block"; // 新增
+        document.getElementById("install-hint").style.display = "block";
       } // 新增
     }, 4000); // 新增
   </script>
@@ -520,14 +539,7 @@
 
           // 網路優先：每次都嘗試抓新版本，失敗才回 cache
           self.addEventListener('fetch', (event) => {
-            const req = event.request;
-            event.respondWith(
-              fetch(req).then(res => {
-                const resClone = res.clone();
-                caches.open(CACHE).then(c => c.put(req, resClone));
-                return res;
-              }).catch(() => caches.match(req))
-            );
+            event.respondWith(fetch(event.request));
           });
 
           // 可選：收到主頁訊息時立即啟用新 SW
