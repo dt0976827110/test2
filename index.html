@@ -249,17 +249,24 @@
   </div>
 
   <!-- 商品詳情頁 -->
+  <!-- 商品詳情頁 -->
   <div id="product-detail" class="product-detail">
-    <button id="back-button" class="back-button">←</button>
+    <button id="back-button" class="back-button">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+        <circle cx="12" cy="12" r="11" fill="#f5f5f5"/>
+        <path d="M14 16l-4-4 4-4" stroke="#1E2A38" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
     <p class="brand-title" id="product-name"></p>
     <div class="balance" id="product-balance"></div>
-
+  
     <div class="chart-container">
       <canvas id="productChart"></canvas>
     </div>
-
+  
     <div id="product-list"></div>
   </div>
+
 
   <!-- 底部導航列 -->
   <div class="bottom-nav">
