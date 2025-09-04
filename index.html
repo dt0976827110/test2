@@ -262,7 +262,12 @@
   <div class="bottom-nav"> ... </div>
 
   <script>
-    // 🔴 新增：顯示無網路提示
+    // 判斷是否從主畫面開啟
+    function isStandalone() {
+      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
+    }
+
+    // 顯示無網路提示
     function showOffline() {
       const splash = document.getElementById("splash");
       splash.style.display = "flex";
@@ -275,9 +280,7 @@
     window.addEventListener("offline", () => { showOffline(); });
     window.addEventListener("online", () => { window.location.reload(); });
 
-    // ... 這裡保留你原本的程式碼（Chart.js、頁面切換、商品詳情等）
-
-    // 修改 setTimeout：進入 app 前先檢查網路
+    // 修改 setTimeout：進入 app 前先檢查網路 + 是否安裝
     setTimeout(() => {
       if (!navigator.onLine) {
         showOffline();
