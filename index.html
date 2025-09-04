@@ -476,6 +476,7 @@
       if (isStandalone()) { // 新增
         document.getElementById("splash").style.display = "none"; // 新增
         document.getElementById("app").style.display = "flex"; // 新增
+        document.querySelector(".bottom-nav").style.display = "flex"; // ✅ 顯示導覽列
       } else { // 新增
         splash.style.animation = "none";  // 停止動畫 ✅
         splash.style.opacity = "1";       // 保持顯示 ✅
