@@ -253,16 +253,100 @@
   </div>
 
   <!-- 總覽頁面 -->
-  <div id="app"> ...  <!-- 你的內容保持不變 --> </div>
+  <div id="app">
+    <p class="brand-title">WealthNova</p>
+    <div class="balance">$8,545.00</div>
+
+    <div class="chart-container">
+      <canvas id="balanceChart"></canvas>
+    </div>
+
+    <p style="align-self:flex-start; margin:10px 0; font-weight:bold;">過去30天</p>
+
+    <div class="transaction-row">
+      <div class="icon"><img src="2.png" alt="TX"></div>
+      <span class="title">台指期</span>
+      <span class="amount">- $5.99</span>
+    </div>
+    <div class="transaction-row">
+      <div class="icon"><img src="3.png" alt="DJ"></div>
+      <span class="title">小道瓊</span>
+      <span class="amount">- $12.99</span>
+    </div>
+    <div class="transaction-row">
+      <div class="icon"><img src="4.png" alt="NQ"></div>
+      <span class="title">小那指</span>
+      <span class="amount">- $88.00</span>
+    </div>
+  </div>
 
   <!-- 歷史績效頁面 -->
-  <div id="history"> ... </div>
+  <div id="history">
+    <p class="brand-title">歷史績效</p>
+    <h2 class="page-title">選擇商品</h2>
+
+    <div class="transaction-row" data-target="tx">
+      <div class="icon"><img src="2.png" alt="TX"></div>
+      <span class="title">台指期</span>
+      <span class="amount">+ 12.5%</span>
+    </div>
+    <div class="transaction-row" data-target="dj">
+      <div class="icon"><img src="3.png" alt="DJ"></div>
+      <span class="title">小道瓊</span>
+      <span class="amount">+ 8.3%</span>
+    </div>
+    <div class="transaction-row" data-target="nq">
+      <div class="icon"><img src="4.png" alt="NQ"></div>
+      <span class="title">小那指</span>
+      <span class="amount">+ 15.7%</span>
+    </div>
+  </div>
 
   <!-- 商品詳情頁 -->
-  <div id="product-detail" class="product-detail"> ... </div>
+  <div id="product-detail" class="product-detail">
+    <button id="back-button" class="back-button">
+      <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="21" cy="21" r="21" fill="#F4F4F4"/>
+        <path d="M24 15L18 21L24 27" stroke="#1E1E2D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <p class="brand-title" id="product-name"></p>
+    <div class="balance" id="product-balance"></div>
+  
+    <div class="chart-container">
+      <canvas id="productChart"></canvas>
+    </div>
+  
+    <div id="product-list"></div>
+  </div>
 
   <!-- 底部導航列 -->
-  <div class="bottom-nav"> ... </div>
+  <div class="bottom-nav">
+    <div class="nav-item active" data-target="app">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M15.3003 15.9182H8.56433" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M16 21H8C5.23858 21 3 18.7614 3 16V11.2C3.00001 9.68108 3.69046 8.24453 4.87653 7.29568L8.87653 4.09568C10.7026 2.63477 13.2974 2.63477 15.1235 4.09568L19.1235 7.29568C20.3096 8.24455 21 9.6811 21 11.2V16C21 18.7614 18.7614 21 16 21Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>總覽頁面</span>
+    </div>
+    <div class="nav-item" data-target="history">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 6C6.358 6 3 9.358 3 13.5C3 17.642 6.358 21 10.5 21C14.642 21 18 17.642 18 13.5H10.5V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M21 10C21 6.134 17.866 3 14 3V10H21Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>歷史績效</span>
+    </div>
+    <div class="nav-item" data-target="export">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M11 3.01254C10.9983 2.46026 11.4446 2.01114 11.9969 2.00941C12.5492 2.00768 12.9983 2.45399 13 3.00627L11 3.01254Z"/>
+        <path d="M14.3158 10.2951L13.0269 11.592L13 3.00627L11 3.01254L11.0269 11.5983L9.73003 10.3095C9.33828 9.92018 8.7051 9.92214 8.3158 10.3139C7.9265 10.7056 7.92849 11.3388 8.32024 11.7281L8.32275 11.7306L8.32374 11.7316L12.039 15.4236L15.7206 11.7187L15.7262 11.7131L15.727 11.7123L15.7278 11.7115L15.7337 11.7056L15.7344 11.7049L14.3158 10.2951Z"/>
+        <path d="M15.7344 11.7049C16.1237 11.3131 16.1217 10.6799 15.73 10.2906C15.3382 9.90134 14.705 9.90335 14.3158 10.2951L15.7344 11.7049Z"/>
+        <path d="M4 12C4 10.8954 4.89543 10 6 10C6.55228 10 7 9.55228 7 9C7 8.44771 6.55228 8 6 8C3.79086 8 2 9.79086 2 12V18C2 20.2091 3.79086 22 6 22H17C19.7614 22 22 19.7614 22 17V12C22 9.79086 20.2091 8 18 8C17.4477 8 17 8.44771 17 9C17 9.55228 17.4477 10 18 10C19.1046 10 20 10.8954 20 12V17C20 18.6569 18.6569 20 17 20H6C4.89543 20 4 19.1046 4 18V12Z"/>
+      </svg>
+      <span>匯出績效</span>
+    </div>
+  </div>
 
   <script>
     // 判斷是否從主畫面開啟
