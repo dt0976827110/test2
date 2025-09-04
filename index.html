@@ -7,9 +7,6 @@
   <!-- 狀態列顏色自動隨深淺模式切換 -->
   <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <!-- ✅ iOS 主畫面 icon -->
-  <link rel="apple-touch-icon" sizes="192x192" href="logo(3).png">
-  <link rel="apple-touch-icon" sizes="512x512" href="logo(3).png">  
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -241,15 +238,11 @@
   <div id="splash">
     <img src="logo(3).png" alt="WealthNova Logo">
     <h1>WealthNova | 財富新星</h1>
-    <!-- 安裝教學容器（預設隱藏） -->
-    <div id="install-hint" style="display:none; margin-top:20px; text-align:center;">
-      <p style="font-size:18px; font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p>
-      <p style="font-size:16px; color:#666; line-height:2;">在瀏覽器選單中點選「加入主畫面」<br>需安裝成 App 才可使用</p>
-    </div>
-    <!-- 🚨 新增無網路提示 -->
-    <div id="offline-hint" style="display:none; margin-top:20px; text-align:center;">
-      <p style="font-size:16px; color:#e74c3c;">⚠️ 無網路中…</p>
-    </div>
+    <!-- 安裝教學容器（預設隱藏） --> <!-- 新增 -->
+    <div id="install-hint" style="display:none; margin-top:20px; text-align:center;"> <!-- 新增 -->
+      <p style="font-size:18px; font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p> <!-- 新增 -->
+      <p style="font-size:16px; color:#666; line-height:2;">在瀏覽器選單中點選「加入主畫面」<br>需安裝成 App 才可使用</p> <!-- 新增 -->
+    </div> <!-- 新增 -->
   </div>
 
   <!-- 總覽頁面 -->
@@ -349,45 +342,145 @@
   </div>
 
   <script>
-    // 判斷是否從主畫面開啟
-    function isStandalone() {
-      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
-    }
-
-    // 顯示無網路提示
-    function showOffline() {
-      const splash = document.getElementById("splash");
-      splash.style.display = "flex";
-      splash.style.opacity = "1";
-      splash.style.animation = "none";
-      document.getElementById("offline-hint").style.display = "block";
-    }
-
-    // 監聽網路狀態
-    window.addEventListener("offline", () => { showOffline(); });
-    window.addEventListener("online", () => { window.location.reload(); });
-
-    // 修改 setTimeout：進入 app 前先檢查網路 + 是否安裝
-    setTimeout(() => {
-      if (!navigator.onLine) {
-        showOffline();
-        return;
+    // Chart.js Balance Chart (Dashboard)
+    const ctx = document.getElementById('balanceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ["Oct","Nov","Dec","Jan","Feb","Mar"],
+        datasets: [{
+          label: "Balance",
+          data: [7000, 7600, 8200, 8545, 8300, 8800],
+          borderColor: "#007BFF",
+          backgroundColor: "rgba(0,123,255,0.1)",
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#007BFF",
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { display: false }
+        }
       }
-      if (isStandalone()) {
-        document.getElementById("splash").style.display = "none";
-        document.getElementById("app").style.display = "flex";
-        document.querySelector(".bottom-nav").style.display = "flex";
-      } else {
-        splash.style.animation = "none";
-        splash.style.opacity = "1";
-        document.getElementById("install-hint").style.display = "block";
-      }
-    }, 4000);
+    });
+
+
+    // 頁面切換
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    const pages = {
+      app: document.getElementById('app'),
+      history: document.getElementById('history'),
+      product: document.getElementById('product-detail'),
+      export: document.createElement("div")
+    };
+    pages.export.innerHTML = '<p class="page-title">匯出績效 (開發中)</p>';
+    document.body.appendChild(pages.export);
+    pages.export.style.display = "none";
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        Object.values(pages).forEach(p => p.style.display = "none");
+        const target = item.getAttribute("data-target");
+        if (target && pages[target]) {
+          pages[target].style.display = "flex";
+        }
+      });
+    });
+
+    // 商品詳情頁切換邏輯
+    const productData = {
+      tx: { name: "台指期", balance: "$9,200.00", icon: "2.png" },
+      dj: { name: "小道瓊", balance: "$8,545.00", icon: "3.png" },
+      nq: { name: "小那指", balance: "$10,120.00", icon: "4.png" }
+    };
+
+    document.querySelectorAll("#history .transaction-row").forEach(row => {
+      row.addEventListener("click", () => {
+        const target = row.getAttribute("data-target");
+        if (target && productData[target]) {
+          Object.values(pages).forEach(p => p.style.display = "none");
+          pages.product.style.display = "flex";
+
+          document.getElementById("product-name").textContent = productData[target].name;
+          document.getElementById("product-balance").textContent = productData[target].balance;
+
+          const list = document.getElementById("product-list");
+          list.innerHTML = "";
+          ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(m => {
+            list.innerHTML += `
+              <div class="transaction-row">
+                <div class="icon"><img src="${productData[target].icon}" alt="${productData[target].name}"></div>
+                <span class="title">${m}</span>
+                <span class="amount">- $5.99</span>
+              </div>`;
+          });
+
+          const productCtx = document.getElementById('productChart').getContext('2d');
+          new Chart(productCtx, {
+            type: 'line',
+            data: {
+              labels: ["Apr","May","Jun","Jul","Aug"],
+              datasets: [{
+                label: productData[target].name,
+                data: [5000, 6000, 7000, 8545, 9200],
+                borderColor: "#007BFF",
+                backgroundColor: "rgba(0,123,255,0.1)",
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: "#007BFF",
+                pointRadius: 5
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { display: false }
+              }
+            }
+          });
+        }
+      });
+    });
+
+    // 返回按鈕邏輯
+    document.getElementById("back-button").addEventListener("click", () => {
+      document.getElementById("product-detail").style.display = "none";
+      document.getElementById("history").style.display = "flex";
+    });
+    // ========================
+    // 判斷是否從主畫面開啟 // 新增
+    // ========================
+    function isStandalone() { // 新增
+      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); // 新增
+    } // 新增
+  
+    setTimeout(() => { // 新增
+      if (isStandalone()) { // 新增
+        document.getElementById("splash").style.display = "none"; // 新增
+        document.getElementById("app").style.display = "flex"; // 新增
+      } else { // 新增
+        splash.style.animation = "none";  // 停止動畫 ✅
+        splash.style.opacity = "1";       // 保持顯示 ✅
+        document.getElementById("install-hint").style.display = "block"; // 新增
+      } // 新增
+    }, 4000); // 新增
   </script>
 
-  <!-- ✅ PWA：只新增 -->
+  <!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
   <script>
     (function () {
+      // 動態建立 manifest（不用額外檔案）
       const manifest = {
         name: "WealthNova | 財富新星",
         short_name: "WealthNova",
@@ -396,8 +489,8 @@
         background_color: "#ffffff",
         theme_color: "#ffffff",
         icons: [
-          { "src": "logo(3).png", "sizes": "192x192", "type": "image/png" },
-          { "src": "logo(3).png", "sizes": "512x512", "type": "image/png" }
+          { "src": "logo.png", "sizes": "192x192", "type": "image/png" },
+          { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
         ]
       };
       const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
@@ -407,19 +500,57 @@
       link.href = manifestURL;
       document.head.appendChild(link);
 
+      // theme-color（若沒有就補上）
+      if (!document.querySelector('meta[name="theme-color"]')) {
+        const m = document.createElement('meta');
+        m.name = 'theme-color';
+        m.content = '#ffffff';
+        document.head.appendChild(m);
+      }
+
+      // 動態註冊 Service Worker（無需 sw.js 檔）
       if ("serviceWorker" in navigator) {
         const swCode = `
+          const CACHE = 'wnova-runtime';
           self.addEventListener('install', (e) => { self.skipWaiting(); });
           self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
 
-          // 🚫 強制線上版：每次都抓網路
+          // 網路優先：每次都嘗試抓新版本，失敗才回 cache
           self.addEventListener('fetch', (event) => {
-            event.respondWith(fetch(event.request));
+            const req = event.request;
+            event.respondWith(
+              fetch(req).then(res => {
+                const resClone = res.clone();
+                caches.open(CACHE).then(c => c.put(req, resClone));
+                return res;
+              }).catch(() => caches.match(req))
+            );
+          });
+
+          // 可選：收到主頁訊息時立即啟用新 SW
+          self.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
           });
         `;
         const swBlob = new Blob([swCode], { type: "text/javascript" });
         const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl).catch(console.error);
+
+        navigator.serviceWorker.register(swUrl).then((reg) => {
+          // 偵測更新，安裝完成就切換並重新載入（確保最新）
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // 新 SW 接手後強制刷新一次內容
+            window.location.reload();
+          });
+        }).catch(console.error);
       }
     })();
   </script>
