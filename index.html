@@ -15,6 +15,7 @@
       justify-content: center;
       align-items: center;
       overflow: hidden;
+      color: #000;
     }
 
     /* --- 開啟畫面 --- */
@@ -157,6 +158,7 @@
       fill: #007BFF;
       color: #007BFF;
     }
+
     /* 商品詳情頁的清單容器 */
     #product-list {
       width: 100%;
@@ -188,6 +190,42 @@
     }
     .back-button:hover {
       background: #e0e0e0;
+    }
+
+    /* 🌙 深色模式 */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #121212;
+        color: #eee;
+      }
+      #app, #history, .product-detail {
+        background: #121212;
+      }
+      .transaction-row {
+        background: #1e1e1e;
+        border: 1px solid #333;
+      }
+      .transaction-row .title,
+      .transaction-row .amount {
+        color: #eee;
+      }
+      .brand-title { color: #aaa; }
+      .balance { color: #fff; }
+      .page-title { color: #fff; }
+      .back-button {
+        background: #2c2c2c;
+      }
+      .back-button svg circle {
+        fill: #2c2c2c;
+      }
+      .back-button svg path {
+        stroke: #eee;
+      }
+      .bottom-nav {
+        background: #1e1e1e;
+        border-top: 1px solid #333;
+      }
+      .bottom-nav .nav-item { color: #aaa; }
     }
   </style>
 </head>
@@ -249,7 +287,6 @@
   </div>
 
   <!-- 商品詳情頁 -->
-  <!-- 商品詳情頁 -->
   <div id="product-detail" class="product-detail">
     <button id="back-button" class="back-button">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
@@ -266,7 +303,6 @@
   
     <div id="product-list"></div>
   </div>
-
 
   <!-- 底部導航列 -->
   <div class="bottom-nav">
@@ -365,15 +401,12 @@
       row.addEventListener("click", () => {
         const target = row.getAttribute("data-target");
         if (target && productData[target]) {
-          // 顯示商品頁
           Object.values(pages).forEach(p => p.style.display = "none");
           pages.product.style.display = "flex";
 
-          // 更新標題與金額
           document.getElementById("product-name").textContent = productData[target].name;
           document.getElementById("product-balance").textContent = productData[target].balance;
 
-          // 更新月份績效清單 (假資料)
           const list = document.getElementById("product-list");
           list.innerHTML = "";
           ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(m => {
@@ -385,7 +418,6 @@
               </div>`;
           });
 
-          // 更新圖表
           const productCtx = document.getElementById('productChart').getContext('2d');
           new Chart(productCtx, {
             type: 'line',
