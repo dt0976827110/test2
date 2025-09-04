@@ -456,5 +456,83 @@
       document.getElementById("history").style.display = "flex";
     });
   </script>
+
+  <!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
+  <script>
+    (function () {
+      // 動態建立 manifest（不用額外檔案）
+      const manifest = {
+        name: "WealthNova | 財富新星",
+        short_name: "WealthNova",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#ffffff",
+        icons: [
+          { "src": "logo.png", "sizes": "192x192", "type": "image/png" },
+          { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
+        ]
+      };
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+      const manifestURL = URL.createObjectURL(manifestBlob);
+      const link = document.createElement("link");
+      link.rel = "manifest";
+      link.href = manifestURL;
+      document.head.appendChild(link);
+
+      // theme-color（若沒有就補上）
+      if (!document.querySelector('meta[name="theme-color"]')) {
+        const m = document.createElement('meta');
+        m.name = 'theme-color';
+        m.content = '#ffffff';
+        document.head.appendChild(m);
+      }
+
+      // 動態註冊 Service Worker（無需 sw.js 檔）
+      if ("serviceWorker" in navigator) {
+        const swCode = `
+          const CACHE = 'wnova-runtime';
+          self.addEventListener('install', (e) => { self.skipWaiting(); });
+          self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
+
+          // 網路優先：每次都嘗試抓新版本，失敗才回 cache
+          self.addEventListener('fetch', (event) => {
+            const req = event.request;
+            event.respondWith(
+              fetch(req).then(res => {
+                const resClone = res.clone();
+                caches.open(CACHE).then(c => c.put(req, resClone));
+                return res;
+              }).catch(() => caches.match(req))
+            );
+          });
+
+          // 可選：收到主頁訊息時立即啟用新 SW
+          self.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+          });
+        `;
+        const swBlob = new Blob([swCode], { type: "text/javascript" });
+        const swUrl = URL.createObjectURL(swBlob);
+
+        navigator.serviceWorker.register(swUrl).then((reg) => {
+          // 偵測更新，安裝完成就切換並重新載入（確保最新）
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // 新 SW 接手後強制刷新一次內容
+            window.location.reload();
+          });
+        }).catch(console.error);
+      }
+    })();
+  </script>
 </body>
 </html>
