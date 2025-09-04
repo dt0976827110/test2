@@ -48,6 +48,11 @@
     @keyframes zoomIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes fadeIn { to { opacity: 1; } }
     @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+    @keyframes zoomLoop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      50%  { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0.6); opacity: 0; }
+    }
 
     /* --- 各頁面 --- */
     #app, #history, .product-detail {
@@ -476,12 +481,18 @@
       splash.style.display = "flex";
       splash.style.opacity = "1";
       splash.style.animation = "none";
+        // 讓 logo 循環動畫
+      const logo = splash.querySelector("img");
+      logo.style.animation = "zoomLoop 2s ease-in-out infinite";
       document.getElementById("offline-hint").style.display = "block";
     }
     // 監聽網路狀態
     window.addEventListener("offline", () => { showOffline(); });
-    window.addEventListener("online", () => { window.location.reload(); });
-    
+    window.addEventListener("online", () => {
+      const logo = document.querySelector("#splash img");
+      logo.style.animation = "zoomIn 1s ease forwards"; // 回到原本動畫
+      window.location.reload();
+    });
     setTimeout(() => { 
         if (!navigator.onLine) {
           showOffline();
