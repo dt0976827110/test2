@@ -5,13 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WealthNova | 財富新星</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- ✅ PWA 必要設定 -->
-  <meta name="theme-color" content="#ffffff">
-  <link rel="manifest" id="manifest-placeholder">
-
   <style>
-    /* 你的原始 CSS 完整保留 ↓ */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Arial', sans-serif;
@@ -23,6 +17,7 @@
       overflow: hidden;
       color: #000;
     }
+
     /* --- 開啟畫面 --- */
     #splash {
       position: absolute;
@@ -54,7 +49,7 @@
       width: 100%;
       height: 100%;
       background: #fff;
-      display: none;
+      display: none; /* 預設隱藏 */
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
@@ -64,6 +59,7 @@
       position: relative;
     }
 
+    /* 標題區 */
     .brand-title {
       font-size: 14px;
       color: #888;
@@ -85,6 +81,7 @@
       margin-bottom: 20px;
     }
 
+    /* 圖表容器 */
     .chart-container {
       width: 90%;
       max-width: 400px;
@@ -92,6 +89,7 @@
       margin-bottom: 20px;
     }
 
+    /* 單行交易卡片 */
     .transaction-row {
       display: flex;
       align-items: center;
@@ -128,6 +126,7 @@
       color: #1E2A38;
     }
 
+    /* --- 底部導航列 --- */
     .bottom-nav {
       position: fixed;
       bottom: 25px; left: 0;
@@ -146,7 +145,7 @@
       font-size: 12px;
       color: #555;
       cursor: pointer;
-      padding-top: 10px;
+      padding-top: 10px; /* 往上推 */
     }
     .bottom-nav svg {
       width: 22px;
@@ -161,6 +160,7 @@
       color: #007BFF;
     }
 
+    /* 商品詳情頁的清單容器 */
     #product-list {
       width: 100%;
       display: flex;
@@ -172,6 +172,7 @@
       width: 100%;
     }
 
+    /* 返回按鈕 */
     .back-button {
       position: absolute;
       top: 20px;
@@ -192,67 +193,268 @@
       background: #e0e0e0;
     }
 
+    /* 🌙 深色模式 */
     @media (prefers-color-scheme: dark) {
-      body { background: #121212; color: #eee; }
-      #app, #history, .product-detail { background: #121212; }
-      .transaction-row { background: #1e1e1e; border: 1px solid #333; }
-      .transaction-row .title, .transaction-row .amount { color: #eee; }
+      body {
+        background: #121212;
+        color: #eee;
+      }
+      #app, #history, .product-detail {
+        background: #121212;
+      }
+      .transaction-row {
+        background: #1e1e1e;
+        border: 1px solid #333;
+      }
+      .transaction-row .title,
+      .transaction-row .amount {
+        color: #eee;
+      }
       .brand-title { color: #aaa; }
       .balance { color: #fff; }
       .page-title { color: #fff; }
-      .back-button { background: #2c2c2c; }
-      .back-button svg circle { fill: #2c2c2c; }
-      .back-button svg path { stroke: #eee; }
-      .bottom-nav { background: #1e1e1e; border-top: 1px solid #333; }
+      .back-button {
+        background: #2c2c2c;
+      }
+      .back-button svg circle {
+        fill: #2c2c2c;
+      }
+      .back-button svg path {
+        stroke: #eee;
+      }
+      .bottom-nav {
+        background: #1e1e1e;
+        border-top: 1px solid #333;
+      }
       .bottom-nav .nav-item { color: #aaa; }
     }
   </style>
 </head>
 <body>
-  <!-- ✅ 你的 HTML 原始碼完整保留 (略) -->
-  <!-- 開啟畫面、總覽頁面、歷史績效、商品詳情、底部導航列 -->
-  <!-- ... (我沒刪一行) ... -->
+  <!-- 開啟畫面 -->
+  <div id="splash">
+    <img src="logo.png" alt="WealthNova Logo">
+    <h1>WealthNova | 財富新星</h1>
+  </div>
+
+  <!-- 總覽頁面 -->
+  <div id="app">
+    <p class="brand-title">WealthNova</p>
+    <div class="balance">$8,545.00</div>
+
+    <div class="chart-container">
+      <canvas id="balanceChart"></canvas>
+    </div>
+
+    <p style="align-self:flex-start; margin:10px 0; font-weight:bold;">過去30天</p>
+
+    <div class="transaction-row">
+      <div class="icon"><img src="2.png" alt="TX"></div>
+      <span class="title">台指期</span>
+      <span class="amount">- $5.99</span>
+    </div>
+    <div class="transaction-row">
+      <div class="icon"><img src="3.png" alt="DJ"></div>
+      <span class="title">小道瓊</span>
+      <span class="amount">- $12.99</span>
+    </div>
+    <div class="transaction-row">
+      <div class="icon"><img src="4.png" alt="NQ"></div>
+      <span class="title">小那指</span>
+      <span class="amount">- $88.00</span>
+    </div>
+  </div>
+
+  <!-- 歷史績效頁面 -->
+  <div id="history">
+    <p class="brand-title">歷史績效</p>
+    <h2 class="page-title">選擇商品</h2>
+
+    <div class="transaction-row" data-target="tx">
+      <div class="icon"><img src="2.png" alt="TX"></div>
+      <span class="title">台指期</span>
+      <span class="amount">+ 12.5%</span>
+    </div>
+    <div class="transaction-row" data-target="dj">
+      <div class="icon"><img src="3.png" alt="DJ"></div>
+      <span class="title">小道瓊</span>
+      <span class="amount">+ 8.3%</span>
+    </div>
+    <div class="transaction-row" data-target="nq">
+      <div class="icon"><img src="4.png" alt="NQ"></div>
+      <span class="title">小那指</span>
+      <span class="amount">+ 15.7%</span>
+    </div>
+  </div>
+
+  <!-- 商品詳情頁 -->
+  <div id="product-detail" class="product-detail">
+    <button id="back-button" class="back-button">
+      <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="21" cy="21" r="21" fill="#F4F4F4"/>
+        <path d="M24 15L18 21L24 27" stroke="#1E1E2D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <p class="brand-title" id="product-name"></p>
+    <div class="balance" id="product-balance"></div>
+  
+    <div class="chart-container">
+      <canvas id="productChart"></canvas>
+    </div>
+  
+    <div id="product-list"></div>
+  </div>
+
+  <!-- 底部導航列 -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-target="app">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M15.3003 15.9182H8.56433" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M16 21H8C5.23858 21 3 18.7614 3 16V11.2C3.00001 9.68108 3.69046 8.24453 4.87653 7.29568L8.87653 4.09568C10.7026 2.63477 13.2974 2.63477 15.1235 4.09568L19.1235 7.29568C20.3096 8.24455 21 9.6811 21 11.2V16C21 18.7614 18.7614 21 16 21Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>總覽頁面</span>
+    </div>
+    <div class="nav-item" data-target="history">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 6C6.358 6 3 9.358 3 13.5C3 17.642 6.358 21 10.5 21C14.642 21 18 17.642 18 13.5H10.5V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M21 10C21 6.134 17.866 3 14 3V10H21Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>歷史績效</span>
+    </div>
+    <div class="nav-item" data-target="export">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M11 3.01254C10.9983 2.46026 11.4446 2.01114 11.9969 2.00941C12.5492 2.00768 12.9983 2.45399 13 3.00627L11 3.01254Z"/>
+        <path d="M14.3158 10.2951L13.0269 11.592L13 3.00627L11 3.01254L11.0269 11.5983L9.73003 10.3095C9.33828 9.92018 8.7051 9.92214 8.3158 10.3139C7.9265 10.7056 7.92849 11.3388 8.32024 11.7281L8.32275 11.7306L8.32374 11.7316L12.039 15.4236L15.7206 11.7187L15.7262 11.7131L15.727 11.7123L15.7278 11.7115L15.7337 11.7056L15.7344 11.7049L14.3158 10.2951Z"/>
+        <path d="M15.7344 11.7049C16.1237 11.3131 16.1217 10.6799 15.73 10.2906C15.3382 9.90134 14.705 9.90335 14.3158 10.2951L15.7344 11.7049Z"/>
+        <path d="M4 12C4 10.8954 4.89543 10 6 10C6.55228 10 7 9.55228 7 9C7 8.44771 6.55228 8 6 8C3.79086 8 2 9.79086 2 12V18C2 20.2091 3.79086 22 6 22H17C19.7614 22 22 19.7614 22 17V12C22 9.79086 20.2091 8 18 8C17.4477 8 17 8.44771 17 9C17 9.55228 17.4477 10 18 10C19.1046 10 20 10.8954 20 12V17C20 18.6569 18.6569 20 17 20H6C4.89543 20 4 19.1046 4 18V12Z"/>
+      </svg>
+      <span>匯出績效</span>
+    </div>
+  </div>
 
   <script>
-    // ✅ 你的原本 JS 保留 (chart.js, 頁面切換, 商品詳情, 返回按鈕)
-    // ... (同上略) ...
+    // Chart.js Balance Chart (Dashboard)
+    const ctx = document.getElementById('balanceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ["Oct","Nov","Dec","Jan","Feb","Mar"],
+        datasets: [{
+          label: "Balance",
+          data: [7000, 7600, 8200, 8545, 8300, 8800],
+          borderColor: "#007BFF",
+          backgroundColor: "rgba(0,123,255,0.1)",
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#007BFF",
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { display: false }
+        }
+      }
+    });
 
-    // ✅ PWA 動態 manifest + service worker
-    const manifest = {
-      name: "WealthNova | 財富新星",
-      short_name: "WealthNova",
-      start_url: ".",
-      display: "standalone",
-      background_color: "#ffffff",
-      theme_color: "#ffffff",
-      icons: [
-        { src: "logo.png", sizes: "192x192", type: "image/png" },
-        { src: "logo.png", sizes: "512x512", type: "image/png" }
-      ]
+    // 開場動畫結束後 → 進入總覽頁
+    setTimeout(() => {
+      document.getElementById("splash").style.display = "none";
+      document.getElementById("app").style.display = "flex";
+    }, 4000);
+
+    // 頁面切換
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    const pages = {
+      app: document.getElementById('app'),
+      history: document.getElementById('history'),
+      product: document.getElementById('product-detail'),
+      export: document.createElement("div")
     };
-    const blob = new Blob([JSON.stringify(manifest)], {type: "application/json"});
-    const manifestURL = URL.createObjectURL(blob);
-    document.getElementById("manifest-placeholder").setAttribute("href", manifestURL);
+    pages.export.innerHTML = '<p class="page-title">匯出績效 (開發中)</p>';
+    document.body.appendChild(pages.export);
+    pages.export.style.display = "none";
 
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").catch(console.error);
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        Object.values(pages).forEach(p => p.style.display = "none");
+        const target = item.getAttribute("data-target");
+        if (target && pages[target]) {
+          pages[target].style.display = "flex";
+        }
+      });
+    });
 
-      // 動態建立 sw.js 內容
-      const swCode = `
-        self.addEventListener('install', e => {
-          self.skipWaiting();
-        });
-        self.addEventListener('activate', e => {
-          e.waitUntil(clients.claim());
-        });
-        self.addEventListener('fetch', e => {
-          e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-        });
-      `;
-      const blobSW = new Blob([swCode], {type: "application/javascript"});
-      const swURL = URL.createObjectURL(blobSW);
-      navigator.serviceWorker.register(swURL);
-    }
+    // 商品詳情頁切換邏輯
+    const productData = {
+      tx: { name: "台指期", balance: "$9,200.00", icon: "2.png" },
+      dj: { name: "小道瓊", balance: "$8,545.00", icon: "3.png" },
+      nq: { name: "小那指", balance: "$10,120.00", icon: "4.png" }
+    };
+
+    document.querySelectorAll("#history .transaction-row").forEach(row => {
+      row.addEventListener("click", () => {
+        const target = row.getAttribute("data-target");
+        if (target && productData[target]) {
+          Object.values(pages).forEach(p => p.style.display = "none");
+          pages.product.style.display = "flex";
+
+          document.getElementById("product-name").textContent = productData[target].name;
+          document.getElementById("product-balance").textContent = productData[target].balance;
+
+          const list = document.getElementById("product-list");
+          list.innerHTML = "";
+          ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(m => {
+            list.innerHTML += `
+              <div class="transaction-row">
+                <div class="icon"><img src="${productData[target].icon}" alt="${productData[target].name}"></div>
+                <span class="title">${m}</span>
+                <span class="amount">- $5.99</span>
+              </div>`;
+          });
+
+          const productCtx = document.getElementById('productChart').getContext('2d');
+          new Chart(productCtx, {
+            type: 'line',
+            data: {
+              labels: ["Apr","May","Jun","Jul","Aug"],
+              datasets: [{
+                label: productData[target].name,
+                data: [5000, 6000, 7000, 8545, 9200],
+                borderColor: "#007BFF",
+                backgroundColor: "rgba(0,123,255,0.1)",
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: "#007BFF",
+                pointRadius: 5
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { display: false }
+              }
+            }
+          });
+        }
+      });
+    });
+
+    // 返回按鈕邏輯
+    document.getElementById("back-button").addEventListener("click", () => {
+      document.getElementById("product-detail").style.display = "none";
+      document.getElementById("history").style.display = "flex";
+    });
   </script>
 </body>
 </html>
