@@ -238,6 +238,11 @@
   <div id="splash">
     <img src="logo.png" alt="WealthNova Logo">
     <h1>WealthNova | 財富新星</h1>
+    <!-- 安裝教學容器（預設隱藏） --> <!-- 新增 -->
+    <div id="install-hint" style="display:none; margin-top:20px; text-align:center;"> <!-- 新增 -->
+      <p style="font-size:16px; font-weight:bold;">📲 請將此網站加到主畫面</p> <!-- 新增 -->
+      <p style="font-size:14px; color:#666;">在瀏覽器選單中點選「加入主畫面」，即可安裝成 App 使用</p> <!-- 新增 -->
+    </div> <!-- 新增 -->
   </div>
 
   <!-- 總覽頁面 -->
@@ -459,6 +464,21 @@
       document.getElementById("product-detail").style.display = "none";
       document.getElementById("history").style.display = "flex";
     });
+    // ========================
+    // 判斷是否從主畫面開啟 // 新增
+    // ========================
+    function isStandalone() { // 新增
+      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); // 新增
+    } // 新增
+  
+    setTimeout(() => { // 新增
+      if (isStandalone()) { // 新增
+        document.getElementById("splash").style.display = "none"; // 新增
+        document.getElementById("app").style.display = "flex"; // 新增
+      } else { // 新增
+        document.getElementById("install-hint").style.display = "block"; // 新增
+      } // 新增
+    }, 4000); // 新增
   </script>
 
   <!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
