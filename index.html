@@ -370,12 +370,6 @@
       }
     });
 
-    // 開場動畫結束後 → 進入總覽頁
-    setTimeout(() => {
-      document.getElementById("splash").style.display = "none";
-      document.getElementById("app").style.display = "flex";
-      document.querySelector(".bottom-nav").style.display = "flex"; // ✅ 顯示導航列
-    }, 4000);
 
     // 頁面切換
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
