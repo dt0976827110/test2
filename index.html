@@ -461,6 +461,12 @@
         if (target && pages[target]) {
           pages[target].style.display = "flex";
           document.getElementById("page-title").textContent = item.querySelector("span").textContent;
+          // 🚀 跟著 header 改顏色
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setThemeColor("#1e1e1e"); // 深色模式 header
+          } else {
+            setThemeColor("#ffffff"); // 淺色模式 header
+          }
           // 🚀 額外控制返回鍵
           if (target === "product") {
             backButton.style.display = "flex";
@@ -581,6 +587,17 @@
 //        document.getElementById("install-hint").style.display = "block";
 //      } // 新增
     }, 4000); // 新增
+
+    function setThemeColor(color) {
+      let metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (!metaTheme) {
+        metaTheme = document.createElement("meta");
+        metaTheme.setAttribute("name", "theme-color");
+        document.head.appendChild(metaTheme);
+      }
+      metaTheme.setAttribute("content", color);
+    }
+
   </script>
 
   <!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
