@@ -528,7 +528,7 @@
           document.getElementById("page-title").textContent = item.querySelector("span").textContent;
           // 🚀 狀態列顏色跟隨主題
           if (document.body.classList.contains("dark")) {
-            setThemeColor("#121212");
+            setThemeColor("#1e1e1e");
           } else {
             setThemeColor("#ffffff");
           }
@@ -662,13 +662,13 @@
         setThemeColor("#ffffff");
       } else if (mode === "dark") {
         document.body.classList.add("dark");
-        setThemeColor("#121212");
+        setThemeColor("#1e1e1e");
       } else if (mode === "system") {
         // 跟隨系統
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         if (prefersDark) {
           document.body.classList.add("dark");
-          setThemeColor("#121212");
+          setThemeColor("#1e1e1e");
         } else {
           document.body.classList.add("light");
           setThemeColor("#ffffff");
