@@ -481,7 +481,54 @@
       body.dark .arrow-icon {
         color: #888;
       }
-   
+    /*版本詳情頁--------------------------------*/
+    .version-page {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 70px 20px 100px;
+      overflow-y: auto;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    
+    /* 立即更新按鈕 */
+    .update-btn {
+      background: #f1f1f1;
+      border: none;
+      border-radius: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 20px 0;
+    }
+    body.dark .update-btn {
+      background: #2c2c2c;
+      color: #fff;
+    }
+    
+    /* 歷史版本清單 */
+    .version-list {
+      width: 100%;
+      max-width: 400px;
+    }
+    .version-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+    }
+    body.dark .version-row {
+      border-bottom: 1px solid #333;
+    }
+    .version-row .value {
+      color: #999;
+    }
+
+    
   </style>
 </head>
 <body>
@@ -577,12 +624,54 @@
   
     <div id="product-list"></div>
   </div>
+
+  
   <!-- 報告頁面 -->
   <div id="export" class="export-page">
     <p class="brand-title">每日盤前盤後報告</p>
     <h2 class="page-title">報告內容 (開發中)</h2>
   </div>
+
   
+  <!-- 版本更新詳情頁 -->
+  <div id="version-detail" class="version-page" style="display:none;">
+    <!-- 固定標題列 -->
+    <div class="header">
+      <button id="version-back" class="back-button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <h1>版本更新</h1>
+    </div>
+  
+    <div class="content">
+      <p class="brand-title">版本</p>
+      <h2 class="page-title" id="current-version">V0.0.4</h2>
+  
+      <button class="update-btn">立即更新</button>
+  
+      <p class="section-title" style="text-align:center;">歷史版本</p>
+      <div class="version-list">
+        <div class="version-row">
+          <span>日期:2025-09-07</span>
+          <span class="value">版本:V0.0.3</span>
+        </div>
+        <div class="version-row">
+          <span>日期:2025-09-03</span>
+          <span class="value">版本:V0.0.2</span>
+        </div>
+        <div class="version-row">
+          <span>日期:2025-09-01</span>
+          <span class="value">版本:V0.0.1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   
       <!-- 設定頁面 -->
     <div id="settings" class="settings-page">
@@ -1020,6 +1109,19 @@
       document.getElementById("theme-popup").style.display = "none";
     });
     
+    // 點擊設定頁的「版本更新」
+    document.querySelector("#settings .settings-item:last-child")
+      .addEventListener("click", () => {
+        Object.values(pages).forEach(p => p.style.display = "none");
+        document.getElementById("version-detail").style.display = "flex";
+        backButton.style.display = "none"; // 不顯示共用返回鍵
+      });
+    
+    // 版本更新頁的專用返回鍵
+    document.getElementById("version-back").addEventListener("click", () => {
+      document.getElementById("version-detail").style.display = "none";
+      pages.settings.style.display = "flex"; // 回到設定頁
+    });
     
 
 
