@@ -421,9 +421,7 @@
       align-items: flex-end;     /* 貼底部 */
       z-index: 20;
     }
-    :root {
-      --safe-bottom: env(safe-area-inset-bottom);
-    }
+
     
     /* 選單容器 */
     .popup-content {
@@ -435,8 +433,8 @@
       width: 100%;
       max-height: 50%;
     
-      /* 🚀 預留 iPhone 安全距離 */
-      padding-bottom: env(safe-area-inset-bottom);
+      
+      padding-bottom: 35px;
     }
     
     /* 選項 */
@@ -987,57 +985,8 @@
     document.querySelector("#theme-popup .popup-cancel").addEventListener("click", () => {
       document.getElementById("theme-popup").style.display = "none";
     });
-    function updateSafeBottom() {
-      // 建立測試元素，讀取 env(safe-area-inset-bottom)
-      const el = document.createElement("div");
-      el.style.cssText = "padding-bottom: env(safe-area-inset-bottom); position:absolute;";
-      document.body.appendChild(el);
     
-      const safeBottom = parseInt(window.getComputedStyle(el).paddingBottom, 10);
-      document.body.removeChild(el);
     
-      // 判斷是否為 0
-      if (safeBottom === 0) {
-        document.documentElement.style.setProperty("--safe-bottom", "0px");
-      } else {
-        document.documentElement.style.setProperty("--safe-bottom", "15px");
-      }
-    }
-    
-    // 頁面載入時執行
-    updateSafeBottom();
-    
-function showSafeBottom() {
-  // 建立一個測試元素，套用 safe-area-inset-bottom
-  const testDiv = document.createElement("div");
-  testDiv.style.position = "absolute";
-  testDiv.style.bottom = "0";
-  testDiv.style.height = "env(safe-area-inset-bottom)";
-  testDiv.style.visibility = "hidden";
-  document.body.appendChild(testDiv);
-
-  // 計算實際像素
-  const safeBottom = testDiv.getBoundingClientRect().height;
-
-  // 顯示在總覽頁面
-  let display = document.getElementById("safe-bottom-display");
-  if (!display) {
-    display = document.createElement("p");
-    display.id = "safe-bottom-display";
-    display.style.marginTop = "20px";
-    display.style.fontSize = "14px";
-    display.style.color = "red";
-    document.querySelector("#app").appendChild(display);
-  }
-  display.textContent = `env(safe-area-inset-bottom) = ${safeBottom}px`;
-
-  // 移除測試元素
-  document.body.removeChild(testDiv);
-}
-
-// 🚀 初次執行 & 監聽旋轉
-showSafeBottom();
-window.addEventListener("resize", showSafeBottom);
 
 
 
