@@ -349,6 +349,51 @@
   #settings {
     align-items: stretch;
   }
+  /* Popup 背景 */
+    .popup {
+      display: none;
+      position: fixed;
+      left: 0; right: 0; bottom: 0; top: 0;
+      background: rgba(0,0,0,0.4);
+      justify-content: flex-end;
+      z-index: 20;
+    }
+    
+    /* 選單容器 */
+    .popup-content {
+      background: #fff;
+      border-radius: 12px 12px 0 0;
+      padding: 10px 0;
+      animation: slideUp 0.3s ease;
+    }
+    
+    /* 選項 */
+    .popup-item {
+      padding: 14px;
+      text-align: center;
+      font-size: 16px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    
+    .popup-item:last-child {
+      border-bottom: none;
+    }
+    
+    .popup-cancel {
+      padding: 14px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #007BFF;
+      cursor: pointer;
+    }
+    
+    /* 動畫 */
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
 
    
   </style>
@@ -551,52 +596,7 @@
   </div>
 
   <script>
-      /* Popup 背景 */
-    .popup {
-      display: none;
-      position: fixed;
-      left: 0; right: 0; bottom: 0; top: 0;
-      background: rgba(0,0,0,0.4);
-      justify-content: flex-end;
-      z-index: 20;
-    }
     
-    /* 選單容器 */
-    .popup-content {
-      background: #fff;
-      border-radius: 12px 12px 0 0;
-      padding: 10px 0;
-      animation: slideUp 0.3s ease;
-    }
-    
-    /* 選項 */
-    .popup-item {
-      padding: 14px;
-      text-align: center;
-      font-size: 16px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-    }
-    
-    .popup-item:last-child {
-      border-bottom: none;
-    }
-    
-    .popup-cancel {
-      padding: 14px;
-      text-align: center;
-      font-size: 16px;
-      font-weight: bold;
-      color: #007BFF;
-      cursor: pointer;
-    }
-    
-    /* 動畫 */
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
     // Chart.js Balance Chart (Dashboard)
     const ctx = document.getElementById('balanceChart').getContext('2d');
     new Chart(ctx, {
