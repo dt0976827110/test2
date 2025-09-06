@@ -267,8 +267,24 @@
       .header h1 {
         color: #fff;
       }
-
+    
     }
+    body.light {
+      background: #ffffff;
+      color: #000;
+    }
+    body.light .header { background: #fff; border-bottom: 1px solid #ddd; }
+    body.light .page-title,
+    body.light .balance { color: #000; }
+
+    body.dark {
+      background: #121212;
+      color: #eee;
+    }
+    body.dark .header { background: #1e1e1e; border-bottom: 1px solid #333; }
+    body.dark .transaction-row { background: #1e1e1e; border: 1px solid #333; }
+    body.dark .page-title,
+    body.dark .balance { color: #fff; }
   </style>
 </head>
 <body>
@@ -661,9 +677,7 @@
       }
     });
     
-    document.getElementById("theme-select").addEventListener("change", (e) => {
-      setTheme(e.target.value);
-    });
+
     
     // 初始化設定
     const savedLang = localStorage.getItem("lang") || "zh";
