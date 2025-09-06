@@ -424,13 +424,16 @@
     
     /* 選單容器 */
     .popup-content {
-      width: 100%;                /* 佔滿螢幕寬 */
-      max-height: 50%;            /* 只佔一半高度 */
       background: #fff;
       border-radius: 12px 12px 0 0;
-      overflow-y: auto;           /* 如果選項太多，可以捲動 */
+      padding: 10px 0;
       animation: slideUp 0.3s ease;
-      margin-bottom: 100px;  /* 🚀 跟導覽列保持距離 */
+    
+      width: 100%;
+      max-height: 50%;
+    
+      /* 🚀 預留 iPhone 安全距離 */
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
     }
     
     /* 選項 */
