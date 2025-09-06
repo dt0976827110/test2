@@ -527,8 +527,11 @@
           pages[target].style.display = "flex";
           document.getElementById("page-title").textContent = item.querySelector("span").textContent;
           // 🚀 狀態列顏色跟隨主題
-          const savedTheme = localStorage.getItem("theme") || "system";
-          setTheme(savedTheme);
+          if (document.body.classList.contains("dark")) {
+            setThemeColor("#121212");
+          } else {
+            setThemeColor("#ffffff");
+          }
           // 🚀 額外控制返回鍵
           if (target === "product") {
             backButton.style.display = "flex";
