@@ -455,27 +455,26 @@
   
       <!-- 設定頁面 -->
     <div id="settings" class="settings-page">
-
-    
       <!-- 顯示設定 -->
       <p class="section-title">顯示設定</p>
       <div class="settings-list">
+        <!-- 🔽 把這裡的 select 全部換掉 -->
         <div class="settings-item">
           <span>語言切換</span>
-          <select id="language-select">
-            <option value="zh">中文</option>
-            <option value="en">English</option>
-          </select>
+          <div class="settings-right">
+            <span id="language-current">中文</span>
+            <span class="arrow">›</span>
+          </div>
         </div>
         <div class="settings-item">
           <span>主題切換</span>
-          <select id="theme-select">
-            <option value="system">跟隨系統</option>
-            <option value="light">淺色</option>
-            <option value="dark">深色</option>
-          </select>
+          <div class="settings-right">
+            <span id="theme-current">跟隨系統</span>
+            <span class="arrow">›</span>
+          </div>
         </div>
       </div>
+
     
       <!-- 關於 -->
       <p class="section-title">其他</p>
@@ -492,6 +491,24 @@
           <span>版本更新</span>
           <span class="value">v1.0.0</span>
         </div>
+      </div>
+    </div>
+    <!-- 語言選單 Popup -->
+    <div id="language-popup" class="popup">
+      <div class="popup-content">
+        <div class="popup-item" data-value="zh">中文</div>
+        <div class="popup-item" data-value="en">English</div>
+        <div class="popup-cancel">取消</div>
+      </div>
+    </div>
+    
+    <!-- 主題選單 Popup -->
+    <div id="theme-popup" class="popup">
+      <div class="popup-content">
+        <div class="popup-item" data-value="system">跟隨系統</div>
+        <div class="popup-item" data-value="light">淺色</div>
+        <div class="popup-item" data-value="dark">深色</div>
+        <div class="popup-cancel">取消</div>
       </div>
     </div>
 
@@ -532,6 +549,51 @@
       <span>設定</span>
     </div>
   </div>
+  /* Popup 背景 */
+    .popup {
+      display: none;
+      position: fixed;
+      left: 0; right: 0; bottom: 0; top: 0;
+      background: rgba(0,0,0,0.4);
+      justify-content: flex-end;
+      z-index: 20;
+    }
+    
+    /* 選單容器 */
+    .popup-content {
+      background: #fff;
+      border-radius: 12px 12px 0 0;
+      padding: 10px 0;
+      animation: slideUp 0.3s ease;
+    }
+    
+    /* 選項 */
+    .popup-item {
+      padding: 14px;
+      text-align: center;
+      font-size: 16px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    
+    .popup-item:last-child {
+      border-bottom: none;
+    }
+    
+    .popup-cancel {
+      padding: 14px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #007BFF;
+      cursor: pointer;
+    }
+    
+    /* 動畫 */
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
 
   <script>
     // Chart.js Balance Chart (Dashboard)
@@ -815,6 +877,49 @@
       }
       metaTheme.setAttribute("content", color);
     }
+    // 🚀 語言切換
+    document.getElementById("language-setting").addEventListener("click", () => {
+      document.getElementById("language-popup").style.display = "flex";
+    });
+    
+    document.querySelectorAll("#language-popup .popup-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const lang = item.getAttribute("data-value");
+        const labels = { zh: "中文", en: "English" };
+    
+        document.getElementById("language-current").textContent = labels[lang];
+        localStorage.setItem("lang", lang);
+        setLanguage(lang);
+    
+        document.getElementById("language-popup").style.display = "none";
+      });
+    });
+    
+    document.querySelector("#language-popup .popup-cancel").addEventListener("click", () => {
+      document.getElementById("language-popup").style.display = "none";
+    });
+    
+    // 🚀 主題切換
+    document.getElementById("theme-setting").addEventListener("click", () => {
+      document.getElementById("theme-popup").style.display = "flex";
+    });
+    
+    document.querySelectorAll("#theme-popup .popup-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const mode = item.getAttribute("data-value");
+        const labels = { system: "跟隨系統", light: "淺色", dark: "深色" };
+    
+        document.getElementById("theme-current").textContent = labels[mode];
+        localStorage.setItem("theme", mode);
+        setTheme(mode);
+    
+        document.getElementById("theme-popup").style.display = "none";
+      });
+    });
+    
+    document.querySelector("#theme-popup .popup-cancel").addEventListener("click", () => {
+      document.getElementById("theme-popup").style.display = "none";
+    });
 
   </script>
 
