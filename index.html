@@ -740,8 +740,8 @@
         document.getElementById("app").style.display = "flex";
         document.querySelector(".bottom-nav").style.display = "flex"; // ✅ 顯示導覽列
         // 🚀 同步狀態列顏色到 header
-        const headerBg = getComputedStyle(document.querySelector(".header")).backgroundColor;
-        setThemeColor(headerBg);
+        const savedTheme = localStorage.getItem("theme") || "system";
+            setTheme(savedTheme);
 //      } else { // 新增
 //        splash.style.animation = "none";  // 停止動畫 ✅
 //        splash.style.opacity = "1";       // 保持顯示 ✅
