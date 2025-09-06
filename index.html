@@ -258,18 +258,18 @@
     }
     body.light .bottom-nav .nav-item { color: #555; }
         /* 🌞 淺色模式下的設定頁 */
-    body.light .settings-list {
+    body.light .list-container {
       background: #fff;
       border-top: 1px solid #eee;
       border-bottom: 1px solid #eee;
     }
     
-    body.light .settings-item {
+    body.light .list-row {
       color: #000;
       border-bottom: 1px solid #eee;
     }
     
-    body.light .settings-item .value {
+    body.light .list-row .value {
       color: #999; /* 右邊版本號文字 */
     }
     
@@ -323,18 +323,18 @@
     }
     body.dark .bottom-nav .nav-item { color: #aaa; }
     /* 🌙 深色模式下的設定頁 */
-    body.dark .settings-list {
+    body.dark .list-container {
       background: #1e1e1e;
       border-top: 1px solid #333;
       border-bottom: 1px solid #333;
     }
     
-    body.dark .settings-item {
+    body.dark .list-row {
       color: #eee;
       border-bottom: 1px solid #333;
     }
     
-    body.dark .settings-item .value {
+    body.dark .list-row .value {
       color: #aaa; /* 深色模式版本號文字 */
     }
     
@@ -365,30 +365,10 @@
   padding-left: 15px;
 }
 
-/* 設定清單容器 */
-.settings-list {
-  background: #fff;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-}
 
-/* 每個設定項 */
-.settings-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  font-size: 14px;
-  border-bottom: 1px solid #eee;
-}
-
-/* 移除最後一項的底線 */
-.settings-item:last-child {
-  border-bottom: none;
-}
 
 /* 下拉選單樣式 */
-.settings-item select {
+.list-row select {
   border: none;
   background: transparent;
   font-size: 14px;
@@ -398,16 +378,12 @@
 }
 
 /* 箭頭樣式 */
-.settings-item .arrow {
+.list-row .arrow {
   color: #bbb;
   font-size: 14px;
 }
 
-/* 右側灰字（版本號之類的） */
-.settings-item .value {
-  font-size: 13px;
-  color: #999;
-}
+
   #settings {
     align-items: stretch;
   }
@@ -510,27 +486,11 @@
       color: #fff;
     }
     
-    /* 歷史版本清單 */
-    .version-list {
-      width: calc(100% + 40px); /* 把左右 padding 抵銷掉 */
-      margin-left: -20px;       /* 往左推出去 */
-      margin-right: -20px;      /* 往右推出去 */
-      border-top: 1px solid #eee;
-      border-bottom: 1px solid #eee;
-    }
-    .version-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 14px 16px;  /* 跟設定頁一樣 */
-      font-size: 14px;
-      border-bottom: 1px solid #eee;
-    }
+
     body.dark .version-row {
       border-bottom: 1px solid #333;
     }
-    .version-row .value {
-      color: #999;
-    }
+
     #version-detail .back-button {
       display: flex !important;
       position: absolute;
@@ -550,6 +510,46 @@
     }
     #version-detail .version-page {
       align-items: stretch; /* 讓內部元素能貼齊左右 */
+    }
+    /* ✅ 共用清單容器 */
+    .list-container {
+      width: 100%;
+      background: inherit; /* 跟主題走 */
+      border-top: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+    }
+    
+    /* ✅ 共用清單行 */
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    /* 最後一行去掉底線 */
+    .list-row:last-child {
+      border-bottom: none;
+    }
+    
+    /* 灰字 */
+    .list-row .value {
+      font-size: 13px;
+      color: #999;
+    }
+    
+    /* 🌙 深色模式 */
+    body.dark .list-container {
+      border-top: 1px solid #333;
+      border-bottom: 1px solid #333;
+    }
+    body.dark .list-row {
+      border-bottom: 1px solid #333;
+    }
+    body.dark .list-row .value {
+      color: #aaa;
     }
 
     
@@ -679,16 +679,16 @@
       <button class="update-btn">立即更新</button>
   
       <p class="section-title" style="text-align:center;">歷史版本</p>
-      <div class="version-list">
-        <div class="version-row">
+      <div class="list-containert">
+        <div class="list-row">
           <span>日期:2025-09-07</span>
           <span class="value">版本:V0.0.3</span>
         </div>
-        <div class="version-row">
+        <div class="list-row">
           <span>日期:2025-09-03</span>
           <span class="value">版本:V0.0.2</span>
         </div>
-        <div class="version-row">
+        <div class="list-row">
           <span>日期:2025-09-01</span>
           <span class="value">版本:V0.0.1</span>
         </div>
@@ -701,9 +701,9 @@
     <div id="settings" class="settings-page">
       <!-- 顯示設定 -->
       <p class="section-title">顯示設定</p>
-      <div class="settings-list">
+      <div class="list-container">
         <!-- 🔽 把這裡的 select 全部換掉 -->
-        <div class="settings-item "id="language-setting">
+        <div class="list-row "id="language-setting">
           <span>語言</span>
           <div class="settings-right">
             <span id="language-current">中文繁體</span>
@@ -713,7 +713,7 @@
             </svg>
           </div>
         </div>
-        <div class="settings-item" id="theme-setting">
+        <div class="list-row" id="theme-setting">
           <span>主題</span>
           <div class="settings-right">
             <span id="theme-current">系統&自動</span>
@@ -728,22 +728,22 @@
     
       <!-- 關於 -->
       <p class="section-title">其他</p>
-      <div class="settings-list">
-        <div class="settings-item clickable">
+      <div class="list-container">
+        <div class="list-row clickable">
           <span>關於</span>
           <!-- SVG 箭頭 -->
             <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <div class="settings-item clickable">
+        <div class="list-row clickable">
           <span>聯絡我們</span>
           <!-- SVG 箭頭 -->
             <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <div class="settings-item" id="version-setting">
+        <div class="list-row" id="version-setting">
           <span>版本更新</span>
           <div class="settings-right">
           <span class="value">V1.0.0</span>
