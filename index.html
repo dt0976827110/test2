@@ -355,15 +355,18 @@
       position: fixed;
       left: 0; right: 0; bottom: 0; top: 0;
       background: rgba(0,0,0,0.4);
-      justify-content: flex-end;
+      justify-content: center;   /* 改成置中 */
+      align-items: flex-end;     /* 貼底部 */
       z-index: 20;
     }
     
     /* 選單容器 */
     .popup-content {
+      width: 100%;                /* 佔滿螢幕寬 */
+      max-height: 50%;            /* 只佔一半高度 */
       background: #fff;
       border-radius: 12px 12px 0 0;
-      padding: 10px 0;
+      overflow-y: auto;           /* 如果選項太多，可以捲動 */
       animation: slideUp 0.3s ease;
     }
     
