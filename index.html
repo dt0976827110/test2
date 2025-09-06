@@ -464,7 +464,22 @@
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
-
+    .arrow-icon {
+        width: 18px;
+        height: 18px;
+        margin-left: 8px;
+        color: #bbb; /* 淺色模式預設 */
+      }
+      
+      /* 🌞 淺色模式箭頭 */
+      body.light .arrow-icon {
+        color: #bbb;
+      }
+      
+      /* 🌙 深色模式箭頭 */
+      body.dark .arrow-icon {
+        color: #888;
+      }
    
   </style>
 </head>
@@ -578,7 +593,10 @@
           <span>語言</span>
           <div class="settings-right">
             <span id="language-current">中文繁體</span>
-            <span class="arrow">›</span>
+            <!-- SVG 箭頭 -->
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
         </div>
         <div class="settings-item" id="theme-setting">
