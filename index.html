@@ -421,6 +421,9 @@
       align-items: flex-end;     /* 貼底部 */
       z-index: 20;
     }
+    :root {
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
     
     /* 選單容器 */
     .popup-content {
@@ -433,7 +436,7 @@
       max-height: 50%;
     
       /* 🚀 預留 iPhone 安全距離 */
-      padding-bottom: calc(env(safe-area-inset-bottom)+0px);
+      padding-bottom: calc(var(--safe-bottom)+0px);
     }
     
     /* 選項 */
