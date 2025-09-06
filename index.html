@@ -63,7 +63,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 20px;
+      padding: 70px 20px 100px;  /* 🚀 改這行，多了 padding-top */
       padding-bottom: 100px;
       overflow-y: auto;
       position: relative;
@@ -241,6 +241,10 @@
   </style>
 </head>
 <body>
+  <!-- 固定標題列 -->
+  <div class="header">
+    <h1 id="page-title">總覽</h1>
+  </div>
   <!-- 開啟畫面 -->
   <div id="splash">
     <img src="logo(3).png" alt="WealthNova Logo">
@@ -416,6 +420,7 @@
         const target = item.getAttribute("data-target");
         if (target && pages[target]) {
           pages[target].style.display = "flex";
+          document.getElementById("page-title").textContent = item.querySelector("span").textContent;
         }
       });
     });
