@@ -224,51 +224,80 @@
       font-size: 18px;
       font-weight: bold;
     }
-
-
-    /* 🌙 深色模式 */
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #121212;
-        color: #eee;
-      }
-      #app, #history, .product-detail, #export, #settings  {
-        background: #121212;
-      }
-      .transaction-row {
-        background: #1e1e1e;
-        border: 1px solid #333;
-      }
-      .transaction-row .title,
-      .transaction-row .amount {
-        color: #eee;
-      }
-      .brand-title { color: #aaa; }
-      .balance { color: #fff; }
-      .page-title { color: #fff; }
-      .back-button {
-        background: #2c2c2c;
-      }
-      .back-button svg circle {
-        fill: #2c2c2c;
-      }
-      .back-button svg path {
-        stroke: #eee;
-      }
-      .bottom-nav {
-        background: #1e1e1e;
-        border-top: 1px solid #333;
-      }
-      .bottom-nav .nav-item { color: #aaa; }
-      .header {
-        background: #1e1e1e;
-        border-bottom: 1px solid #333;
-      }
-      .header h1 {
-        color: #fff;
-      }
-
+    /* 🌞 淺色模式 */
+    body.light {
+      background: #ffffff;
+      color: #000;
     }
+    body.light #app,
+    body.light #history,
+    body.light .product-detail,
+    body.light #export,
+    body.light #settings {
+      background: #ffffff;
+    }
+    body.light .transaction-row {
+      background: #fff;
+      border: 1px solid #ddd;
+    }
+    body.light .transaction-row .title,
+    body.light .transaction-row .amount {
+      color: #1E2A38;
+    }
+    body.light .brand-title { color: #888; }
+    body.light .balance { color: #000; }
+    body.light .page-title { color: #000; }
+    body.light .back-button { background: transparent; }
+    body.light .header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+    }
+    body.light .header h1 { color: #000; }
+    body.light .bottom-nav {
+      background: #fff;
+      border-top: 1px solid #ddd;
+    }
+    body.light .bottom-nav .nav-item { color: #555; }
+    
+    /* 🌙 深色模式 */
+    body.dark {
+      background: #121212;
+      color: #eee;
+    }
+    body.dark #app,
+    body.dark #history,
+    body.dark .product-detail,
+    body.dark #export,
+    body.dark #settings {
+      background: #121212;
+    }
+    body.dark .transaction-row {
+      background: #1e1e1e;
+      border: 1px solid #333;
+    }
+    body.dark .transaction-row .title,
+    body.dark .transaction-row .amount {
+      color: #eee;
+    }
+    body.dark .brand-title { color: #aaa; }
+    body.dark .balance { color: #fff; }
+    body.dark .page-title { color: #fff; }
+    body.dark .back-button { background: #2c2c2c; }
+    body.dark .back-button svg circle { fill: #2c2c2c; }
+    body.dark .back-button svg path { stroke: #eee; }
+    body.dark .header {
+      background: #1e1e1e;
+      border-bottom: 1px solid #333;
+    }
+    body.dark .header h1 { color: #fff; }
+    body.dark .bottom-nav {
+      background: #1e1e1e;
+      border-top: 1px solid #333;
+    }
+    body.dark .bottom-nav .nav-item { color: #aaa; }
+
+
+   
   </style>
 </head>
 <body>
