@@ -512,8 +512,9 @@
     
     /* 歷史版本清單 */
     .version-list {
-      width: 100%;
-      background: inherit; /* 跟隨主題 */
+      width: calc(100% + 40px); /* 把左右 padding 抵銷掉 */
+      margin-left: -20px;       /* 往左推出去 */
+      margin-right: -20px;      /* 往右推出去 */
       border-top: 1px solid #eee;
       border-bottom: 1px solid #eee;
     }
