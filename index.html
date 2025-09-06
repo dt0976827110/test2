@@ -833,6 +833,7 @@
       product: document.getElementById('product-detail'),
       export: document.getElementById('export'),
       settings: document.getElementById('settings')
+      version: document.getElementById('version-detail')
     };
 
 
@@ -926,11 +927,18 @@
     const backButton = document.getElementById("back-button");
 
     backButton.addEventListener("click", () => {
-      pages.product.style.display = "none";
-      pages.history.style.display = "flex";
-    
-      backButton.style.display = "none"; // ← 隱藏返回鍵
-      document.getElementById("page-title").textContent = "歷史"; // ← 改回標題
+      if (pages.product.style.display === "flex") {
+        // 商品詳情 → 回歷史
+        pages.product.style.display = "none";
+        pages.history.style.display = "flex";
+        document.getElementById("page-title").textContent = "歷史";
+      } else if (pages.version.style.display === "flex") {
+        // 版本詳情 → 回設定
+        pages.version.style.display = "none";
+        pages.settings.style.display = "flex";
+        document.getElementById("page-title").textContent = "設定";
+      }
+      backButton.style.display = "none"; // ✅ 返回後隱藏
     });
     // 語言翻譯字典
     const translations = {
@@ -1117,8 +1125,10 @@
     
     document.getElementById("version-setting").addEventListener("click", () => {
       Object.values(pages).forEach(p => p.style.display = "none");
-      document.getElementById("version-detail").style.display = "flex";
-      backButton.style.display = "none"; // 用自己的返回鍵
+      pages.version.style.display = "flex";
+    
+      backButton.style.display = "flex"; // ✅ 用共用返回鍵就好
+      document.getElementById("page-title").textContent = "版本更新";
     });
     
     // 版本更新頁的專用返回鍵
