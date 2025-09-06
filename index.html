@@ -512,15 +512,15 @@
           showOffline();
           return;
         }
-      if (isStandalone()) {
+//      if (isStandalone()) {
         document.getElementById("splash").style.display = "none";
         document.getElementById("app").style.display = "flex";
         document.querySelector(".bottom-nav").style.display = "flex"; // ✅ 顯示導覽列
-      } else { // 新增
-        splash.style.animation = "none";  // 停止動畫 ✅
-        splash.style.opacity = "1";       // 保持顯示 ✅
-        document.getElementById("install-hint").style.display = "block";
-      } // 新增
+//      } else { // 新增
+//        splash.style.animation = "none";  // 停止動畫 ✅
+//        splash.style.opacity = "1";       // 保持顯示 ✅
+//        document.getElementById("install-hint").style.display = "block";
+//      } // 新增
     }, 4000); // 新增
   </script>
 
