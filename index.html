@@ -188,21 +188,21 @@
       left: 10px;
       top: 50%;
       transform: translateY(-50%);
-      background: transparent; /* 背景透明 */
-      background: none;
+      background: rgba(0,0,0,0.05); /* 背景顏色，可改成白/黑/透明 */
       border: none;
       cursor: pointer;
-      display: none; /* 預設隱藏 */
-      padding: 0;
-      width: auto;             /* 讓按鈕大小跟 SVG 一樣 */
-      height: auto;
+      display: none;   /* 預設隱藏 */
+      padding: 6px;    /* SVG 外留空隙 */
+      border-radius: 50%;  /* 變成圓形 */
+      line-height: 0;  /* 避免文字高度影響 */
     }
     .back-button svg {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
+      display: block;
     }
     .back-button:hover {
-      background: #e0e0e0;
+      background: rgba(0,0,0,0.15); /* hover 時顏色更明顯 */
     }
     /* 固定標題列 */
     .header {
