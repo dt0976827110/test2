@@ -461,6 +461,12 @@
         if (target && pages[target]) {
           pages[target].style.display = "flex";
           document.getElementById("page-title").textContent = item.querySelector("span").textContent;
+          // 🚀 額外控制返回鍵
+          if (target === "product") {
+            backButton.style.display = "flex";
+          } else {
+            backButton.style.display = "none";
+          }
         }
       });
     });
