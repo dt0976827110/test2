@@ -295,46 +295,58 @@
     }
     body.dark .bottom-nav .nav-item { color: #aaa; }
      /* ==================== */
-      /* 🚀 新增 設定頁樣式 */
-      /* ==================== */
-      .section-title {
-        font-size: 12px;
-        color: #999;
-        margin: 20px 0 10px;
-        padding-left: 10px;
-      }
-    
-      .settings-list {
-        background: #fff;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #eee;
-      }
-    
-      .settings-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 14px 16px;
-        font-size: 14px;
-        border-bottom: 1px solid #f0f0f0;
-      }
-    
-      .settings-item:last-child {
-        border-bottom: none;
-      }
-    
-      .settings-item select {
-        border: none;
-        background: transparent;
-        font-size: 14px;
-        color: #555;
-        outline: none;
-      }
-    
-      .settings-item.clickable {
-        cursor: pointer;
-      }
+  /* 設定頁標題 */
+.section-title {
+  font-size: 12px;
+  color: #999;
+  margin: 20px 0 8px;
+  padding-left: 15px;
+}
+
+/* 設定清單容器 */
+.settings-list {
+  background: #fff;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+/* 每個設定項 */
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+}
+
+/* 移除最後一項的底線 */
+.settings-item:last-child {
+  border-bottom: none;
+}
+
+/* 下拉選單樣式 */
+.settings-item select {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #666;
+  outline: none;
+  appearance: none;
+}
+
+/* 箭頭樣式 */
+.settings-item .arrow {
+  color: #bbb;
+  font-size: 14px;
+}
+
+/* 右側灰字（版本號之類的） */
+.settings-item .value {
+  font-size: 13px;
+  color: #999;
+}
+
 
    
   </style>
@@ -439,47 +451,48 @@
   </div>
   
   
-  <!-- 設定頁面 -->
-  <div id="settings" class="settings-page">
-    <h2 class="page-title">設定</h2>
-  
-    <!-- 顯示設定 -->
-    <p class="section-title">顯示設定</p>
-    <div class="settings-list">
-      <div class="settings-item">
-        <span>語言切換</span>
-        <select id="language-select">
-          <option value="zh">中文</option>
-          <option value="en">English</option>
-        </select>
+      <!-- 設定頁面 -->
+    <div id="settings" class="settings-page">
+      <h2 class="page-title">設定</h2>
+    
+      <!-- 顯示設定 -->
+      <p class="section-title">顯示設定</p>
+      <div class="settings-list">
+        <div class="settings-item">
+          <span>語言切換</span>
+          <select id="language-select">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="settings-item">
+          <span>主題切換</span>
+          <select id="theme-select">
+            <option value="system">跟隨系統</option>
+            <option value="light">淺色</option>
+            <option value="dark">深色</option>
+          </select>
+        </div>
       </div>
-      <div class="settings-item">
-        <span>主題切換</span>
-        <select id="theme-select">
-          <option value="system">跟隨系統</option>
-          <option value="light">淺色</option>
-          <option value="dark">深色</option>
-        </select>
+    
+      <!-- 關於 -->
+      <p class="section-title">關於</p>
+      <div class="settings-list">
+        <div class="settings-item clickable">
+          <span>關於</span>
+          <span class="arrow">›</span>
+        </div>
+        <div class="settings-item clickable">
+          <span>聯絡我們</span>
+          <span class="arrow">›</span>
+        </div>
+        <div class="settings-item">
+          <span>版本更新</span>
+          <span class="value">v1.0.0</span>
+        </div>
       </div>
     </div>
-  
-    <!-- 關於 -->
-    <p class="section-title">關於</p>
-    <div class="settings-list">
-      <div class="settings-item clickable">
-        <span>關於</span>
-        <span>＞</span>
-      </div>
-      <div class="settings-item clickable">
-        <span>聯絡我們</span>
-        <span><a href="mailto:trader@example.com">Email</a></span>
-      </div>
-      <div class="settings-item">
-        <span>版本更新</span>
-        <span>v1.0.0</span>
-      </div>
-    </div>
-  </div>
+
 
 
   <!-- 底部導航列 -->
