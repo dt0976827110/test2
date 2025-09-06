@@ -526,12 +526,9 @@
         if (target && pages[target]) {
           pages[target].style.display = "flex";
           document.getElementById("page-title").textContent = item.querySelector("span").textContent;
-          // 🚀 跟著 header 改顏色
-          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            setThemeColor("#1e1e1e"); // 深色模式 header
-          } else {
-            setThemeColor("#ffffff"); // 淺色模式 header
-          }
+          // 🚀 狀態列顏色跟隨主題
+          const savedTheme = localStorage.getItem("theme") || "system";
+          setTheme(savedTheme);
           // 🚀 額外控制返回鍵
           if (target === "product") {
             backButton.style.display = "flex";
