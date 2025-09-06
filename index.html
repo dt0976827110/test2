@@ -765,9 +765,7 @@
       document.getElementById("page-title").textContent = t.overview; // 初始化標題
     }
     
-    document.getElementById("language-select").addEventListener("change", (e) => {
-      setLanguage(e.target.value);
-    });
+
     
     // 主題切換
     // 主題切換
@@ -797,9 +795,7 @@
     }
     
     // 監聽主題選單變動
-    document.getElementById("theme-select").addEventListener("change", (e) => {
-      setTheme(e.target.value);
-    });
+
     
     // 🚀 另外監聽系統深淺色變動（只有在「跟隨系統」模式才會觸發）
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
@@ -809,18 +805,16 @@
       }
     });
     
-    document.getElementById("theme-select").addEventListener("change", (e) => {
-      setTheme(e.target.value);
-    });
+
     
     // 初始化設定
     const savedLang = localStorage.getItem("lang") || "zh";
-    document.getElementById("language-select").value = savedLang;
+
     setLanguage(savedLang);
     
    // 初始化
     const savedTheme = localStorage.getItem("theme") || "system";
-    document.getElementById("theme-select").value = savedTheme;
+
     setTheme(savedTheme);
     
     // ========================
