@@ -1007,6 +1007,37 @@
     // 頁面載入時執行
     updateSafeBottom();
     
+function showSafeBottom() {
+  // 建立一個測試元素，套用 safe-area-inset-bottom
+  const testDiv = document.createElement("div");
+  testDiv.style.position = "absolute";
+  testDiv.style.bottom = "0";
+  testDiv.style.height = "env(safe-area-inset-bottom)";
+  testDiv.style.visibility = "hidden";
+  document.body.appendChild(testDiv);
+
+  // 計算實際像素
+  const safeBottom = testDiv.getBoundingClientRect().height;
+
+  // 顯示在總覽頁面
+  let display = document.getElementById("safe-bottom-display");
+  if (!display) {
+    display = document.createElement("p");
+    display.id = "safe-bottom-display";
+    display.style.marginTop = "20px";
+    display.style.fontSize = "14px";
+    display.style.color = "red";
+    document.querySelector("#app").appendChild(display);
+  }
+  display.textContent = `env(safe-area-inset-bottom) = ${safeBottom}px`;
+
+  // 移除測試元素
+  document.body.removeChild(testDiv);
+}
+
+// 🚀 初次執行 & 監聽旋轉
+showSafeBottom();
+window.addEventListener("resize", showSafeBottom);
 
 
 
