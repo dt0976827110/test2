@@ -436,7 +436,7 @@
       max-height: 50%;
     
       /* 🚀 預留 iPhone 安全距離 */
-      padding-bottom: calc(var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
     }
     
     /* 選項 */
@@ -987,6 +987,28 @@
     document.querySelector("#theme-popup .popup-cancel").addEventListener("click", () => {
       document.getElementById("theme-popup").style.display = "none";
     });
+    function updateSafeBottom() {
+      // 建立測試元素，讀取 env(safe-area-inset-bottom)
+      const el = document.createElement("div");
+      el.style.cssText = "padding-bottom: env(safe-area-inset-bottom); position:absolute;";
+      document.body.appendChild(el);
+    
+      const safeBottom = parseInt(window.getComputedStyle(el).paddingBottom, 10);
+      document.body.removeChild(el);
+    
+      // 判斷是否為 0
+      if (safeBottom === 0) {
+        document.documentElement.style.setProperty("--safe-bottom", "0px");
+      } else {
+        document.documentElement.style.setProperty("--safe-bottom", "15px");
+      }
+    }
+    
+    // 頁面載入時執行
+    updateSafeBottom();
+    
+
+
 
   </script>
 
