@@ -622,21 +622,44 @@
     });
     
     // 主題切換
+    // 主題切換
     function setTheme(mode) {
       localStorage.setItem("theme", mode);
+    
+      // 先清掉舊的 class
+      document.body.classList.remove("light", "dark");
+    
       if (mode === "light") {
         document.body.classList.add("light");
-        document.body.classList.remove("dark");
         setThemeColor("#ffffff");
       } else if (mode === "dark") {
         document.body.classList.add("dark");
-        document.body.classList.remove("light");
         setThemeColor("#121212");
-      } else {
+      } else if (mode === "system") {
+        // 跟隨系統
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        setTheme(prefersDark ? "dark" : "light");
+        if (prefersDark) {
+          document.body.classList.add("dark");
+          setThemeColor("#121212");
+        } else {
+          document.body.classList.add("light");
+          setThemeColor("#ffffff");
+        }
       }
     }
+    
+    // 監聽主題選單變動
+    document.getElementById("theme-select").addEventListener("change", (e) => {
+      setTheme(e.target.value);
+    });
+    
+    // 🚀 另外監聽系統深淺色變動（只有在「跟隨系統」模式才會觸發）
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      const savedTheme = localStorage.getItem("theme") || "system";
+      if (savedTheme === "system") {
+        setTheme("system"); // 重新套用
+      }
+    });
     
     document.getElementById("theme-select").addEventListener("change", (e) => {
       setTheme(e.target.value);
@@ -647,10 +670,10 @@
     document.getElementById("language-select").value = savedLang;
     setLanguage(savedLang);
     
+   // 初始化
     const savedTheme = localStorage.getItem("theme") || "system";
     document.getElementById("theme-select").value = savedTheme;
     setTheme(savedTheme);
-
     
     // ========================
     // 判斷是否從主畫面開啟 // 新增
