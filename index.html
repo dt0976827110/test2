@@ -544,11 +544,12 @@
       padding-left: 0;  /* 移除左邊 padding */
     }
     #version-detail .version-list {
-      width: calc(100% + 40px);  /* 抵銷掉左右 padding */
-      margin-left: -20px;        /* 往左推出去 */
-      margin-right: -20px;       /* 往右推出去 */
+      width: 100%;          /* 跟設定頁一樣滿版 */
       border-top: 1px solid #eee;
       border-bottom: 1px solid #eee;
+    }
+    #version-detail .version-page {
+      align-items: stretch; /* 讓內部元素能貼齊左右 */
     }
 
     
