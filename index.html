@@ -404,39 +404,41 @@
     <h2 class="page-title">設定</h2>
   
     <!-- 顯示設定 -->
-    <section style="margin:20px 0; width:100%; max-width:400px;">
-      <h3 style="font-size:16px; margin-bottom:10px;">顯示設定</h3>
-  
-      <label style="display:block; margin-bottom:10px;">
-        語言切換：
+    <p class="section-title">顯示設定</p>
+    <div class="settings-list">
+      <div class="settings-item">
+        <span>語言切換</span>
         <select id="language-select">
           <option value="zh">中文</option>
           <option value="en">English</option>
         </select>
-      </label>
-  
-      <label style="display:block; margin-bottom:10px;">
-        主題模式：
+      </div>
+      <div class="settings-item">
+        <span>主題切換</span>
         <select id="theme-select">
           <option value="system">跟隨系統</option>
           <option value="light">淺色</option>
           <option value="dark">深色</option>
         </select>
-      </label>
-    </section>
+      </div>
+    </div>
   
     <!-- 關於 -->
-    <section style="margin:20px 0; width:100%; max-width:400px;">
-      <h3 style="font-size:16px; margin-bottom:10px;">關於</h3>
-      <p id="investment-idea" style="margin-bottom:10px;">投資理念：穩健交易、風險控管、長期增長</p>
-      <p style="margin-bottom:10px;">
-        聯絡交易者：
-        <a href="mailto:trader@example.com">Email</a> |
-        <a href="https://www.instagram.com/your_ig" target="_blank">IG</a> |
-        <a href="https://line.me/R/ti/p/your_line_id" target="_blank">LINE 官方帳號</a>
-      </p>
-      <p>App 版本號：v1.0.0</p>
-    </section>
+    <p class="section-title">關於</p>
+    <div class="settings-list">
+      <div class="settings-item clickable">
+        <span>關於</span>
+        <span>＞</span>
+      </div>
+      <div class="settings-item clickable">
+        <span>聯絡我們</span>
+        <span><a href="mailto:trader@example.com">Email</a></span>
+      </div>
+      <div class="settings-item">
+        <span>版本更新</span>
+        <span>v1.0.0</span>
+      </div>
+    </div>
   </div>
 
 
