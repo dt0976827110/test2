@@ -573,6 +573,9 @@
       logo.style.animation = "zoomIn 1s ease forwards"; // 回到原本動畫
       window.location.reload();
     });
+    // 🚀 頁面載入 → 強制 splash 狀態列為白色
+    setThemeColor("#ffffff");
+        
     setTimeout(() => { 
         if (!navigator.onLine) {
           showOffline();
