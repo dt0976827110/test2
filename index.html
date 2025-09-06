@@ -719,7 +719,7 @@
               <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <div class="settings-item">
+        <div class="settings-item" id="version-setting">
           <span>版本更新</span>
           <div class="settings-right">
           <span class="value">V1.0.0</span>
@@ -1109,13 +1109,11 @@
       document.getElementById("theme-popup").style.display = "none";
     });
     
-    // 點擊設定頁的「版本更新」
-    document.querySelector("#settings .settings-item:last-child")
-      .addEventListener("click", () => {
-        Object.values(pages).forEach(p => p.style.display = "none");
-        document.getElementById("version-detail").style.display = "flex";
-        backButton.style.display = "none"; // 不顯示共用返回鍵
-      });
+    document.getElementById("version-setting").addEventListener("click", () => {
+      Object.values(pages).forEach(p => p.style.display = "none");
+      document.getElementById("version-detail").style.display = "flex";
+      backButton.style.display = "none"; // 用自己的返回鍵
+    });
     
     // 版本更新頁的專用返回鍵
     document.getElementById("version-back").addEventListener("click", () => {
