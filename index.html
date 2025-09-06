@@ -1108,7 +1108,7 @@
     document.querySelectorAll("#language-popup .popup-item").forEach(item => {
       item.addEventListener("click", () => {
         const lang = item.getAttribute("data-value");
-        const labels = { zh: "中文", en: "English" };
+        const labels = { zh: "中文繁體", en: "English" };
     
         document.getElementById("language-current").textContent = labels[lang];
         localStorage.setItem("lang", lang);
@@ -1130,7 +1130,7 @@
     document.querySelectorAll("#theme-popup .popup-item").forEach(item => {
       item.addEventListener("click", () => {
         const mode = item.getAttribute("data-value");
-        const labels = { system: "跟隨系統", light: "淺色", dark: "深色" };
+        const labels = { system: "系統&自動", light: "淺色模式", dark: "深色模式" };
     
         document.getElementById("theme-current").textContent = labels[mode];
         localStorage.setItem("theme", mode);
