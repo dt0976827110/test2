@@ -477,6 +477,9 @@
 
           document.getElementById("product-name").textContent = productData[target].name;
           document.getElementById("product-balance").textContent = productData[target].balance;
+          
+          backButton.style.display = "flex"; 
+          document.getElementById("page-title").textContent = "商品詳情";
 
           const list = document.getElementById("product-list");
           list.innerHTML = "";
@@ -520,9 +523,14 @@
     });
 
     // 返回按鈕邏輯
-    document.getElementById("back-button").addEventListener("click", () => {
-      document.getElementById("product-detail").style.display = "none";
-      document.getElementById("history").style.display = "flex";
+    const backButton = document.getElementById("back-button");
+
+    backButton.addEventListener("click", () => {
+      pages.product.style.display = "none";
+      pages.history.style.display = "flex";
+    
+      backButton.style.display = "none"; // ← 隱藏返回鍵
+      document.getElementById("page-title").textContent = "歷史"; // ← 改回標題
     });
     // ========================
     // 判斷是否從主畫面開啟 // 新增
