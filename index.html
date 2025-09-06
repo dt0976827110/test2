@@ -585,6 +585,73 @@
       backButton.style.display = "none"; // ← 隱藏返回鍵
       document.getElementById("page-title").textContent = "歷史"; // ← 改回標題
     });
+    // 語言翻譯字典
+    const translations = {
+      zh: {
+        overview: "總覽",
+        history: "歷史",
+        report: "報告",
+        settings: "設定",
+        productDetail: "商品詳情",
+        investmentIdea: "投資理念：穩健交易、風險控管、長期增長",
+      },
+      en: {
+        overview: "Overview",
+        history: "History",
+        report: "Report",
+        settings: "Settings",
+        productDetail: "Product Detail",
+        investmentIdea: "Investment Philosophy: Steady trading, risk control, long-term growth",
+      }
+    };
+    
+    // 切換語言
+    function setLanguage(lang) {
+      localStorage.setItem("lang", lang);
+      const t = translations[lang];
+      document.querySelector(".bottom-nav [data-target='app'] span").textContent = t.overview;
+      document.querySelector(".bottom-nav [data-target='history'] span").textContent = t.history;
+      document.querySelector(".bottom-nav [data-target='export'] span").textContent = t.report;
+      document.querySelector(".bottom-nav [data-target='settings'] span").textContent = t.settings;
+      document.getElementById("investment-idea").textContent = t.investmentIdea;
+      document.getElementById("page-title").textContent = t.overview; // 初始化標題
+    }
+    
+    document.getElementById("language-select").addEventListener("change", (e) => {
+      setLanguage(e.target.value);
+    });
+    
+    // 主題切換
+    function setTheme(mode) {
+      localStorage.setItem("theme", mode);
+      if (mode === "light") {
+        document.body.classList.add("light");
+        document.body.classList.remove("dark");
+        setThemeColor("#ffffff");
+      } else if (mode === "dark") {
+        document.body.classList.add("dark");
+        document.body.classList.remove("light");
+        setThemeColor("#121212");
+      } else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(prefersDark ? "dark" : "light");
+      }
+    }
+    
+    document.getElementById("theme-select").addEventListener("change", (e) => {
+      setTheme(e.target.value);
+    });
+    
+    // 初始化設定
+    const savedLang = localStorage.getItem("lang") || "zh";
+    document.getElementById("language-select").value = savedLang;
+    setLanguage(savedLang);
+    
+    const savedTheme = localStorage.getItem("theme") || "system";
+    document.getElementById("theme-select").value = savedTheme;
+    setTheme(savedTheme);
+
+    
     // ========================
     // 判斷是否從主畫面開啟 // 新增
     // ========================
