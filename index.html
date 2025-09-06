@@ -55,7 +55,7 @@
     }
 
     /* --- 各頁面 --- */
-    #app, #history, .product-detail {
+    #app, #history, .product-detail, #export, #settings {
       width: 100%;
       height: 100%;
       background: #fff;
@@ -444,14 +444,7 @@
       export: document.getElementById('export'),
       settings: document.getElementById('settings')
     };
-    pages.export.innerHTML = '<p class="page-title">匯出績效 (開發中)</p>';
-    document.body.appendChild(pages.export);
-    pages.export.style.display = "none";
-    // 🚀 新增的 settings 頁面
-    pages.settings = document.createElement("div");
-    pages.settings.innerHTML = '<p class="page-title">設定頁面 (開發中)</p>';
-    document.body.appendChild(pages.settings);
-    pages.settings.style.display = "none";
+
 
     navItems.forEach(item => {
       item.addEventListener('click', () => {
