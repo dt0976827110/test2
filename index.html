@@ -1130,11 +1130,8 @@
   Object.values(pages).forEach(p => p.style.display = "none");
   pages[pageId].style.display = "flex";
 
-  // 只 push 子頁
-  if (!["app","history","export","settings"].includes(pageId)) {
-    if (pageStack[pageStack.length - 1] !== pageId) {
-      pageStack.push(pageId);
-    }
+  if (pageStack[pageStack.length - 1] !== pageId) {
+    pageStack.push(pageId);
   }
 
   if (title) document.getElementById("page-title").textContent = title;
