@@ -491,13 +491,7 @@
       border-bottom: 1px solid #333;
     }
 
-    #version-detail .back-button {
-      display: flex !important;
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
+
 
     #version-detail .section-title {
       text-align: center;
@@ -664,14 +658,6 @@
   <div id="version-detail" class="version-page" style="display:none;">
     <!-- 固定標題列 -->
     <div class="header">
-      <button id="version-back" class="back-button">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-             xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 18L9 12L15 6"
-                stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
       <h1>版本更新</h1>
     </div>
   
@@ -862,26 +848,21 @@
       item.addEventListener('click', () => {
         navItems.forEach(i => i.classList.remove('active'));
         item.classList.add('active');
-        Object.values(pages).forEach(p => p.style.display = "none");
+    
         const target = item.getAttribute("data-target");
         if (target && pages[target]) {
-          pages[target].style.display = "flex";
-          document.getElementById("page-title").textContent = item.querySelector("span").textContent;
-          // 🚀 狀態列顏色跟隨主題
+          showPage(target, item.querySelector("span").textContent);
+    
+          // 狀態列顏色跟隨主題
           if (document.body.classList.contains("dark")) {
             setThemeColor("#1e1e1e");
           } else {
             setThemeColor("#ffffff");
           }
-          // 🚀 額外控制返回鍵
-          if (target === "product") {
-            backButton.style.display = "flex";
-          } else {
-            backButton.style.display = "none";
-          }
         }
       });
     });
+
 
     // 商品詳情頁切換邏輯
     const productData = {
@@ -894,15 +875,11 @@
       row.addEventListener("click", () => {
         const target = row.getAttribute("data-target");
         if (target && productData[target]) {
-          Object.values(pages).forEach(p => p.style.display = "none");
-          pages.product.style.display = "flex";
+          showPage("product", "商品詳情");
 
           document.getElementById("product-name").textContent = productData[target].name;
           document.getElementById("product-balance").textContent = productData[target].balance;
           
-          backButton.style.display = "flex"; 
-          document.getElementById("page-title").textContent = "商品詳情";
-
           const list = document.getElementById("product-list");
           list.innerHTML = "";
           ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(m => {
@@ -1145,20 +1122,55 @@
     });
     
     document.getElementById("version-setting").addEventListener("click", () => {
+      showPage("version", "版本更新");
+    });
+    
+
+    
+    // 📌 返回堆疊
+    const pageStack = [];
+    const backButton = document.getElementById("back-button");
+    
+    // 📌 顯示某個頁面
+    function showPage(pageId, title = "") {
+      // 隱藏所有頁面
       Object.values(pages).forEach(p => p.style.display = "none");
-      pages.version.style.display = "flex";
     
-      backButton.style.display = "flex"; // ✅ 用共用返回鍵就好
-      document.getElementById("page-title").textContent = "版本更新";
+      // 顯示目標頁
+      pages[pageId].style.display = "flex";
+    
+      // 推到堆疊（避免重複 push）
+      if (pageStack[pageStack.length - 1] !== pageId) {
+        pageStack.push(pageId);
+      }
+    
+      // 設定標題
+      if (title) {
+        document.getElementById("page-title").textContent = title;
+      }
+    
+      // 控制返回鍵
+      backButton.style.display = pageStack.length > 1 ? "flex" : "none";
+    }
+    
+    // 📌 點擊返回鍵
+    backButton.addEventListener("click", () => {
+      if (pageStack.length > 1) {
+        pageStack.pop(); // 移除當前頁
+        const prevPage = pageStack[pageStack.length - 1];
+    
+        Object.values(pages).forEach(p => p.style.display = "none");
+        pages[prevPage].style.display = "flex";
+    
+        // 設定標題（取自 bottom-nav 或預設值）
+        const navItem = document.querySelector(`.bottom-nav [data-target='${prevPage}'] span`);
+        if (navItem) {
+          document.getElementById("page-title").textContent = navItem.textContent;
+        }
+    
+        backButton.style.display = pageStack.length > 1 ? "flex" : "none";
+      }
     });
-    
-    // 版本更新頁的專用返回鍵
-    document.getElementById("version-back").addEventListener("click", () => {
-      document.getElementById("version-detail").style.display = "none";
-      pages.settings.style.display = "flex"; // 回到設定頁
-      backButton.style.display = "none"; // 
-    });
-    
 
 
 
