@@ -923,19 +923,24 @@
 
 
     backButton.addEventListener("click", () => {
-      if (pages.product.style.display === "flex") {
-        // 商品詳情 → 回歷史
-        pages.product.style.display = "none";
-        pages.history.style.display = "flex";
-        document.getElementById("page-title").textContent = "歷史";
-      } else if (pages.version.style.display === "flex") {
-        // 版本詳情 → 回設定
-        pages.version.style.display = "none";
-        pages.settings.style.display = "flex";
-        document.getElementById("page-title").textContent = "設定";
+      if (pageStack.length > 1) {
+        pageStack.pop(); // 移除當前頁
+        const prevPage = pageStack[pageStack.length - 1];
+    
+        Object.values(pages).forEach(p => p.style.display = "none");
+        pages[prevPage].style.display = "flex";
+    
+        // 設定標題
+        const navItem = document.querySelector(`.bottom-nav [data-target='${prevPage}'] span`);
+        if (navItem) {
+          document.getElementById("page-title").textContent = navItem.textContent;
+        }
+    
+        // ✅ 返回鍵顯示/隱藏 → 已交給 showPage 控制
+        //backButton.style.display = pageStack.length > 1 ? "flex" : "none";
       }
-
     });
+
     // 語言翻譯字典
     const translations = {
       zh: {
