@@ -1116,19 +1116,25 @@
 
     
     // 📌 顯示某個頁面
-    function showPage(pageId, title = "") {
+    function showPage(pageId, title = "", isBack = false) {
   Object.values(pages).forEach(p => p.style.display = "none");
   pages[pageId].style.display = "flex";
 
-  if (pageStack[pageStack.length - 1] !== pageId) {
+  if (!isBack && pageStack[pageStack.length - 1] !== pageId) {
     pageStack.push(pageId);
   }
 
-  if (title) document.getElementById("page-title").textContent = title;
+  if (title) {
+    document.getElementById("page-title").textContent = title;
+  }
 
-  backButton.style.display = ["app","history","export","settings"].includes(pageId) ? "none" : "flex";
-      console.log("Stack:", pageStack);
+  if (["app", "history", "export", "settings"].includes(pageId)) {
+    backButton.style.display = "none";
+  } else {
+    backButton.style.display = "flex";
+  }
 }
+
 
     
     // 📌 點擊返回鍵
