@@ -1155,7 +1155,7 @@
         if (navItem) {
           document.getElementById("page-title").textContent = navItem.textContent;
         }
-    
+        showPage(prevPage, title, true); // ✅ 加上 true，避免重複 push
         //backButton.style.display = pageStack.length > 1 ? "flex" : "none";
       }
     });
