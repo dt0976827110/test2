@@ -762,13 +762,13 @@
 
   
     <!-- 關於頁面 -->
-    <div id="about-page" class="sub-page" style="display:none;">
+    <div id="about-page" class="about-page" style="display:none;">
       <p class="brand-title">關於</p>
       <h2 class="page-title">開發中</h2>
     </div>
     
     <!-- 聯絡我們頁面 -->
-    <div id="contact-page" class="sub-page" style="display:none;">
+    <div id="contact-page" class="contact-page" style="display:none;">
       <p class="brand-title">聯絡我們</p>
       <h2 class="page-title">開發中</h2>
     </div>
@@ -851,8 +851,8 @@
       export: document.getElementById('export'),
       settings: document.getElementById('settings'),
       version: document.getElementById('version-detail')
-      about: document.getElementById('about'),
-      contact: document.getElementById('contact')
+      about: document.getElementById("about-page"),     // ✅ 新增
+      contact: document.getElementById("contact-page")  // ✅ 新增
     };
 
 
