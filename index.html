@@ -876,7 +876,7 @@
         const target = row.getAttribute("data-target");
         if (target && productData[target]) {
           showPage("product", "商品詳情");
-
+          backButton.style.display = "flex";  
           document.getElementById("product-name").textContent = productData[target].name;
           document.getElementById("product-balance").textContent = productData[target].balance;
           
@@ -1124,6 +1124,7 @@
     
     document.getElementById("version-setting").addEventListener("click", () => {
       showPage("version", "版本更新");
+      backButton.style.display = "flex";  
     });
     
 
