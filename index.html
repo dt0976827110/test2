@@ -4,28 +4,25 @@
   <meta charset="UTF-8"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>WealthNova | 財富新星</title>
-  
-  <!-- PWA 圖示 -->
+  <!-- 狀態列顏色自動隨深淺模式切換 -->
+
+  <!-- ✅ iOS 主畫面 icon -->
   <link rel="apple-touch-icon" sizes="192x192" href="logo(3).png">
   <link rel="apple-touch-icon" sizes="512x512" href="logo(3).png">
-  
-  <!-- 外部函式庫 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
   <style>
-    /* 重置樣式與基礎設定 */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
     body {
       font-family: 'Arial', sans-serif;
+      background: #fff;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      transition: background-color 0.3s, color 0.3s;
+      color: #000;
     }
 
-    /* 開啟畫面 */
+    /* --- 開啟畫面 --- */
     #splash {
       position: absolute;
       top: 0; left: 0;
@@ -34,12 +31,11 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      background: #fff;
       z-index: 10;
       animation: fadeOut 1s ease 3s forwards;
     }
-    
     #splash img { width: 100px; animation: zoomIn 1s ease forwards; }
-    
     #splash h1 {
       margin-top: 20px;
       font-size: 22px;
@@ -48,101 +44,31 @@
       opacity: 0;
       animation: fadeIn 2s ease 1s forwards;
     }
-
-    #install-hint, #offline-hint {
-      margin-top: 20px; 
-      text-align: center;
-    }
-
-    #install-hint p:first-child {
-      font-size: 18px; 
-      font-weight: bold;
-      line-height: 4;
-    }
-
-    #install-hint p:last-child {
-      font-size: 16px; 
-      color: #666; 
-      line-height: 2;
-    }
-
-    #offline-hint p {
-      font-size: 16px; 
-      color: #e74c3c;
-    }
-
-    /* 動畫效果 */
-    @keyframes zoomIn { 
-      from { transform: scale(0.6); opacity: 0; } 
-      to { transform: scale(1); opacity: 1; } 
-    }
-    
+    @keyframes zoomIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes fadeIn { to { opacity: 1; } }
     @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
-    
     @keyframes zoomLoop {
-      0% { transform: scale(0.6); opacity: 0; }
-      50% { transform: scale(1); opacity: 1; }
+      0%   { transform: scale(0.6); opacity: 0; }
+      50%  { transform: scale(1); opacity: 1; }
       100% { transform: scale(0.6); opacity: 0; }
     }
 
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    /* 頁面佈局 */
-    .page {
+    /* --- 各頁面 --- */
+    #app, #history, .product-detail, #export, #settings {
       width: 100%;
       height: 100%;
-      display: none;
+      background: #fff;
+      display: none; /* 預設隱藏 */
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 70px 20px 100px;
+      padding: 70px 20px 100px;  /* 🚀 改這行，多了 padding-top */
+      padding-bottom: 100px;
       overflow-y: auto;
       position: relative;
     }
 
-    .page.active { display: flex; }
-    .page.settings-layout { align-items: stretch; }
-
-    /* 頂部標題列 */
-    .header {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 50px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 5;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .header h1 {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .back-button {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      display: none;
-      padding: 6px;
-      border-radius: 50%;
-      line-height: 0;
-    }
-    
-    .back-button svg { width: 24px; height: 24px; }
-    .back-button:hover { background: #e0e0e0; }
-
-    /* 頁面標題區域 */
+    /* 標題區 */
     .brand-title {
       font-size: 14px;
       color: #888;
@@ -150,7 +76,6 @@
       text-align: center;
       width: 100%;
     }
-    
     .page-title {
       font-size: 18px;
       font-weight: bold;
@@ -158,7 +83,6 @@
       width: 100%;
       margin: 15px 0;
     }
-    
     .balance {
       font-size: 28px;
       font-weight: bold;
@@ -174,7 +98,7 @@
       margin-bottom: 20px;
     }
 
-    /* 交易列表項目 */
+    /* 單行交易卡片 */
     .transaction-row {
       display: flex;
       align-items: center;
@@ -188,7 +112,6 @@
       width: 100%;
       cursor: pointer;
     }
-    
     .transaction-row .icon {
       width: 35px; height: 35px;
       border-radius: 50%;
@@ -197,9 +120,7 @@
       justify-content: center;
       align-items: center;
     }
-    
     .transaction-row .icon img { width: 20px; }
-    
     .transaction-row .title {
       flex: 1;
       font-size: 14px;
@@ -208,14 +129,13 @@
       margin-left: 10px;
       text-align: left;
     }
-    
     .transaction-row .amount {
       font-size: 14px;
       font-weight: bold;
       color: #1E2A38;
     }
 
-    /* 底部導航列 */
+    /* --- 底部導航列 --- */
     .bottom-nav {
       position: fixed;
       bottom: 0px; left: 0;
@@ -223,11 +143,10 @@
       height: 100px;
       background: #fff;
       border-top: 1px solid #ddd;
-      display: none;
+      display: none;   /* ✅ 一開始隱藏 */
       justify-content: space-around;
       align-items: center;
     }
-    
     .bottom-nav .nav-item {
       display: flex;
       flex-direction: column;
@@ -237,7 +156,6 @@
       cursor: pointer;
       margin-top: -20px;
     }
-    
     .bottom-nav svg {
       width: 22px;
       height: 22px;
@@ -245,92 +163,257 @@
       fill: #aaa;
       transition: fill 0.3s;
     }
-    
     .bottom-nav .active svg,
     .bottom-nav .active span {
       fill: #007BFF;
       color: #007BFF;
     }
 
-    /* 商品詳情頁 */
+    /* 商品詳情頁的清單容器 */
     #product-list {
       width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    
     #product-list .transaction-row {
       max-width: 400px;
       width: 100%;
     }
 
-    /* 設定頁面樣式 */
-    .section-title {
-      font-size: 12px;
-      color: #999;
-      margin: 20px 0 8px;
-      padding-left: 15px;
+    /* 返回按鈕 */
+    .back-button {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent; /* 背景透明 */
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: none;   /* 預設隱藏 */
+      padding: 0;    /* SVG 外留空隙 */
+      padding: 6px;    /* SVG 外留空隙 */
+      border-radius: 50%;  /* 變成圓形 */
+      line-height: 0;  /* 避免文字高度影響 */
     }
-
-    .list-container {
+    .back-button svg {
+      width: 24px;
+      height: 24px;
+      
+    }
+    .back-button:hover {
+      background: #e0e0e0;
+    }
+    /* 固定標題列 */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      background: inherit;
+      height: 50px;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 5;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    /* 🌞 淺色模式 */
+    body.light {
+      background: #ffffff;
+      color: #000;
+    }
+    body.light #app,
+    body.light #history,
+    body.light .product-detail,
+    body.light #export,
+    body.light #settings {
+      background: #ffffff;
+    }
+    body.light .transaction-row {
+      background: #fff;
+      border: 1px solid #ddd;
+    }
+    body.light .transaction-row .title,
+    body.light .transaction-row .amount {
+      color: #1E2A38;
+    }
+    body.light .brand-title { color: #888; }
+    body.light .balance { color: #000; }
+    body.light .page-title { color: #000; }
+    body.light .back-button { background: transparent; }
+    body.light .header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+    }
+    body.light .header h1 { color: #000; }
+    body.light .bottom-nav {
+      background: #fff;
+      border-top: 1px solid #ddd;
+    }
+    body.light .bottom-nav .nav-item { color: #555; }
+        /* 🌞 淺色模式下的設定頁 */
+    body.light .list-container {
+      background: #fff;
       border-top: 1px solid #eee;
       border-bottom: 1px solid #eee;
     }
     
-    .list-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 16px;
-      font-size: 14px;
+    body.light .list-row {
+      color: #000;
       border-bottom: 1px solid #eee;
-      cursor: pointer;
     }
     
-    .list-row:last-child { border-bottom: none; }
+    body.light .list-row .value {
+      color: #999; /* 右邊版本號文字 */
+    }
     
-    .list-row .value {
-      font-size: 13px;
-      color: #999;
+    body.light .popup-content {
+      background: #fff;
+    }
+    
+    body.light .popup-item {
+      color: #000;
+      border-bottom: 1px solid #eee;
+    }
+    
+    body.light .popup-cancel {
+      color: #007BFF;
+    }
+    
+    /* 🌙 深色模式 */
+    body.dark {
+      background: #121212;
+      color: #eee;
+    }
+    body.dark #app,
+    body.dark #history,
+    body.dark .product-detail,
+    body.dark #export,
+    body.dark #settings {
+      background: #121212;
+    }
+    body.dark .transaction-row {
+      background: #1e1e1e;
+      border: 1px solid #333;
+    }
+    body.dark .transaction-row .title,
+    body.dark .transaction-row .amount {
+      color: #eee;
+    }
+    body.dark .brand-title { color: #aaa; }
+    body.dark .balance { color: #fff; }
+    body.dark .page-title { color: #fff; }
+    body.dark .back-button { background: #2c2c2c; }
+    body.dark .back-button svg circle { fill: #2c2c2c; }
+    body.dark .back-button svg path { stroke: #eee; }
+    body.dark .header {
+      background: #1e1e1e;
+      border-bottom: 1px solid #333;
+    }
+    body.dark .header h1 { color: #fff; }
+    body.dark .bottom-nav {
+      background: #1e1e1e;
+      border-top: 1px solid #333;
+    }
+    body.dark .bottom-nav .nav-item { color: #aaa; }
+    /* 🌙 深色模式下的設定頁 */
+    body.dark .list-container {
+      background: #1e1e1e;
+      border-top: 1px solid #333;
+      border-bottom: 1px solid #333;
+    }
+    
+    body.dark .list-row {
+      color: #eee;
+      border-bottom: 1px solid #333;
+    }
+    
+    body.dark .list-row .value {
+      color: #aaa; /* 深色模式版本號文字 */
+    }
+    
+    body.dark .popup-content {
+      background: #1e1e1e;
+    }
+    
+    body.dark .popup-item {
+      color: #eee;
+      border-bottom: 1px solid #333;
+    }
+    
+    body.dark .popup-cancel {
+      color: #4da3ff; /* 深色背景上更清楚 */
     }
 
-    .settings-right {
-      display: flex;
-      align-items: center;
-    }
 
-    .arrow-icon {
-      width: 18px;
-      height: 18px;
-      margin-left: 8px;
-      color: #bbb;
-      vertical-align: middle;
-    }
 
-    /* 彈出選單樣式 */
+
+
+    
+     /* ==================== */
+  /* 設定頁標題 */
+.section-title {
+  font-size: 12px;
+  color: #999;
+  margin: 20px 0 8px;
+  padding-left: 15px;
+}
+
+
+
+/* 下拉選單樣式 */
+.list-row select {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #666;
+  outline: none;
+  appearance: none;
+}
+
+/* 箭頭樣式 */
+.list-row .arrow {
+  color: #bbb;
+  font-size: 14px;
+}
+
+
+  #settings {
+    align-items: stretch;
+  }
+  /* Popup 背景 */
     .popup {
       display: none;
       position: fixed;
       left: 0; right: 0; bottom: 0; top: 0;
       background: rgba(0,0,0,0.4);
-      justify-content: center;
-      align-items: flex-end;
+      justify-content: center;   /* 改成置中 */
+      align-items: flex-end;     /* 貼底部 */
       z-index: 20;
     }
+
     
+    /* 選單容器 */
     .popup-content {
       background: #fff;
       border-radius: 12px 12px 0 0;
       padding: 10px 0;
       animation: slideUp 0.3s ease;
+    
       width: 100%;
       max-height: 50%;
+    
+      
       padding-bottom: 35px;
     }
     
+    /* 選項 */
     .popup-item {
       padding: 14px;
       text-align: center;
@@ -339,7 +422,9 @@
       cursor: pointer;
     }
     
-    .popup-item:last-child { border-bottom: none; }
+    .popup-item:last-child {
+      border-bottom: none;
+    }
     
     .popup-cancel {
       padding: 14px;
@@ -349,8 +434,30 @@
       color: #007BFF;
       cursor: pointer;
     }
-
-    /* 版本更新頁面 */
+    
+    /* 動畫 */
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .arrow-icon {
+        width: 18px;
+        height: 18px;
+        margin-left: 8px;
+        color: #bbb; /* 淺色模式預設 */
+        vertical-align: middle; /* ✅ 對齊文字中線 */
+      }
+      
+      /* 🌞 淺色模式箭頭 */
+      body.light .arrow-icon {
+        color: #bbb;
+      }
+      
+      /* 🌙 深色模式箭頭 */
+      body.dark .arrow-icon {
+        color: #888;
+      }
+    /*版本詳情頁--------------------------------*/
     .version-page {
       width: 100%;
       height: 100%;
@@ -362,6 +469,7 @@
       justify-content: flex-start;
     }
     
+    /* 立即更新按鈕 */
     .update-btn {
       background: #f1f1f1;
       border: none;
@@ -370,112 +478,120 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      display: block;
-      margin: 20px auto;
+      display: block;       /* 變成區塊 */
+      margin: 20px auto; /* ⬅️ 左右自動置中 */
     }
+    body.dark .update-btn {
+      background: #2c2c2c;
+      color: #fff;
+    }
+    
+
+    body.dark .version-row {
+      border-bottom: 1px solid #333;
+    }
+
+
 
     #version-detail .section-title {
       text-align: center;
-      padding-left: 0;
+      padding-left: 0;  /* 移除左邊 padding */
     }
-
     #version-detail .version-list {
-      width: 100%;
+      width: 100%;          /* 跟設定頁一樣滿版 */
       border-top: 1px solid #eee;
       border-bottom: 1px solid #eee;
     }
-
-    #version-detail { align-items: stretch; }
-    .version-page { align-items: stretch; }
-
-    /* 淺色模式 */
-    body.light {
-      background: #ffffff;
-      color: #000;
+    #version-detail  {
+      align-items: stretch; /* 讓內部元素能貼齊左右 */
+    }
+    .version-page{
+      align-items: stretch;
+    }
+    /* ✅ 共用清單容器 */
+    .list-container {
+      width: 100%;
+      background: inherit; /* 跟主題走 */
+      border-top: 1px solid #eee;
+      border-bottom: 1px solid #eee;
     }
     
-    body.light .page { background: #ffffff; }
-    body.light .transaction-row { background: #fff; border: 1px solid #ddd; }
-    body.light .transaction-row .title,
-    body.light .transaction-row .amount { color: #1E2A38; }
-    body.light .brand-title { color: #888; }
-    body.light .balance { color: #000; }
-    body.light .page-title { color: #000; }
-    body.light .back-button { background: transparent; }
-    body.light .header { background: #fff; border-bottom: 1px solid #ddd; }
-    body.light .header h1 { color: #000; }
-    body.light .bottom-nav { background: #fff; border-top: 1px solid #ddd; }
-    body.light .bottom-nav .nav-item { color: #555; }
-    body.light .list-container { background: #fff; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
-    body.light .list-row { color: #000; border-bottom: 1px solid #eee; }
-    body.light .list-row .value { color: #999; }
-    body.light .popup-content { background: #fff; }
-    body.light .popup-item { color: #000; border-bottom: 1px solid #eee; }
-    body.light .popup-cancel { color: #007BFF; }
-    body.light .arrow-icon { color: #bbb; }
-
-    /* 深色模式 */
-    body.dark {
-      background: #121212;
-      color: #eee;
+    /* ✅ 共用清單行 */
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
     }
     
-    body.dark .page { background: #121212; }
-    body.dark .transaction-row { background: #1e1e1e; border: 1px solid #333; }
-    body.dark .transaction-row .title,
-    body.dark .transaction-row .amount { color: #eee; }
-    body.dark .brand-title { color: #aaa; }
-    body.dark .balance { color: #fff; }
-    body.dark .page-title { color: #fff; }
-    body.dark .back-button { background: #2c2c2c; }
-    body.dark .back-button svg circle { fill: #2c2c2c; }
-    body.dark .back-button svg path { stroke: #eee; }
-    body.dark .header { background: #1e1e1e; border-bottom: 1px solid #333; }
-    body.dark .header h1 { color: #fff; }
-    body.dark .bottom-nav { background: #1e1e1e; border-top: 1px solid #333; }
-    body.dark .bottom-nav .nav-item { color: #aaa; }
-    body.dark .list-container { background: #1e1e1e; border-top: 1px solid #333; border-bottom: 1px solid #333; }
-    body.dark .list-row { color: #eee; border-bottom: 1px solid #333; }
-    body.dark .list-row .value { color: #aaa; }
-    body.dark .popup-content { background: #1e1e1e; }
-    body.dark .popup-item { color: #eee; border-bottom: 1px solid #333; }
-    body.dark .popup-cancel { color: #4da3ff; }
-    body.dark .arrow-icon { color: #888; }
-    body.dark .update-btn { background: #2c2c2c; color: #fff; }
+    /* 最後一行去掉底線 */
+    .list-row:last-child {
+      border-bottom: none;
+    }
+    
+    /* 灰字 */
+    .list-row .value {
+      font-size: 13px;
+      color: #999;
+    }
+    
+    /* 🌙 深色模式 */
+    body.dark .list-container {
+      border-top: 1px solid #333;
+      border-bottom: 1px solid #333;
+    }
+    body.dark .list-row {
+      border-bottom: 1px solid #333;
+    }
+    body.dark .list-row .value {
+      color: #aaa;
+    }
+
+    
   </style>
 </head>
 <body>
   <!-- 固定標題列 -->
   <div class="header">
-    <button id="back-button" class="back-button">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 18L9 12L15 6" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <button id="back-button" class="back-button" style="display:none;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18L9 12L15 6"
+              stroke="#000" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
     <h1 id="page-title">總覽頁面</h1>
   </div>
-
   <!-- 開啟畫面 -->
   <div id="splash">
     <img src="logo(3).png" alt="WealthNova Logo">
     <h1>WealthNova | 財富新星</h1>
-    <div id="install-hint" style="display:none;">
-      <p>📲 請將此網站加到主畫面</p>
-      <p>在瀏覽器選單中點選「加入主畫面」<br>需安裝成 App 才可使用</p>
-    </div>
-    <div id="offline-hint" style="display:none;">
-      <p>請檢查網路狀態</p>
+    <!-- 安裝教學容器（預設隱藏） --> <!-- 新增 -->
+    <div id="install-hint" style="display:none; margin-top:20px; text-align:center;"> <!-- 新增 -->
+      <p style="font-size:18px; font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p> <!-- 新增 -->
+      <p style="font-size:16px; color:#666; line-height:2;">在瀏覽器選單中點選「加入主畫面」<br>需安裝成 App 才可使用</p> <!-- 新增 -->
+    </div> <!-- 新增 -->
+    <!-- 🚨 新增無網路提示 -->
+    <div id="offline-hint" style="display:none; margin-top:20px; text-align:center;">
+      <p style="font-size:16px; color:#e74c3c;">請檢查網路狀態</p>
     </div>
   </div>
 
   <!-- 總覽頁面 -->
-  <div id="app" class="page active">
+  <div id="app">
+    <div class="header"><h1>總覽頁面</h1></div>
     <p class="brand-title">總績效</p>
     <div class="balance">$8,545.00</div>
+
     <div class="chart-container">
       <canvas id="balanceChart"></canvas>
     </div>
+
     <p style="align-self:flex-start; margin:10px 0; font-weight:bold;">當月績效</p>
+
     <div class="transaction-row">
       <div class="icon"><img src="2.png" alt="TX"></div>
       <span class="title">台指期</span>
@@ -494,9 +610,11 @@
   </div>
 
   <!-- 歷史績效頁面 -->
-  <div id="history" class="page">
+  <div id="history">
+    <div class="header"><h1>歷史頁面</h1></div>
     <p class="brand-title">查詢績效</p>
     <h2 class="page-title">選擇商品</h2>
+
     <div class="transaction-row" data-target="tx">
       <div class="icon"><img src="2.png" alt="TX"></div>
       <span class="title">台指期</span>
@@ -515,78 +633,38 @@
   </div>
 
   <!-- 商品詳情頁 -->
-  <div id="product-detail" class="page">
+  <div id="product-detail" class="product-detail">
+    
+
     <p class="brand-title" id="product-name"></p>
     <div class="balance" id="product-balance"></div>
+  
     <div class="chart-container">
       <canvas id="productChart"></canvas>
     </div>
+  
     <div id="product-list"></div>
   </div>
 
+  
   <!-- 報告頁面 -->
-  <div id="export" class="page">
+  <div id="export" class="export-page">
     <p class="brand-title">每日盤前盤後報告</p>
     <h2 class="page-title">報告內容 (開發中)</h2>
   </div>
 
-  <!-- 設定頁面 -->
-  <div id="settings" class="page settings-layout">
-    <p class="section-title">顯示設定</p>
-    <div class="list-container">
-      <div class="list-row" id="language-setting">
-        <span>語言</span>
-        <div class="settings-right">
-          <span id="language-current">中文繁體</span>
-          <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </div>
-      <div class="list-row" id="theme-setting">
-        <span>主題</span>
-        <div class="settings-right">
-          <span id="theme-current">系統&自動</span>
-          <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <p class="section-title">其他</p>
-    <div class="list-container">
-      <div class="list-row clickable" id="about-setting">
-        <span>關於</span>
-        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="list-row clickable" id="contact-setting">
-        <span>聯絡我們</span>
-        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="list-row" id="version-setting">
-        <span>版本更新</span>
-        <div class="settings-right">
-          <span class="value">V1.0.0</span>
-          <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  
   <!-- 版本更新詳情頁 -->
-  <div id="version-detail" class="page version-page">
+  <div id="version-detail" class="version-page" style="display:none;">
+
+  
     <div class="content">
       <p class="brand-title">版本</p>
       <h2 class="page-title" id="current-version">V0.0.4</h2>
+  
       <button class="update-btn">立即更新</button>
-      <p class="section-title">歷史版本</p>
+  
+      <p class="section-title" style="text-align:center;">歷史版本</p>
       <div class="list-container">
         <div class="list-row">
           <span>日期:2025-09-07</span>
@@ -604,36 +682,98 @@
     </div>
   </div>
 
-  <!-- 關於頁面 -->
-  <div id="about-page" class="page">
-    <p class="brand-title">關於</p>
-    <h2 class="page-title">開發中</h2>
-  </div>
   
-  <!-- 聯絡我們頁面 -->
-  <div id="contact-page" class="page">
-    <p class="brand-title">聯絡我們</p>
-    <h2 class="page-title">開發中</h2>
-  </div>
+      <!-- 設定頁面 -->
+    <div id="settings" class="settings-page">
+      <!-- 顯示設定 -->
+      <p class="section-title">顯示設定</p>
+      <div class="list-container">
+        <!-- 🔽 把這裡的 select 全部換掉 -->
+        <div class="list-row "id="language-setting">
+          <span>語言</span>
+          <div class="settings-right">
+            <span id="language-current">中文繁體</span>
+            <!-- SVG 箭頭 -->
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="list-row" id="theme-setting">
+          <span>主題</span>
+          <div class="settings-right">
+            <span id="theme-current">系統&自動</span>
+            <!-- SVG 箭頭 -->
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
 
-  <!-- 語言選單彈窗 -->
-  <div id="language-popup" class="popup">
-    <div class="popup-content">
-      <div class="popup-item" data-value="zh">中文繁體</div>
-      <div class="popup-item" data-value="en">English</div>
-      <div class="popup-cancel">取消</div>
+    
+      <!-- 關於 -->
+      <p class="section-title">其他</p>
+      <div class="list-container">
+        <div class="list-row clickable" id="about-setting">
+          <span>關於</span>
+          <!-- SVG 箭頭 -->
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="list-row clickable" id="contact-setting">
+          <span>聯絡我們</span>
+          <!-- SVG 箭頭 -->
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="list-row" id="version-setting">
+          <span>版本更新</span>
+          <div class="settings-right">
+          <span class="value">V1.0.0</span>
+          <!-- SVG 箭頭 -->
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+    <!-- 語言選單 Popup -->
+    <div id="language-popup" class="popup">
+      <div class="popup-content">
+        <div class="popup-item" data-value="zh">中文繁體</div>
+        <div class="popup-item" data-value="en">English</div>
+        <div class="popup-cancel">取消</div>
+      </div>
+    </div>
+    
+    <!-- 主題選單 Popup -->
+    <div id="theme-popup" class="popup">
+      <div class="popup-content">
+        <div class="popup-item" data-value="system">系統&自動</div>
+        <div class="popup-item" data-value="light">淺色模式</div>
+        <div class="popup-item" data-value="dark">深色模式</div>
+        <div class="popup-cancel">取消</div>
+      </div>
+    </div>
+
   
-  <!-- 主題選單彈窗 -->
-  <div id="theme-popup" class="popup">
-    <div class="popup-content">
-      <div class="popup-item" data-value="system">系統&自動</div>
-      <div class="popup-item" data-value="light">淺色模式</div>
-      <div class="popup-item" data-value="dark">深色模式</div>
-      <div class="popup-cancel">取消</div>
+    <!-- 關於頁面 -->
+    <div id="about-page" class="about-page" style="display:none;">
+      <p class="brand-title">關於</p>
+      <h2 class="page-title">開發中</h2>
     </div>
-  </div>
+    
+    <!-- 聯絡我們頁面 -->
+    <div id="contact-page" class="contact-page" style="display:none;">
+      <p class="brand-title">聯絡我們</p>
+      <h2 class="page-title">開發中</h2>
+    </div>
+
+
 
   <!-- 底部導航列 -->
   <div class="bottom-nav">
@@ -653,11 +793,13 @@
     </div>
     <div class="nav-item" data-target="export">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <line x1="6.27" y1="11.05" x2="17.73" y2="11.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
-        <line x1="6.27" y1="14.86" x2="17.73" y2="14.86" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
-        <line x1="6.27" y1="18.68" x2="17.73" y2="18.68" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
-        <polygon points="20.59 6.27 20.59 22.5 3.41 22.5 3.41 1.5 15.82 1.5 20.59 6.27" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none" stroke-opacity="0.6"/>
-        <polygon points="20.59 6.27 20.59 7.23 14.86 7.23 14.86 1.5 15.82 1.5 20.59 6.27" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none" stroke-opacity="0.6"/>
+        <line x1="6.27" y1="11.05" x2="17.73" y2="11.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"stroke-opacity="0.6"/>
+        <line x1="6.27" y1="14.86" x2="17.73" y2="14.86" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"stroke-opacity="0.6"/>
+        <line x1="6.27" y1="18.68" x2="17.73" y2="18.68" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"stroke-opacity="0.6"/>
+        <polygon points="20.59 6.27 20.59 22.5 3.41 22.5 3.41 1.5 15.82 1.5 20.59 6.27"
+                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"stroke-opacity="0.6"/>
+        <polygon points="20.59 6.27 20.59 7.23 14.86 7.23 14.86 1.5 15.82 1.5 20.59 6.27"
+                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"stroke-opacity="0.6"/>
       </svg>
       <span>報告</span>
     </div>
@@ -670,515 +812,440 @@
   </div>
 
   <script>
-    // 應用程式主要類別
-    class WealthNova {
-      constructor() {
-        this.pageStack = [];
-        this.currentChart = null;
-        this.productChart = null;
-        
-        // 頁面對應表
-        this.pages = {
-          app: document.getElementById('app'),
-          history: document.getElementById('history'),
-          product: document.getElementById('product-detail'),
-          export: document.getElementById('export'),
-          settings: document.getElementById('settings'),
-          version: document.getElementById('version-detail'),
-          about: document.getElementById('about-page'),
-          contact: document.getElementById('contact-page')
-        };
-
-        // 商品資料
-        this.productData = {
-          tx: { name: "台指期", balance: "$9,200.00", icon: "2.png" },
-          dj: { name: "小道瓊", balance: "$8,545.00", icon: "3.png" },
-          nq: { name: "小那指", balance: "$10,120.00", icon: "4.png" }
-        };
-
-        // 語言翻譯字典
-        this.translations = {
-          zh: {
-            overview: "總覽",
-            history: "歷史",
-            report: "報告",
-            settings: "設定",
-            productDetail: "商品詳情",
-          },
-          en: {
-            overview: "Overview",
-            history: "History",
-            report: "Report",
-            settings: "Settings",
-            productDetail: "Product Detail",
-          }
-        };
-
-        this.init();
-      }
-
-      // 初始化應用程式
-      init() {
-        this.initCharts();
-        this.initEventListeners();
-        this.initSettings();
-        this.initPWA();
-        this.handleAppStart();
-      }
-
-      // 初始化圖表
-      initCharts() {
-        // 總覽頁面圖表
-        const ctx = document.getElementById('balanceChart').getContext('2d');
-        this.currentChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: ["Oct","Nov","Dec","Jan","Feb","Mar"],
-            datasets: [{
-              label: "Balance",
-              data: [7000, 7600, 8200, 8545, 8300, 8800],
-              borderColor: "#007BFF",
-              backgroundColor: "rgba(0,123,255,0.1)",
-              fill: true,
-              tension: 0.4,
-              pointBackgroundColor: "#007BFF",
-              pointRadius: 5
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { display: false } },
-              y: { display: false }
-            }
-          }
-        });
-      }
-
-      // 初始化事件監聽器
-      initEventListeners() {
-        // 底部導航列事件
-        this.initBottomNavigation();
-        
-        // 返回按鈕事件
-        this.initBackButton();
-        
-        // 商品詳情頁事件
-        this.initProductDetails();
-        
-        // 設定頁面事件
-        this.initSettingsEvents();
-        
-        // 網路狀態監聽
-        this.initNetworkEvents();
-      }
-
-      // 初始化底部導航列
-      initBottomNavigation() {
-        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
-        navItems.forEach(item => {
-          item.addEventListener('click', () => {
-            navItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-        
-            const target = item.getAttribute("data-target");
-            if (target && this.pages[target]) {
-              this.showPage(target, item.querySelector("span").textContent);
-              this.updateThemeColor();
-            }
-          });
-        });
-      }
-
-      // 初始化返回按鈕
-      initBackButton() {
-        const backButton = document.getElementById("back-button");
-        backButton.addEventListener("click", () => {
-          if (this.pageStack.length > 1) {
-            this.pageStack.pop();
-            const prevPage = this.pageStack[this.pageStack.length - 1];
-        
-            const navItem = document.querySelector(`.bottom-nav [data-target='${prevPage}'] span`);
-            const title = navItem ? navItem.textContent : "";
-            this.showPage(prevPage, title, true);
-          }
-        });
-      }
-
-      // 初始化商品詳情頁
-      initProductDetails() {
-        document.querySelectorAll("#history .transaction-row").forEach(row => {
-          row.addEventListener("click", () => {
-            const target = row.getAttribute("data-target");
-            if (target && this.productData[target]) {
-              this.showProductDetail(target);
-            }
-          });
-        });
-      }
-
-      // 顯示商品詳情
-      showProductDetail(target) {
-        const product = this.productData[target];
-        this.showPage("product", "商品詳情");
-        
-        document.getElementById("back-button").style.display = "flex";
-        document.getElementById("product-name").textContent = product.name;
-        document.getElementById("product-balance").textContent = product.balance;
-        
-        this.updateProductList(product);
-        this.createProductChart(product);
-      }
-
-      // 更新商品清單
-      updateProductList(product) {
-        const list = document.getElementById("product-list");
-        list.innerHTML = "";
-        
-        ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(month => {
-          list.innerHTML += `
-            <div class="transaction-row">
-              <div class="icon"><img src="${product.icon}" alt="${product.name}"></div>
-              <span class="title">${month}</span>
-              <span class="amount">- $5.99</span>
-            </div>`;
-        });
-      }
-
-      // 建立商品圖表
-      createProductChart(product) {
-        if (this.productChart) {
-          this.productChart.destroy();
+    
+    // Chart.js Balance Chart (Dashboard)
+    const ctx = document.getElementById('balanceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ["Oct","Nov","Dec","Jan","Feb","Mar"],
+        datasets: [{
+          label: "Balance",
+          data: [7000, 7600, 8200, 8545, 8300, 8800],
+          borderColor: "#007BFF",
+          backgroundColor: "rgba(0,123,255,0.1)",
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#007BFF",
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { display: false }
         }
-
-        const productCtx = document.getElementById('productChart').getContext('2d');
-        this.productChart = new Chart(productCtx, {
-          type: 'line',
-          data: {
-            labels: ["Apr","May","Jun","Jul","Aug"],
-            datasets: [{
-              label: product.name,
-              data: [5000, 6000, 7000, 8545, 9200],
-              borderColor: "#007BFF",
-              backgroundColor: "rgba(0,123,255,0.1)",
-              fill: true,
-              tension: 0.4,
-              pointBackgroundColor: "#007BFF",
-              pointRadius: 5
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { display: false } },
-              y: { display: false }
-            }
-          }
-        });
       }
+    });
 
-      // 初始化設定頁面事件
-      initSettingsEvents() {
-        // 語言設定
-        this.initLanguageSettings();
-        
-        // 主題設定
-        this.initThemeSettings();
-        
-        // 其他設定
-        this.initOtherSettings();
-      }
 
-      // 初始化語言設定
-      initLanguageSettings() {
-        document.getElementById("language-setting").addEventListener("click", () => {
-          document.getElementById("language-popup").style.display = "flex";
-        });
-        
-        document.querySelectorAll("#language-popup .popup-item").forEach(item => {
-          item.addEventListener("click", () => {
-            const lang = item.getAttribute("data-value");
-            const labels = { zh: "中文繁體", en: "English" };
-        
-            document.getElementById("language-current").textContent = labels[lang];
-            localStorage.setItem("lang", lang);
-            this.setLanguage(lang);
-        
-            document.getElementById("language-popup").style.display = "none";
-          });
-        });
-        
-        document.querySelector("#language-popup .popup-cancel").addEventListener("click", () => {
-          document.getElementById("language-popup").style.display = "none";
-        });
-      }
+    // 頁面切換
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    const pages = {
+      app: document.getElementById('app'),
+      history: document.getElementById('history'),
+      product: document.getElementById('product-detail'),
+      export: document.getElementById('export'),
+      settings: document.getElementById('settings'),
+      version: document.getElementById('version-detail'),
+      about: document.getElementById('about-page'),
+      contact: document.getElementById('contact-page')
+    };
 
-      // 初始化主題設定
-      initThemeSettings() {
-        document.getElementById("theme-setting").addEventListener("click", () => {
-          document.getElementById("theme-popup").style.display = "flex";
-        });
-        
-        document.querySelectorAll("#theme-popup .popup-item").forEach(item => {
-          item.addEventListener("click", () => {
-            const mode = item.getAttribute("data-value");
-            const labels = { system: "系統&自動", light: "淺色模式", dark: "深色模式" };
-        
-            document.getElementById("theme-current").textContent = labels[mode];
-            localStorage.setItem("theme", mode);
-            this.setTheme(mode);
-        
-            document.getElementById("theme-popup").style.display = "none";
-          });
-        });
-        
-        document.querySelector("#theme-popup .popup-cancel").addEventListener("click", () => {
-          document.getElementById("theme-popup").style.display = "none";
-        });
-      }
 
-      // 初始化其他設定
-      initOtherSettings() {
-        document.getElementById("version-setting").addEventListener("click", () => {
-          this.showPage("version", "版本更新");
-        });
-        
-        document.getElementById("about-setting").addEventListener("click", () => {
-          this.showPage("about", "關於");
-        });
-        
-        document.getElementById("contact-setting").addEventListener("click", () => {
-          this.showPage("contact", "聯絡我們");
-        });
-      }
-
-      // 初始化網路事件監聽
-      initNetworkEvents() {
-        window.addEventListener("offline", () => { 
-          this.showOffline(); 
-        });
-        
-        window.addEventListener("online", () => {
-          const logo = document.querySelector("#splash img");
-          logo.style.animation = "zoomIn 1s ease forwards";
-          window.location.reload();
-        });
-      }
-
-      // 初始化設定
-      initSettings() {
-        const savedLang = localStorage.getItem("lang") || "zh";
-        const savedTheme = localStorage.getItem("theme") || "system";
-        
-        this.setLanguage(savedLang);
-        this.setTheme(savedTheme);
-      }
-
-      // 設定語言
-      setLanguage(lang) {
-        localStorage.setItem("lang", lang);
-        const t = this.translations[lang];
-        
-        document.querySelector(".bottom-nav [data-target='app'] span").textContent = t.overview;
-        document.querySelector(".bottom-nav [data-target='history'] span").textContent = t.history;
-        document.querySelector(".bottom-nav [data-target='export'] span").textContent = t.report;
-        document.querySelector(".bottom-nav [data-target='settings'] span").textContent = t.settings;
-        document.getElementById("page-title").textContent = t.overview;
-      }
-
-      // 設定主題
-      setTheme(mode) {
-        localStorage.setItem("theme", mode);
-        
-        document.body.classList.remove("light", "dark");
-        
-        if (mode === "light") {
-          document.body.classList.add("light");
-          this.setThemeColor("#ffffff");
-        } else if (mode === "dark") {
-          document.body.classList.add("dark");
-          this.setThemeColor("#1e1e1e");
-        } else if (mode === "system") {
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          if (prefersDark) {
-            document.body.classList.add("dark");
-            this.setThemeColor("#1e1e1e");
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+    
+        const target = item.getAttribute("data-target");
+        if (target && pages[target]) {
+          showPage(target, item.querySelector("span").textContent);
+    
+          // 狀態列顏色跟隨主題
+          if (document.body.classList.contains("dark")) {
+            setThemeColor("#1e1e1e");
           } else {
-            document.body.classList.add("light");
-            this.setThemeColor("#ffffff");
+            setThemeColor("#ffffff");
           }
         }
-      }
+      });
+    });
 
-      // 設定狀態列顏色
-      setThemeColor(color) {
-        let metaTheme = document.querySelector('meta[name="theme-color"]');
-        if (!metaTheme) {
-          metaTheme = document.createElement("meta");
-          metaTheme.setAttribute("name", "theme-color");
-          document.head.appendChild(metaTheme);
+
+    // 商品詳情頁切換邏輯
+    const productData = {
+      tx: { name: "台指期", balance: "$9,200.00", icon: "2.png" },
+      dj: { name: "小道瓊", balance: "$8,545.00", icon: "3.png" },
+      nq: { name: "小那指", balance: "$10,120.00", icon: "4.png" }
+    };
+
+    document.querySelectorAll("#history .transaction-row").forEach(row => {
+      row.addEventListener("click", () => {
+        const target = row.getAttribute("data-target");
+        if (target && productData[target]) {
+          showPage("product", "商品詳情");
+          backButton.style.display = "flex";  
+          document.getElementById("product-name").textContent = productData[target].name;
+          document.getElementById("product-balance").textContent = productData[target].balance;
+          
+          const list = document.getElementById("product-list");
+          list.innerHTML = "";
+          ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(m => {
+            list.innerHTML += `
+              <div class="transaction-row">
+                <div class="icon"><img src="${productData[target].icon}" alt="${productData[target].name}"></div>
+                <span class="title">${m}</span>
+                <span class="amount">- $5.99</span>
+              </div>`;
+          });
+
+          const productCtx = document.getElementById('productChart').getContext('2d');
+          new Chart(productCtx, {
+            type: 'line',
+            data: {
+              labels: ["Apr","May","Jun","Jul","Aug"],
+              datasets: [{
+                label: productData[target].name,
+                data: [5000, 6000, 7000, 8545, 9200],
+                borderColor: "#007BFF",
+                backgroundColor: "rgba(0,123,255,0.1)",
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: "#007BFF",
+                pointRadius: 5
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { display: false }
+              }
+            }
+          });
         }
-        metaTheme.setAttribute("content", color);
-      }
+      });
+    });
+        // 📌 返回堆疊
+    const pageStack = [];
+    const backButton = document.getElementById("back-button");
 
-      // 更新主題顏色
-      updateThemeColor() {
-        if (document.body.classList.contains("dark")) {
-          this.setThemeColor("#1e1e1e");
+
+
+    // 語言翻譯字典
+    const translations = {
+      zh: {
+        overview: "總覽",
+        history: "歷史",
+        report: "報告",
+        settings: "設定",
+        productDetail: "商品詳情",
+
+      },
+      en: {
+        overview: "Overview",
+        history: "History",
+        report: "Report",
+        settings: "Settings",
+        productDetail: "Product Detail",
+
+      }
+    };
+    
+    // 切換語言
+    function setLanguage(lang) {
+      localStorage.setItem("lang", lang);
+      const t = translations[lang];
+      document.querySelector(".bottom-nav [data-target='app'] span").textContent = t.overview;
+      document.querySelector(".bottom-nav [data-target='history'] span").textContent = t.history;
+      document.querySelector(".bottom-nav [data-target='export'] span").textContent = t.report;
+      document.querySelector(".bottom-nav [data-target='settings'] span").textContent = t.settings;
+
+      document.getElementById("page-title").textContent = t.overview; // 初始化標題
+    }
+    
+
+    
+    // 主題切換
+    // 主題切換
+    function setTheme(mode) {
+      localStorage.setItem("theme", mode);
+    
+      // 先清掉舊的 class
+      document.body.classList.remove("light", "dark");
+    
+      if (mode === "light") {
+        document.body.classList.add("light");
+        setThemeColor("#ffffff");
+      } else if (mode === "dark") {
+        document.body.classList.add("dark");
+        setThemeColor("#1e1e1e");
+      } else if (mode === "system") {
+        // 跟隨系統
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (prefersDark) {
+          document.body.classList.add("dark");
+          setThemeColor("#1e1e1e");
         } else {
-          this.setThemeColor("#ffffff");
-        }
-      }
-
-      // 顯示頁面
-      showPage(pageId, title = "", isBack = false) {
-        Object.values(this.pages).forEach(p => p.style.display = "none");
-        this.pages[pageId].style.display = "flex";
-
-        if (!isBack && this.pageStack[this.pageStack.length - 1] !== pageId) {
-          this.pageStack.push(pageId);
-        }
-
-        if (title) {
-          document.getElementById("page-title").textContent = title;
-        }
-
-        const backButton = document.getElementById("back-button");
-        if (["app", "history", "export", "settings"].includes(pageId)) {
-          backButton.style.display = "none";
-        } else {
-          backButton.style.display = "flex";
-        }
-      }
-
-      // 判斷是否為獨立應用
-      isStandalone() { 
-        return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); 
-      }
-
-      // 顯示無網路狀態
-      showOffline() {
-        const splash = document.getElementById("splash");
-        splash.style.display = "flex";
-        splash.style.opacity = "1";
-        splash.style.animation = "none";
-        
-        const logo = splash.querySelector("img");
-        logo.style.animation = "zoomLoop 2s ease-in-out infinite";
-        document.getElementById("offline-hint").style.display = "block";
-      }
-
-      // 處理應用啟動
-      handleAppStart() {
-        this.setThemeColor("#ffffff");
-            
-        setTimeout(() => { 
-          if (!navigator.onLine) {
-            this.showOffline();
-            return;
-          }
-          
-          document.getElementById("splash").style.display = "none";
-          document.getElementById("app").style.display = "flex";
-          document.querySelector(".bottom-nav").style.display = "flex";
-          
-          const savedTheme = localStorage.getItem("theme") || "system";
-          this.setTheme(savedTheme);
-        }, 4000);
-      }
-
-      // 初始化 PWA
-      initPWA() {
-        // 動態建立 manifest
-        const manifest = {
-          name: "WealthNova | 財富新星",
-          short_name: "WealthNova",
-          start_url: ".",
-          display: "standalone",
-          background_color: "#ffffff",
-          theme_color: "#ffffff",
-          icons: [
-            { "src": "logo(3).png", "sizes": "192x192", "type": "image/png" },
-            { "src": "logo(3).png", "sizes": "512x512", "type": "image/png" }
-          ]
-        };
-        
-        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-        const manifestURL = URL.createObjectURL(manifestBlob);
-        const link = document.createElement("link");
-        link.rel = "manifest";
-        link.href = manifestURL;
-        document.head.appendChild(link);
-
-        // theme-color meta 標籤
-        if (!document.querySelector('meta[name="theme-color"]')) {
-          const m = document.createElement('meta');
-          m.name = 'theme-color';
-          m.content = '#ffffff';
-          document.head.appendChild(m);
-        }
-
-        // 註冊 Service Worker
-        this.registerServiceWorker();
-
-        // 監聽系統主題變化
-        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-          const savedTheme = localStorage.getItem("theme") || "system";
-          if (savedTheme === "system") {
-            this.setTheme("system");
-          }
-        });
-      }
-
-      // 註冊 Service Worker
-      registerServiceWorker() {
-        if ("serviceWorker" in navigator) {
-          const swCode = `
-            const CACHE = 'wnova-runtime';
-            self.addEventListener('install', (e) => { self.skipWaiting(); });
-            self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
-
-            // 網路優先策略
-            self.addEventListener('fetch', (event) => {
-              event.respondWith(fetch(event.request));
-            });
-
-            // 處理更新訊息
-            self.addEventListener('message', (e) => {
-              if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
-            });
-          `;
-          
-          const swBlob = new Blob([swCode], { type: "text/javascript" });
-          const swUrl = URL.createObjectURL(swBlob);
-
-          navigator.serviceWorker.register(swUrl).then((reg) => {
-            reg.addEventListener('updatefound', () => {
-              const newWorker = reg.installing;
-              if (!newWorker) return;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                }
-              });
-            });
-            
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              window.location.reload();
-            });
-          }).catch(console.error);
+          document.body.classList.add("light");
+          setThemeColor("#ffffff");
         }
       }
     }
+    
+    // 監聽主題選單變動
 
-    // 初始化應用程式
-    document.addEventListener('DOMContentLoaded', () => {
-      new WealthNova();
+    
+    // 🚀 另外監聽系統深淺色變動（只有在「跟隨系統」模式才會觸發）
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      const savedTheme = localStorage.getItem("theme") || "system";
+      if (savedTheme === "system") {
+        setTheme("system"); // 重新套用
+      }
     });
+    
+
+    
+    // 初始化設定
+    const savedLang = localStorage.getItem("lang") || "zh";
+
+    setLanguage(savedLang);
+    
+   // 初始化
+    const savedTheme = localStorage.getItem("theme") || "system";
+
+    setTheme(savedTheme);
+    
+    // ========================
+    // 判斷是否從主畫面開啟 // 新增
+    // ========================
+    function isStandalone() { 
+      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); 
+    } 
+    // 顯示無網路提示
+    function showOffline() {
+      const splash = document.getElementById("splash");
+      splash.style.display = "flex";
+      splash.style.opacity = "1";
+      splash.style.animation = "none";
+        // 讓 logo 循環動畫
+      const logo = splash.querySelector("img");
+      logo.style.animation = "zoomLoop 2s ease-in-out infinite";
+      document.getElementById("offline-hint").style.display = "block";
+    }
+    // 監聽網路狀態
+    window.addEventListener("offline", () => { showOffline(); });
+    window.addEventListener("online", () => {
+      const logo = document.querySelector("#splash img");
+      logo.style.animation = "zoomIn 1s ease forwards"; // 回到原本動畫
+      window.location.reload();
+    });
+    // 🚀 頁面載入 → 強制 splash 狀態列為白色
+    setThemeColor("#ffffff");
+        
+    setTimeout(() => { 
+        if (!navigator.onLine) {
+          showOffline();
+          return;
+        }
+//      if (isStandalone()) {
+        document.getElementById("splash").style.display = "none";
+        document.getElementById("app").style.display = "flex";
+        document.querySelector(".bottom-nav").style.display = "flex"; // ✅ 顯示導覽列
+        // 🚀 同步狀態列顏色到 header
+        const savedTheme = localStorage.getItem("theme") || "system";
+            setTheme(savedTheme);
+//      } else { // 新增
+//        splash.style.animation = "none";  // 停止動畫 ✅
+//        splash.style.opacity = "1";       // 保持顯示 ✅
+//        document.getElementById("install-hint").style.display = "block";
+//      } // 新增
+    }, 4000); // 新增
+
+    function setThemeColor(color) {
+      let metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (!metaTheme) {
+        metaTheme = document.createElement("meta");
+        metaTheme.setAttribute("name", "theme-color");
+        document.head.appendChild(metaTheme);
+      }
+      metaTheme.setAttribute("content", color);
+    }
+    // 🚀 語言切換
+    document.getElementById("language-setting").addEventListener("click", () => {
+      document.getElementById("language-popup").style.display = "flex";
+    });
+    
+    document.querySelectorAll("#language-popup .popup-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const lang = item.getAttribute("data-value");
+        const labels = { zh: "中文繁體", en: "English" };
+    
+        document.getElementById("language-current").textContent = labels[lang];
+        localStorage.setItem("lang", lang);
+        setLanguage(lang);
+    
+        document.getElementById("language-popup").style.display = "none";
+      });
+    });
+    
+    document.querySelector("#language-popup .popup-cancel").addEventListener("click", () => {
+      document.getElementById("language-popup").style.display = "none";
+    });
+    
+    // 🚀 主題切換
+    document.getElementById("theme-setting").addEventListener("click", () => {
+      document.getElementById("theme-popup").style.display = "flex";
+    });
+    
+    document.querySelectorAll("#theme-popup .popup-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const mode = item.getAttribute("data-value");
+        const labels = { system: "系統&自動", light: "淺色模式", dark: "深色模式" };
+    
+        document.getElementById("theme-current").textContent = labels[mode];
+        localStorage.setItem("theme", mode);
+        setTheme(mode);
+    
+        document.getElementById("theme-popup").style.display = "none";
+      });
+    });
+    
+    document.querySelector("#theme-popup .popup-cancel").addEventListener("click", () => {
+      document.getElementById("theme-popup").style.display = "none";
+    });
+    
+    document.getElementById("version-setting").addEventListener("click", () => {
+      showPage("version", "版本更新");
+    });
+    document.getElementById("about-setting").addEventListener("click", () => {
+      showPage("about", "關於");
+    });
+    
+    document.getElementById("contact-setting").addEventListener("click", () => {
+      showPage("contact", "聯絡我們");
+    });
+
+
+    
+
+    
+    // 📌 顯示某個頁面
+    function showPage(pageId, title = "", isBack = false) {
+  Object.values(pages).forEach(p => p.style.display = "none");
+  pages[pageId].style.display = "flex";
+
+  if (!isBack && pageStack[pageStack.length - 1] !== pageId) {
+    pageStack.push(pageId);
+  }
+
+  if (title) {
+    document.getElementById("page-title").textContent = title;
+  }
+
+  if (["app", "history", "export", "settings"].includes(pageId)) {
+    backButton.style.display = "none";
+  } else {
+    backButton.style.display = "flex";
+  }
+}
+
+
+    
+    // 📌 點擊返回鍵
+    // 📌 點擊返回鍵
+    backButton.addEventListener("click", () => {
+      if (pageStack.length > 1) {
+        pageStack.pop(); // 移除當前頁
+        const prevPage = pageStack[pageStack.length - 1];
+    
+        // 🚀 改用 showPage，才會觸發黑名單邏輯
+        const navItem = document.querySelector(`.bottom-nav [data-target='${prevPage}'] span`);
+        const title = navItem ? navItem.textContent : "";
+        showPage(prevPage, title, true); // ← true = 代表返回，不再 push
+      }
+    });
+    
+
+
+
+  </script>
+
+  <!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
+  <script>
+    (function () {
+      // 動態建立 manifest（不用額外檔案）
+      const manifest = {
+        name: "WealthNova | 財富新星",
+        short_name: "WealthNova",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#ffffff",
+        icons: [
+          { "src": "logo(3).png", "sizes": "192x192", "type": "image/png" },
+          { "src": "logo(3).png", "sizes": "512x512", "type": "image/png" }
+        ]
+      };
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+      const manifestURL = URL.createObjectURL(manifestBlob);
+      const link = document.createElement("link");
+      link.rel = "manifest";
+      link.href = manifestURL;
+      document.head.appendChild(link);
+
+      // theme-color（若沒有就補上）
+      if (!document.querySelector('meta[name="theme-color"]')) {
+        const m = document.createElement('meta');
+        m.name = 'theme-color';
+        m.content = '#ffffff';
+        document.head.appendChild(m);
+      }
+
+      // 動態註冊 Service Worker（無需 sw.js 檔）
+      if ("serviceWorker" in navigator) {
+        const swCode = `
+          const CACHE = 'wnova-runtime';
+          self.addEventListener('install', (e) => { self.skipWaiting(); });
+          self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
+
+          // 網路優先：每次都嘗試抓新版本，失敗才回 cache
+          self.addEventListener('fetch', (event) => {
+            event.respondWith(fetch(event.request));
+          });
+
+          // 可選：收到主頁訊息時立即啟用新 SW
+          self.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+          });
+        `;
+        const swBlob = new Blob([swCode], { type: "text/javascript" });
+        const swUrl = URL.createObjectURL(swBlob);
+
+        navigator.serviceWorker.register(swUrl).then((reg) => {
+          // 偵測更新，安裝完成就切換並重新載入（確保最新）
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // 新 SW 接手後強制刷新一次內容
+            window.location.reload();
+          });
+        }).catch(console.error);
+      }
+    })();
   </script>
 </body>
 </html>
