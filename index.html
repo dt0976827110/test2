@@ -1127,30 +1127,21 @@
     
     // 📌 顯示某個頁面
     function showPage(pageId, title = "") {
-      // 隱藏所有頁面
-      Object.values(pages).forEach(p => p.style.display = "none");
-    
-      // 顯示目標頁
-      pages[pageId].style.display = "flex";
-    
-      // 推到堆疊（避免重複 push）
-      if (pageStack[pageStack.length - 1] !== pageId) {
-        pageStack.push(pageId);
-      }
-    
-      // 設定標題
-      if (title) {
-        document.getElementById("page-title").textContent = title;
-      }
-    
+  Object.values(pages).forEach(p => p.style.display = "none");
+  pages[pageId].style.display = "flex";
 
-      // 🚀 強制控制返回鍵
-      if (["app", "history", "export", "settings"].includes(pageId)) {
-        backButton.style.display = "none"; // 主頁面永遠隱藏
-      } else {
-        backButton.style.display = "flex"; // 子頁面才顯示
-      }
+  // 只 push 子頁
+  if (!["app","history","export","settings"].includes(pageId)) {
+    if (pageStack[pageStack.length - 1] !== pageId) {
+      pageStack.push(pageId);
     }
+  }
+
+  if (title) document.getElementById("page-title").textContent = title;
+
+  backButton.style.display = ["app","history","export","settings"].includes(pageId) ? "none" : "flex";
+}
+
     
     // 📌 點擊返回鍵
     backButton.addEventListener("click", () => {
