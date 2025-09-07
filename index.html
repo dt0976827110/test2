@@ -920,7 +920,9 @@
         }
       });
     });
-
+        // 📌 返回堆疊
+    const pageStack = [];
+    const backButton = document.getElementById("back-button");
 
 
     backButton.addEventListener("click", () => {
@@ -1126,9 +1128,7 @@
     
 
     
-    // 📌 返回堆疊
-    const pageStack = [];
-    const backButton = document.getElementById("back-button");
+
     
     // 📌 顯示某個頁面
     function showPage(pageId, title = "") {
