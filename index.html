@@ -1138,22 +1138,19 @@
 
     
     // 📌 點擊返回鍵
+    // 📌 點擊返回鍵
     backButton.addEventListener("click", () => {
       if (pageStack.length > 1) {
         pageStack.pop(); // 移除當前頁
         const prevPage = pageStack[pageStack.length - 1];
     
-        Object.values(pages).forEach(p => p.style.display = "none");
-        pages[prevPage].style.display = "flex";
-    
-        // 設定標題（取自 bottom-nav 或預設值）
+        // 🚀 改用 showPage，才會觸發黑名單邏輯
         const navItem = document.querySelector(`.bottom-nav [data-target='${prevPage}'] span`);
-        if (navItem) {
-          document.getElementById("page-title").textContent = navItem.textContent;
-        }
-        
+        const title = navItem ? navItem.textContent : "";
+        showPage(prevPage, title, true); // ← true = 代表返回，不再 push
       }
     });
+    
 
 
 
