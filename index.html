@@ -1149,8 +1149,13 @@
         document.getElementById("page-title").textContent = title;
       }
     
-      // 控制返回鍵
-      //backButton.style.display = pageStack.length > 1 ? "flex" : "none";
+
+      // 🚀 強制控制返回鍵
+      if (["app", "history", "export", "settings"].includes(pageId)) {
+        backButton.style.display = "none"; // 主頁面永遠隱藏
+      } else {
+        backButton.style.display = "flex"; // 子頁面才顯示
+      }
     }
     
     // 📌 點擊返回鍵
@@ -1168,7 +1173,7 @@
           document.getElementById("page-title").textContent = navItem.textContent;
         }
     
-        backButton.style.display = pageStack.length > 1 ? "flex" : "none";
+        //backButton.style.display = pageStack.length > 1 ? "flex" : "none";
       }
     });
 
