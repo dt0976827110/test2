@@ -922,17 +922,7 @@
     const backButton = document.getElementById("back-button");
 
 
-    backButton.addEventListener("click", () => {
-      if (pageStack.length > 1) {
-        pageStack.pop(); // 移除當前頁
-        const prevPage = pageStack[pageStack.length - 1];
-    
-        // 🚀 改用 showPage()，讓共用邏輯生效
-        const navItem = document.querySelector(`.bottom-nav [data-target='${prevPage}'] span`);
-        const title = navItem ? navItem.textContent : "";
-        showPage(prevPage, title);
-      }
-    });
+
     // 語言翻譯字典
     const translations = {
       zh: {
@@ -1144,8 +1134,8 @@
     // 📌 點擊返回鍵
     backButton.addEventListener("click", () => {
       if (pageStack.length > 1) {
-        //pageStack.pop(); // 移除當前頁
-        //const prevPage = pageStack[pageStack.length - 1];
+        pageStack.pop(); // 移除當前頁
+        const prevPage = pageStack[pageStack.length - 1];
     
         Object.values(pages).forEach(p => p.style.display = "none");
         pages[prevPage].style.display = "flex";
@@ -1155,7 +1145,7 @@
         if (navItem) {
           document.getElementById("page-title").textContent = navItem.textContent;
         }
-        //backButton.style.display = pageStack.length > 1 ? "flex" : "none";
+        
       }
     });
 
