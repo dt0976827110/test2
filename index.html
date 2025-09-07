@@ -1144,8 +1144,8 @@
     // 📌 點擊返回鍵
     backButton.addEventListener("click", () => {
       if (pageStack.length > 1) {
-        pageStack.pop(); // 移除當前頁
-        const prevPage = pageStack[pageStack.length - 1];
+        //pageStack.pop(); // 移除當前頁
+        //const prevPage = pageStack[pageStack.length - 1];
     
         Object.values(pages).forEach(p => p.style.display = "none");
         pages[prevPage].style.display = "flex";
@@ -1155,7 +1155,6 @@
         if (navItem) {
           document.getElementById("page-title").textContent = navItem.textContent;
         }
-        showPage(prevPage, title, true); // ✅ 加上 true，避免重複 push
         //backButton.style.display = pageStack.length > 1 ? "flex" : "none";
       }
     });
