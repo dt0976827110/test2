@@ -11,6 +11,7 @@
 <link href="logo(3).png" rel="apple-touch-icon" sizes="512x512"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+    *, *::before, *::after { box-sizing: border-box; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Arial', sans-serif;
@@ -568,10 +569,10 @@
       padding: 14px 14px 120px 14px; /* 底部留給 nav */
       display:flex;
       flex-direction:column;
-      align-items:center;
-      gap: 10px;
-      background:#f4f5f7;
-    }
+      align-items:stretch;
+gap: 10px;
+      background: transparent;
+}
     .overview-topbar{
       width:100%;
       max-width:520px;
@@ -810,18 +811,6 @@
 </div>
 <!-- 總覽頁面 -->
 <div id="app" class="page overview-page">
-<div class="topbar-title">資產量控</div>
-    <button class="topbar-icon" id="notify-btn" aria-label="通知">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z"></path>
-        <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2z"></path>
-      </svg>
-      <span class="dot" aria-hidden="true"></span>
-    </button>
-  </div>
-<div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
-  </div>
-
   <div class="overview-balance">
     <div class="overview-balance-head">
       <div class="label">總覽看板</div>
@@ -831,7 +820,7 @@
     <div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
   </div>
 
-  <div class="overview-maincard">
+<div class="overview-maincard">
     <div class="donut-wrap">
       <canvas id="assetDonut"></canvas>
     </div>
