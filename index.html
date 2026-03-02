@@ -1,16 +1,16 @@
 <!DOCTYPE html>
+
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8"> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>WealthNova | 財富新星</title>
-  <!-- 狀態列顏色自動隨深淺模式切換 -->
-
-  <!-- ✅ iOS 主畫面 icon -->
-  <link rel="apple-touch-icon" sizes="192x192" href="logo(3).png">
-  <link rel="apple-touch-icon" sizes="512x512" href="logo(3).png">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>WealthNova | 財富新星</title>
+<!-- 狀態列顏色自動隨深淺模式切換 -->
+<!-- ✅ iOS 主畫面 icon -->
+<link href="logo(3).png" rel="apple-touch-icon" sizes="192x192"/>
+<link href="logo(3).png" rel="apple-touch-icon" sizes="512x512"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Arial', sans-serif;
@@ -559,265 +559,203 @@
   </style>
 </head>
 <body>
-  <!-- 固定標題列 -->
-  <div class="header">
-    <button id="back-button" class="back-button" style="display:none;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-           xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 18L9 12L15 6"
-              stroke="#000" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    <h1 id="page-title">總覽頁面</h1>
-  </div>
-  <!-- 開啟畫面 -->
-  <div id="splash">
-    <img src="logo(3).png" alt="WealthNova Logo">
-    <h1>WealthNova | 財富新星</h1>
-    <!-- 安裝教學容器（預設隱藏） --> <!-- 新增 -->
-    <div id="install-hint" style="display:none; margin-top:20px; text-align:center;"> <!-- 新增 -->
-      <p style="font-size:18px; font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p> <!-- 新增 -->
-      <p style="font-size:16px; color:#666; line-height:2;">在瀏覽器選單中點選「加入主畫面」<br>需安裝成 App 才可使用</p> <!-- 新增 -->
-    </div> <!-- 新增 -->
-    <!-- 🚨 新增無網路提示 -->
-    <div id="offline-hint" style="display:none; margin-top:20px; text-align:center;">
-      <p style="font-size:16px; color:#e74c3c;">請檢查網路狀態</p>
-    </div>
-  </div>
-
-  <!-- 總覽頁面 -->
-  <div id="app">
-    <div class="header"><h1>總覽頁面</h1></div>
-    <p class="brand-title">總績效</p>
-    <div class="balance">$8,545.00</div>
-
-    <div class="chart-container">
-      <canvas id="balanceChart"></canvas>
-    </div>
-
-    <p style="align-self:flex-start; margin:10px 0; font-weight:bold;">當月績效</p>
-
-    <div class="transaction-row">
-      <div class="icon"><img src="2.png" alt="TX"></div>
-      <span class="title">台指期</span>
-      <span class="amount">- $5.99</span>
-    </div>
-    <div class="transaction-row">
-      <div class="icon"><img src="3.png" alt="DJ"></div>
-      <span class="title">小道瓊</span>
-      <span class="amount">- $12.99</span>
-    </div>
-    <div class="transaction-row">
-      <div class="icon"><img src="4.png" alt="NQ"></div>
-      <span class="title">小那指</span>
-      <span class="amount">- $88.00</span>
-    </div>
-  </div>
-
-  <!-- 歷史績效頁面 -->
-  <div id="history">
-    <div class="header"><h1>歷史頁面</h1></div>
-    <p class="brand-title">查詢績效</p>
-    <h2 class="page-title">選擇商品</h2>
-
-    <div class="transaction-row" data-target="tx">
-      <div class="icon"><img src="2.png" alt="TX"></div>
-      <span class="title">台指期</span>
-      <span class="amount">+ 12.5%</span>
-    </div>
-    <div class="transaction-row" data-target="dj">
-      <div class="icon"><img src="3.png" alt="DJ"></div>
-      <span class="title">小道瓊</span>
-      <span class="amount">+ 8.3%</span>
-    </div>
-    <div class="transaction-row" data-target="nq">
-      <div class="icon"><img src="4.png" alt="NQ"></div>
-      <span class="title">小那指</span>
-      <span class="amount">+ 15.7%</span>
-    </div>
-  </div>
-
-  <!-- 商品詳情頁 -->
-  <div id="product-detail" class="product-detail">
-    
-
-    <p class="brand-title" id="product-name"></p>
-    <div class="balance" id="product-balance"></div>
-  
-    <div class="chart-container">
-      <canvas id="productChart"></canvas>
-    </div>
-  
-    <div id="product-list"></div>
-  </div>
-
-  
-  <!-- 報告頁面 -->
-  <div id="export" class="export-page">
-    <p class="brand-title">每日盤前盤後報告</p>
-    <h2 class="page-title">報告內容 (開發中)</h2>
-  </div>
-
-  
-  <!-- 版本更新詳情頁 -->
-  <div id="version-detail" class="version-page" style="display:none;">
-
-  
-    <div class="content">
-      <p class="brand-title">版本</p>
-      <h2 class="page-title" id="current-version">V0.0.4</h2>
-  
-      <button class="update-btn">立即更新</button>
-  
-      <p class="section-title" style="text-align:center;">歷史版本</p>
-      <div class="list-container">
-        <div class="list-row">
-          <span>日期:2025-09-07</span>
-          <span class="value">版本:V0.0.3</span>
-        </div>
-        <div class="list-row">
-          <span>日期:2025-09-03</span>
-          <span class="value">版本:V0.0.2</span>
-        </div>
-        <div class="list-row">
-          <span>日期:2025-09-01</span>
-          <span class="value">版本:V0.0.1</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
-      <!-- 設定頁面 -->
-    <div id="settings" class="settings-page">
-      <!-- 顯示設定 -->
-      <p class="section-title">顯示設定</p>
-      <div class="list-container">
-        <!-- 🔽 把這裡的 select 全部換掉 -->
-        <div class="list-row "id="language-setting">
-          <span>語言</span>
-          <div class="settings-right">
-            <span id="language-current">中文繁體</span>
-            <!-- SVG 箭頭 -->
-            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-        <div class="list-row" id="theme-setting">
-          <span>主題</span>
-          <div class="settings-right">
-            <span id="theme-current">系統&自動</span>
-            <!-- SVG 箭頭 -->
-            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-    
-      <!-- 關於 -->
-      <p class="section-title">其他</p>
-      <div class="list-container">
-        <div class="list-row clickable" id="about-setting">
-          <span>關於</span>
-          <!-- SVG 箭頭 -->
-            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <div class="list-row clickable" id="contact-setting">
-          <span>聯絡我們</span>
-          <!-- SVG 箭頭 -->
-            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <div class="list-row" id="version-setting">
-          <span>版本更新</span>
-          <div class="settings-right">
-          <span class="value">V1.0.0</span>
-          <!-- SVG 箭頭 -->
-            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- 語言選單 Popup -->
-    <div id="language-popup" class="popup">
-      <div class="popup-content">
-        <div class="popup-item" data-value="zh">中文繁體</div>
-        <div class="popup-item" data-value="en">English</div>
-        <div class="popup-cancel">取消</div>
-      </div>
-    </div>
-    
-    <!-- 主題選單 Popup -->
-    <div id="theme-popup" class="popup">
-      <div class="popup-content">
-        <div class="popup-item" data-value="system">系統&自動</div>
-        <div class="popup-item" data-value="light">淺色模式</div>
-        <div class="popup-item" data-value="dark">深色模式</div>
-        <div class="popup-cancel">取消</div>
-      </div>
-    </div>
-
-  
-    <!-- 關於頁面 -->
-    <div id="about-page" class="about-page" style="display:none;">
-      <p class="brand-title">關於</p>
-      <h2 class="page-title">開發中</h2>
-    </div>
-    
-    <!-- 聯絡我們頁面 -->
-    <div id="contact-page" class="contact-page" style="display:none;">
-      <p class="brand-title">聯絡我們</p>
-      <h2 class="page-title">開發中</h2>
-    </div>
+<!-- 固定標題列 -->
+<div class="header">
+<button class="back-button" id="back-button" style="display:none;">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 18L9 12L15 6" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<h1 id="page-title">總覽頁面</h1>
+</div>
+<!-- 開啟畫面 -->
+<div id="splash">
+<img alt="WealthNova Logo" src="logo(3).png"/>
+<h1>WealthNova | 財富新星</h1>
+<!-- 安裝教學容器（預設隱藏） --> <!-- 新增 -->
+<div id="install-hint" style="display:none; margin-top:20px; text-align:center;"> <!-- 新增 -->
+<p style="font-size:18px; font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p> <!-- 新增 -->
+<p style="font-size:16px; color:#666; line-height:2;">在瀏覽器選單中點選「加入主畫面」<br/>需安裝成 App 才可使用</p> <!-- 新增 -->
+</div> <!-- 新增 -->
+<!-- 🚨 新增無網路提示 -->
+<div id="offline-hint" style="display:none; margin-top:20px; text-align:center;">
+<p style="font-size:16px; color:#e74c3c;">請檢查網路狀態</p>
+</div>
+</div>
+<!-- 總覽頁面 -->
+<div id="app">
+<div class="header"><h1>總覽頁面</h1></div>
+<p class="brand-title">總績效</p>
+<div class="balance">$8,545.00</div>
+<div class="chart-container">
+<canvas id="balanceChart"></canvas>
+</div>
+<p style="align-self:flex-start; margin:10px 0; font-weight:bold;">當月績效</p>
+<div class="transaction-row">
+<div class="icon"><img alt="TX" src="2.png"/></div>
+<span class="title">台指期</span>
+<span class="amount">- $5.99</span>
+</div>
+<div class="transaction-row">
+<div class="icon"><img alt="DJ" src="3.png"/></div>
+<span class="title">小道瓊</span>
+<span class="amount">- $12.99</span>
+</div>
+<div class="transaction-row">
+<div class="icon"><img alt="NQ" src="4.png"/></div>
+<span class="title">小那指</span>
+<span class="amount">- $88.00</span>
+</div>
+</div><div id="rebalance"><div class="header"><h1>再平衡頁面</h1></div><p class="brand-title">再平衡</p><h2 class="page-title">開發中</h2></div>
+<!-- 歷史績效頁面 -->
+<div id="history">
+<div class="header"><h1>歷史頁面</h1></div>
+<p class="brand-title">查詢績效</p>
+<h2 class="page-title">選擇商品</h2>
+<div class="transaction-row" data-target="tx">
+<div class="icon"><img alt="TX" src="2.png"/></div>
+<span class="title">台指期</span>
+<span class="amount">+ 12.5%</span>
+</div>
+<div class="transaction-row" data-target="dj">
+<div class="icon"><img alt="DJ" src="3.png"/></div>
+<span class="title">小道瓊</span>
+<span class="amount">+ 8.3%</span>
+</div>
+<div class="transaction-row" data-target="nq">
+<div class="icon"><img alt="NQ" src="4.png"/></div>
+<span class="title">小那指</span>
+<span class="amount">+ 15.7%</span>
+</div>
+</div>
+<!-- 商品詳情頁 -->
+<div class="product-detail" id="product-detail">
+<p class="brand-title" id="product-name"></p>
+<div class="balance" id="product-balance"></div>
+<div class="chart-container">
+<canvas id="productChart"></canvas>
+</div>
+<div id="product-list"></div>
+</div>
+<!-- 報告頁面 -->
+<div class="export-page" id="export">
+<p class="brand-title">每日盤前盤後報告</p>
+<h2 class="page-title">報告內容 (開發中)</h2>
+</div>
+<!-- 版本更新詳情頁 -->
+<div class="version-page" id="version-detail" style="display:none;">
+<div class="content">
+<p class="brand-title">版本</p>
+<h2 class="page-title" id="current-version">V0.0.4</h2>
+<button class="update-btn">立即更新</button>
+<p class="section-title" style="text-align:center;">歷史版本</p>
+<div class="list-container">
+<div class="list-row">
+<span>日期:2025-09-07</span>
+<span class="value">版本:V0.0.3</span>
+</div>
+<div class="list-row">
+<span>日期:2025-09-03</span>
+<span class="value">版本:V0.0.2</span>
+</div>
+<div class="list-row">
+<span>日期:2025-09-01</span>
+<span class="value">版本:V0.0.1</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 設定頁面 -->
+<div class="settings-page" id="settings">
+<!-- 顯示設定 -->
+<p class="section-title">顯示設定</p>
+<div class="list-container">
+<!-- 🔽 把這裡的 select 全部換掉 -->
+<div class="list-row" id="language-setting">
+<span>語言</span>
+<div class="settings-right">
+<span id="language-current">中文繁體</span>
+<!-- SVG 箭頭 -->
+<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<div class="list-row" id="theme-setting">
+<span>主題</span>
+<div class="settings-right">
+<span id="theme-current">系統&amp;自動</span>
+<!-- SVG 箭頭 -->
+<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- 關於 -->
+<p class="section-title">其他</p>
+<div class="list-container">
+<div class="list-row clickable" id="about-setting">
+<span>關於</span>
+<!-- SVG 箭頭 -->
+<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="list-row clickable" id="contact-setting">
+<span>聯絡我們</span>
+<!-- SVG 箭頭 -->
+<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="list-row" id="version-setting">
+<span>版本更新</span>
+<div class="settings-right">
+<span class="value">V1.0.0</span>
+<!-- SVG 箭頭 -->
+<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- 語言選單 Popup -->
+<div class="popup" id="language-popup">
+<div class="popup-content">
+<div class="popup-item" data-value="zh">中文繁體</div>
+<div class="popup-item" data-value="en">English</div>
+<div class="popup-cancel">取消</div>
+</div>
+</div>
+<!-- 主題選單 Popup -->
+<div class="popup" id="theme-popup">
+<div class="popup-content">
+<div class="popup-item" data-value="system">系統&amp;自動</div>
+<div class="popup-item" data-value="light">淺色模式</div>
+<div class="popup-item" data-value="dark">深色模式</div>
+<div class="popup-cancel">取消</div>
+</div>
+</div>
+<!-- 關於頁面 -->
+<div class="about-page" id="about-page" style="display:none;">
+<p class="brand-title">關於</p>
+<h2 class="page-title">開發中</h2>
+</div>
+<!-- 聯絡我們頁面 -->
+<div class="contact-page" id="contact-page" style="display:none;">
+<p class="brand-title">聯絡我們</p>
+<h2 class="page-title">開發中</h2>
+</div>
+<!-- 底部導航列 -->
+<div class="bottom-nav">
 
 
 
-  <!-- 底部導航列 -->
-  <div class="bottom-nav">
-    <div class="nav-item active" data-target="app">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M15.3003 15.9182H8.56433" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M16 21H8C5.23858 21 3 18.7614 3 16V11.2C3.00001 9.68108 3.69046 8.24453 4.87653 7.29568L8.87653 4.09568C10.7026 2.63477 13.2974 2.63477 15.1235 4.09568L19.1235 7.29568C20.3096 8.24455 21 9.6811 21 11.2V16C21 18.7614 18.7614 21 16 21Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>總覽</span>
-    </div>
-    <div class="nav-item" data-target="history">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 6C6.358 6 3 9.358 3 13.5C3 17.642 6.358 21 10.5 21C14.642 21 18 17.642 18 13.5H10.5V6Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M21 10C21 6.134 17.866 3 14 3V10H21Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>歷史</span>
-    </div>
-    <div class="nav-item" data-target="export">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <line x1="6.27" y1="11.05" x2="17.73" y2="11.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"stroke-opacity="0.6"/>
-        <line x1="6.27" y1="14.86" x2="17.73" y2="14.86" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"stroke-opacity="0.6"/>
-        <line x1="6.27" y1="18.68" x2="17.73" y2="18.68" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"stroke-opacity="0.6"/>
-        <polygon points="20.59 6.27 20.59 22.5 3.41 22.5 3.41 1.5 15.82 1.5 20.59 6.27"
-                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"stroke-opacity="0.6"/>
-        <polygon points="20.59 6.27 20.59 7.23 14.86 7.23 14.86 1.5 15.82 1.5 20.59 6.27"
-                 stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"stroke-opacity="0.6"/>
-      </svg>
-      <span>報告</span>
-    </div>
-    <div class="nav-item" data-target="settings">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
-        <path d="M3 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM12 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM19 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/>
-      </svg>
-      <span>設定</span>
-    </div>
-  </div>
 
-  <script>
+<div class="nav-item active" data-target="app"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 3 10v11h6v-6h6v6h6V10l-9-7z"></path></svg><span>總覽</span></div><div class="nav-item" data-target="rebalance"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5 5 0 0 1-9.5 2H5.3A7 7 0 0 0 19 13c0-3.87-3.13-7-7-7z"></path><path d="M12 18v3l4-4-4-4v3c-2.76 0-5-2.24-5-5a5 5 0 0 1 9.5-2h2.2A7 7 0 0 0 5 11c0 3.87 3.13 7 7 7z"></path></svg><span>再平衡</span></div><div class="nav-item" data-target="trade"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 19h16v2H4v-2zM7 14l3-3 3 3 6-6 1.4 1.4-7.4 7.4-3-3-3 3L3.6 12.8 5 11.4 7 13.4z"></path></svg><span>交易</span></div><div class="nav-item" data-target="history"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 3a9 9 0 1 0 8.94 10h-2.02A7 7 0 1 1 13 5V3z"></path><path d="M12 8h2v6l5 3-1 1.73-6-3.73V8z"></path></svg><span>歷史紀錄</span></div><div class="nav-item" data-target="settings"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 12.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L1.7 7.88a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L1.82 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.4 1.05.71 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.23 1.12-.54 1.63-.94l2.39.96c.22.09.48 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.56zM11 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"></path></svg><span>設定</span></div></div>
+<script>
     
     // Chart.js Balance Chart (Dashboard)
     const ctx = document.getElementById('balanceChart').getContext('2d');
@@ -852,8 +790,10 @@
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
     const pages = {
       app: document.getElementById('app'),
+      rebalance: document.getElementById('rebalance'),
       history: document.getElementById('history'),
       product: document.getElementById('product-detail'),
+      trade: document.getElementById('export'),
       export: document.getElementById('export'),
       settings: document.getElementById('settings'),
       version: document.getElementById('version-detail'),
@@ -948,19 +888,19 @@
     const translations = {
       zh: {
         overview: "總覽",
-        history: "歷史",
-        report: "報告",
+        rebalance: "再平衡",
+        trade: "交易",
+        history: "歷史紀錄",
         settings: "設定",
         productDetail: "商品詳情",
-
       },
       en: {
         overview: "Overview",
+        rebalance: "Rebalance",
+        trade: "Trade",
         history: "History",
-        report: "Report",
         settings: "Settings",
         productDetail: "Product Detail",
-
       }
     };
     
@@ -969,8 +909,9 @@
       localStorage.setItem("lang", lang);
       const t = translations[lang];
       document.querySelector(".bottom-nav [data-target='app'] span").textContent = t.overview;
+      document.querySelector(".bottom-nav [data-target='rebalance'] span").textContent = t.rebalance;
+      document.querySelector(".bottom-nav [data-target='trade'] span").textContent = t.trade;
       document.querySelector(".bottom-nav [data-target='history'] span").textContent = t.history;
-      document.querySelector(".bottom-nav [data-target='export'] span").textContent = t.report;
       document.querySelector(".bottom-nav [data-target='settings'] span").textContent = t.settings;
 
       document.getElementById("page-title").textContent = t.overview; // 初始化標題
@@ -1182,9 +1123,8 @@
 
 
   </script>
-
-  <!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
-  <script>
+<!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
+<script>
     (function () {
       // 動態建立 manifest（不用額外檔案）
       const manifest = {
