@@ -631,7 +631,16 @@ gap: 10px;
       box-shadow: 0 8px 24px rgba(0,0,0,.06);
       align-items:center;
     }
-    .donut-wrap{ width: 160px; height: 160px; }
+    
+    .overview-topcard{ flex-direction:column; gap:14px; }
+    .overview-topcard .overview-split{ display:flex; gap:12px; align-items:center; }
+    .overview-topcard .legend-right{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+    .overview-topcard .legend-right .amt{ opacity:.75; font-size:12px; font-weight:600; }
+    @media (max-width:420px){
+      .overview-topcard .overview-split{ flex-direction:column; align-items:stretch; }
+      .donut-wrap{ width: 180px; height: 180px; margin: 0 auto; }
+    }
+.donut-wrap{ width: 160px; height: 160px; }
     #assetDonut{ width:100% !important; height:100% !important; }
 
     .legend{ flex:1; display:flex; flex-direction:column; gap:10px; }
@@ -811,46 +820,56 @@ gap: 10px;
 </div>
 <!-- 總覽頁面 -->
 <div id="app" class="page overview-page">
-  <div class="overview-balance">
+  <div class="overview-maincard overview-topcard">
     <div class="overview-balance-head">
       <div class="label">總覽看板</div>
-      <div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
+      <div class="updated" id="overview-updated">動態更新：—</div>
     </div>
-    <div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
+    <div class="amount">NT$ <span id="total-nt">—</span></div>
     <div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
+
+    <div class="overview-split">
+      <div class="donut-wrap">
+        <canvas id="assetDonut"></canvas>
+      </div>
+
+      <div class="legend">
+        <div class="legend-row">
+          <div class="legend-left"><span class="dot c1"></span><span class="name">BTC</span></div>
+          <div class="legend-right">
+            <span class="pct" id="legend-pct-BTC">—</span>
+            <span class="amt" id="legend-val-BTC">—</span>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <div class="legend-left"><span class="dot c2"></span><span class="name">0050</span></div>
+          <div class="legend-right">
+            <span class="pct" id="legend-pct-0050">—</span>
+            <span class="amt" id="legend-val-0050">—</span>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <div class="legend-left"><span class="dot c3"></span><span class="name">GOLD</span></div>
+          <div class="legend-right">
+            <span class="pct" id="legend-pct-GOLD">—</span>
+            <span class="amt" id="legend-val-GOLD">—</span>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <div class="legend-left"><span class="dot c4"></span><span class="name">CASH</span></div>
+          <div class="legend-right">
+            <span class="pct" id="legend-pct-CASH">—</span>
+            <span class="amt" id="legend-val-CASH">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-<div class="overview-maincard">
-    <div class="donut-wrap">
-      <canvas id="assetDonut"></canvas>
-    </div>
-
-    <div class="legend">
-      <div class="legend-row">
-        <div class="legend-left"><span class="dot c1"></span><span class="name">BTC 比特幣</span></div>
-        <div class="legend-right">
-          <span class="pct">28.8%</span>
-          <span class="tag">+0.2</span>
-        </div>
-      </div>
-      <div class="legend-row">
-        <div class="legend-left"><span class="dot c2"></span><span class="name">0050 0050</span></div>
-        <div class="legend-right">
-          <span class="pct">21.3%</span>
-          <span class="tag">-0.3</span>
-        </div>
-      </div>
-      <div class="legend-row">
-        <div class="legend-left"><span class="dot c3"></span><span class="name">總生 現金</span></div>
-        <div class="legend-right">
-          <span class="pct">14.1%</span>
-          <span class="tag">+0.0</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="overview-grid">
+<div class="overview-grid">
     <div class="mini-card">
       <div class="mini-head">
         <div class="mini-icon c1">₿</div>
@@ -1054,12 +1073,64 @@ gap: 10px;
 
 <div class="nav-item active" data-target="app"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 3 10v11h6v-6h6v6h6V10l-9-7z"></path></svg><span>總覽</span></div><div class="nav-item" data-target="rebalance"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5 5 0 0 1-9.5 2H5.3A7 7 0 0 0 19 13c0-3.87-3.13-7-7-7z"></path><path d="M12 18v3l4-4-4-4v3c-2.76 0-5-2.24-5-5a5 5 0 0 1 9.5-2h2.2A7 7 0 0 0 5 11c0 3.87 3.13 7 7 7z"></path></svg><span>再平衡</span></div><div class="nav-item" data-target="trade"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 19h16v2H4v-2zM7 14l3-3 3 3 6-6 1.4 1.4-7.4 7.4-3-3-3 3L3.6 12.8 5 11.4 7 13.4z"></path></svg><span>交易</span></div><div class="nav-item" data-target="history"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 3a9 9 0 1 0 8.94 10h-2.02A7 7 0 1 1 13 5V3z"></path><path d="M12 8h2v6l5 3-1 1.73-6-3.73V8z"></path></svg><span>歷史紀錄</span></div><div class="nav-item" data-target="settings"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 12.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L1.7 7.88a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L1.82 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.4 1.05.71 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.23 1.12-.54 1.63-.94l2.39.96c.22.09.48 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.56zM11 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"></path></svg><span>設定</span></div></div>
 <script>
-    
-    
-    // Chart.js Asset Donut (Overview)
+
+    // Chart.js Asset Donut (Overview) + Legend sync + Dynamic updated time
     (function initAssetDonut(){
       const el = document.getElementById('assetDonut');
       if (!el) return;
+
+      // Example values (NT$) - can be wired to real data later
+      const assets = [
+        { key: 'BTC',  label: 'BTC',  value: 330000 },
+        { key: '0050', label: '0050', value: 245500 },
+        { key: 'GOLD', label: 'GOLD', value: 161200 },
+        { key: 'CASH', label: 'CASH', value: 409850 },
+      ];
+
+      function fmtNumber(n){
+        return n.toLocaleString('en-US');
+      }
+
+      function formatNow(){
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth()+1).padStart(2,'0');
+        const d = String(now.getDate()).padStart(2,'0');
+        let hh = now.getHours();
+        const ampm = hh >= 12 ? 'PM' : 'AM';
+        hh = hh % 12; if (hh === 0) hh = 12;
+        const H = String(hh).padStart(2,'0');
+        const M = String(now.getMinutes()).padStart(2,'0');
+        return `動態更新：${y}/${m}/${d} ${H}:${M} ${ampm}`;
+      }
+
+      function syncUI(){
+        const total = assets.reduce((s,a)=>s+a.value,0);
+
+        // total amount (top)
+        const totalEl = document.getElementById('total-nt');
+        if (totalEl) totalEl.textContent = fmtNumber(total);
+
+        // updated time
+        const upEl = document.getElementById('overview-updated');
+        if (upEl) upEl.textContent = formatNow();
+
+        // legend
+        assets.forEach(a=>{
+          const pct = total ? (a.value/total*100) : 0;
+          const pctEl = document.getElementById(`legend-pct-${a.key}`);
+          const valEl = document.getElementById(`legend-val-${a.key}`);
+          if (pctEl) pctEl.textContent = `${pct.toFixed(1)}%`;
+          if (valEl) valEl.textContent = `NT$ ${fmtNumber(a.value)}`;
+        });
+
+        // chart dataset values
+        if (window.assetDonutChart){
+          window.assetDonutChart.data.labels = assets.map(a=>a.label);
+          window.assetDonutChart.data.datasets[0].data = assets.map(a=>a.value);
+          window.assetDonutChart.update();
+        }
+      }
 
       const dctx = el.getContext('2d');
       if (window.assetDonutChart) window.assetDonutChart.destroy();
@@ -1067,10 +1138,11 @@ gap: 10px;
       window.assetDonutChart = new Chart(dctx, {
         type: 'doughnut',
         data: {
-          labels: ['BTC', '0050', '現金', '其他'],
+          labels: assets.map(a=>a.label),
           datasets: [{
-            data: [28.8, 21.3, 14.1, 35.8],
-            borderWidth: 0
+            data: assets.map(a=>a.value),
+            borderWidth: 0,
+            backgroundColor: ['#f5a623','#4a90e2','#7ed321','#50e3c2']
           }]
         },
         options: {
@@ -1082,14 +1154,33 @@ gap: 10px;
             tooltip: {
               callbacks: {
                 label: function(ctx){
-                  return ` ${ctx.label}: ${ctx.parsed}%`;
+                  const data = ctx.dataset.data || [];
+                  const sum = data.reduce((s,v)=>s+v,0);
+                  const pct = sum ? (ctx.parsed/sum*100) : 0;
+                  const val = ctx.parsed;
+                  return ` ${ctx.label}: NT$ ${fmtNumber(val)} (${pct.toFixed(1)}%)`;
                 }
               }
             }
           }
         }
       });
+
+      // initial sync
+      syncUI();
+
+      // refresh time on each tab focus
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) syncUI();
+      });
+
+      // refresh every minute (time only)
+      setInterval(() => {
+        const upEl = document.getElementById('overview-updated');
+        if (upEl) upEl.textContent = formatNow();
+      }, 60 * 1000);
     })();
+
 // 頁面切換
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
     const pages = {
