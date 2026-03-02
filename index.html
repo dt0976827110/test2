@@ -211,13 +211,15 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 50px;
-      background: #fff;
-      border-bottom: 1px solid #ddd;
+      height: 0px;               /* hide title bar */
+      background: transparent;
+      border-bottom: none;
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 5;
+      z-index: 1000;
+      overflow: visible;         /* allow back button to show */
+      pointer-events: none;      /* header itself not clickable */
     }
     .header h1 {
       font-size: 18px;
@@ -731,6 +733,46 @@
     body.dark .legend-right .tag{ background:#2a2a2a; color:#cfd3da; }
     body.dark .topbar-icon .dot{ border-color:#121212; }
 
+
+    /* ===== Header bar hidden, keep back button ===== */
+    #page-title{ display:none; }
+    .back-button{
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 6px 22px rgba(0,0,0,0.18);
+      display: none; /* controlled by JS via inline style */
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+    }
+    body.dark .back-button{
+      background: rgba(30,30,30,0.92);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* prevent accidental horizontal scroll (right gray bar) */
+    html, body { overflow-x: hidden; }
+
+    /* ===== overview balance header inside card ===== */
+    .overview-balance-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom: 6px;
+    }
+    .overview-balance-head .label{ font-weight:700; color:#1E2A38; font-size:13px; }
+    .overview-balance-head .updated{ color:#8a8f98; font-size:11px; white-space:nowrap; }
+    body.dark .overview-balance-head .label{ color:#e6e6e6; }
+    body.dark .overview-balance-head .updated{ color:#9aa0a6; }
+
 </style>
 </head>
 <body>
@@ -759,9 +801,7 @@
 </div>
 <!-- 總覽頁面 -->
 <div id="app" class="page overview-page">
-  <div class="overview-topbar">
-    <div class="topbar-spacer"></div>
-    <div class="topbar-title">資產量控</div>
+<div class="topbar-title">資產量控</div>
     <button class="topbar-icon" id="notify-btn" aria-label="通知">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z"></path>
@@ -770,13 +810,14 @@
       <span class="dot" aria-hidden="true"></span>
     </button>
   </div>
-
-  <div class="overview-header">
-    <div class="label">總覽看板</div>
-    <div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
+<div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
   </div>
 
   <div class="overview-balance">
+    <div class="overview-balance-head">
+      <div class="label">總覽看板</div>
+      <div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
+    </div>
     <div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
     <div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
   </div>
