@@ -825,10 +825,32 @@ gap: 10px;
       <canvas id="assetDonut"></canvas>
     </div>
 
-    <div class="legend">
-      <div class="legend-row">
-        <div class="legend-left"><span class="dot c1"></span><span class="name">BTC 比特幣</span></div>
+    <div class="legend" id="assetLegend">
+      <div class="legend-row" data-key="BTC">
+        <div class="legend-left"><span class="dot c1"></span><span class="name">BTC</span></div>
         <div class="legend-right">
+          <span class="pct">--</span>
+        </div>
+      </div>
+      <div class="legend-row" data-key="0050">
+        <div class="legend-left"><span class="dot c2"></span><span class="name">0050</span></div>
+        <div class="legend-right">
+          <span class="pct">--</span>
+        </div>
+      </div>
+      <div class="legend-row" data-key="GOLD">
+        <div class="legend-left"><span class="dot c3"></span><span class="name">GOLD</span></div>
+        <div class="legend-right">
+          <span class="pct">--</span>
+        </div>
+      </div>
+      <div class="legend-row" data-key="CASH">
+        <div class="legend-left"><span class="dot c4"></span><span class="name">CASH</span></div>
+        <div class="legend-right">
+          <span class="pct">--</span>
+        </div>
+      </div>
+    </div><div class="legend-right">
           <span class="pct">28.8%</span>
           <span class="tag">+0.2</span>
         </div>
@@ -1061,15 +1083,59 @@ gap: 10px;
       const el = document.getElementById('assetDonut');
       if (!el) return;
 
+      // Sample values (can be replaced by real portfolio data later)
+      const assets = [
+        { key: 'BTC',  label: 'BTC',  value: 330000, color: '#f5a623' },
+        { key: '0050', label: '0050', value: 245500, color: '#4a90e2' },
+        { key: 'GOLD', label: 'GOLD', value: 161200, color: '#7ed321' },
+        { key: 'CASH', label: 'CASH', value: 409850, color: '#50e3c2' }
+      ];
+
+      const total = assets.reduce((s,a)=>s+a.value,0) || 1;
+      const pct = (v)=> (Math.round((v/total)*1000)/10).toFixed(1) + '%';
+
+      // Update legend (percent only)
+      const legend = document.getElementById('assetLegend');
+      if (legend){
+        legend.querySelectorAll('.legend-row').forEach(row=>{
+          const key = row.getAttribute('data-key');
+          const a = assets.find(x=>x.key===key);
+          const pctEl = row.querySelector('.pct');
+          if (a && pctEl) pctEl.textContent = pct(a.value);
+        });
+      }
+
+      // Update "動態更新" to current time (and keep it fresh)
+      function pad2(n){ return String(n).padStart(2,'0'); }
+      function formatNow(d){
+        const yyyy = d.getFullYear();
+        const mm = pad2(d.getMonth()+1);
+        const dd = pad2(d.getDate());
+        let hh = d.getHours();
+        const ap = hh >= 12 ? 'PM' : 'AM';
+        hh = hh % 12; if (hh === 0) hh = 12;
+        const mi = pad2(d.getMinutes());
+        return `${yyyy}/${mm}/${dd} ${pad2(hh)}:${mi} ${ap}`;
+      }
+      function updateOverviewTime(){
+        const t = document.getElementById('overview-updated');
+        if (t) t.textContent = '動態更新：' + formatNow(new Date());
+      }
+      updateOverviewTime();
+      if (!window.__overviewTimeTimer){
+        window.__overviewTimeTimer = setInterval(updateOverviewTime, 60000);
+      }
+
       const dctx = el.getContext('2d');
       if (window.assetDonutChart) window.assetDonutChart.destroy();
 
       window.assetDonutChart = new Chart(dctx, {
         type: 'doughnut',
         data: {
-          labels: ['BTC', '0050', '現金', '其他'],
+          labels: assets.map(a=>a.label),
           datasets: [{
-            data: [28.8, 21.3, 14.1, 35.8],
+            data: assets.map(a=>a.value),
+            backgroundColor: assets.map(a=>a.color),
             borderWidth: 0
           }]
         },
@@ -1081,8 +1147,9 @@ gap: 10px;
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: function(ctx){
-                  return ` ${ctx.label}: ${ctx.parsed}%`;
+                label: (ctx)=>{
+                  const v = ctx.parsed || 0;
+                  return ` ${ctx.label}: NT$ ${v.toLocaleString()} (${pct(v)})`;
                 }
               }
             }
