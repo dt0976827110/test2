@@ -698,13 +698,16 @@ gap: 10px;
     .mini-sub{
       margin-top:6px;
       display:flex;
-      justify-content:flex-start;   /* 佔比與漲跌% 都靠左 */
+      justify-content:space-between; /* 佔比左、漲跌%右 */
+      align-items:baseline;
       gap:10px;
-      align-items:center;
+      width:100%;
       font-size:12px;
       color: rgba(255,255,255,0.75);
       font-weight:700;
     }
+    .mini-pct{opacity:0.75;}
+    .mini-change{font-weight:800;}
     .mini-change{
       font-weight:900;
     }
