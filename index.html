@@ -860,7 +860,7 @@ gap: 10px;
 
 /* === Typography upgrade (correct selectors) === */
 
-/* 總覽看板（左上標題） */
+/* 資產總額（左上標題） */
 .overview-balance-head .label{
   font-size: 20px;
   font-weight: 800;
@@ -873,13 +873,15 @@ gap: 10px;
 }
 
 /* 圓餅圖右側四行（名稱＋百分比） */
-#assetLegend .legend-row .name{
-  font-size: 50px;
-  font-weight: 700;
+
+/* === FINAL overrides (ensure legend font applies) === */
+#assetLegend .legend-left .name{
+  font-size: 20px !important;
+  font-weight: 700 !important;
 }
-#assetLegend .legend-row .pct{
-  font-size: 50px;
-  font-weight: 800;
+#assetLegend .legend-right .pct{
+  font-size: 20px !important;
+  font-weight: 800 !important;
 }
 
 </style>
@@ -895,7 +897,7 @@ gap: 10px;
 
 /* === Typography upgrade (correct selectors) === */
 
-/* 總覽看板（左上標題） */
+/* 資產總額（左上標題） */
 .overview-balance-head .label{
   font-size: 20px;
   font-weight: 800;
@@ -908,13 +910,15 @@ gap: 10px;
 }
 
 /* 圓餅圖右側四行（名稱＋百分比） */
-#assetLegend .legend-row .name{
-  font-size: 16px;
-  font-weight: 700;
+
+/* === FINAL overrides (ensure legend font applies) === */
+#assetLegend .legend-left .name{
+  font-size: 20px !important;
+  font-weight: 700 !important;
 }
-#assetLegend .legend-row .pct{
-  font-size: 16px;
-  font-weight: 800;
+#assetLegend .legend-right .pct{
+  font-size: 20px !important;
+  font-weight: 800 !important;
 }
 
 </style>
@@ -947,7 +951,7 @@ gap: 10px;
 <div id="app" class="page overview-page">
   <div class="overview-balance">
 <div class="overview-balance-head">
-<div class="label">總覽看板</div>
+<div class="label">資產總額</div>
 <div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
 </div>
 <div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
