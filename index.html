@@ -854,117 +854,108 @@ gap: 10px;
 <!-- 總覽頁面 -->
 <div id="app" class="page overview-page">
   <div class="overview-balance">
-    <div class="overview-balance-head">
-      <div class="label">總覽看板</div>
-      <div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
-    </div>
-    <div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
-    <div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
-  </div>
-
-<div class="overview-maincard">
-    <div class="donut-wrap">
-      <canvas id="assetDonut"></canvas>
-    </div>
-
-    <div class="legend" id="assetLegend">
-      <div class="legend-row" data-key="BTC">
-        <div class="legend-left"><span class="dot c1"></span><span class="name">BTC</span></div>
-        <div class="legend-right"><span class="pct">--</span></div>
-      </div>
-      <div class="legend-row" data-key="0050">
-        <div class="legend-left"><span class="dot c2"></span><span class="name">0050</span></div>
-        <div class="legend-right"><span class="pct">--</span></div>
-      </div>
-      <div class="legend-row" data-key="GOLD">
-        <div class="legend-left"><span class="dot c3"></span><span class="name">GOLD</span></div>
-        <div class="legend-right"><span class="pct">--</span></div>
-      </div>
-      <div class="legend-row" data-key="CASH">
-        <div class="legend-left"><span class="dot c4"></span><span class="name">CASH</span></div>
-        <div class="legend-right"><span class="pct">--</span></div>
-      </div>
-    </div>
-  </div>
-
-<div class="overview-grid">
-    <div class="mini-card" style="--card-color:#f5a623;">
-      <div class="mini-top">
-        <div class="mini-top-left">
-          <div class="mini-top-icon">₿</div>
-          <div class="mini-top-title">BTC</div>
-        </div>
-      </div>
-      <div class="mini-body">
-        <div class="mini-amt">NT$ <span>575,000</span></div>
-        <div class="mini-sub">
-          <span class="mini-pct">28.8%</span>
-          <span class="mini-change up">+1.2%</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="mini-card" style="--card-color:#4a90e2;">
-      <div class="mini-top">
-        <div class="mini-top-left">
-          <div class="mini-top-icon">50</div>
-          <div class="mini-top-title">0050</div>
-        </div>
-      </div>
-      <div class="mini-body">
-        <div class="mini-amt">NT$ <span>245,500</span></div>
-        <div class="mini-sub">
-          <span class="mini-pct">21.3%</span>
-          <span class="mini-change down">-0.34%</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="mini-card" style="--card-color:#7ed321;">
-      <div class="mini-top">
-        <div class="mini-top-left">
-          <div class="mini-top-icon">Au</div>
-          <div class="mini-top-title">黃金</div>
-        </div>
-      </div>
-      <div class="mini-body">
-        <div class="mini-amt">NT$ <span>161,200</span></div>
-        <div class="mini-sub">
-          <span class="mini-pct">14.1%</span>
-          <span class="mini-change down">-10.3%</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="mini-card" style="--card-color:#50e3c2;">
-      <div class="mini-top">
-        <div class="mini-top-left">
-          <div class="mini-top-icon">$</div>
-          <div class="mini-top-title">現金</div>
-        </div>
-      </div>
-      <div class="mini-body">
-        <div class="mini-amt">NT$ <span>250,000</span></div>
-        <div class="mini-sub">
-          <span class="mini-pct">35.8%</span>
-          <span class="mini-change up">+10.0%</span>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="overview-balance-head">
+<div class="label">總覽看板</div>
+<div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
 </div>
-
+<div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
+<div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
+</div>
+  <div class="overview-maincard">
+<div class="donut-wrap">
+<canvas id="assetDonut"></canvas>
+</div>
+<div class="legend" id="assetLegend">
+<div class="legend-row" data-key="BTC">
+<div class="legend-left"><span class="dot c1"></span><span class="name">BTC</span></div>
+<div class="legend-right"><span class="pct">--</span></div>
+</div>
+<div class="legend-row" data-key="0050">
+<div class="legend-left"><span class="dot c2"></span><span class="name">0050</span></div>
+<div class="legend-right"><span class="pct">--</span></div>
+</div>
+<div class="legend-row" data-key="GOLD">
+<div class="legend-left"><span class="dot c3"></span><span class="name">GOLD</span></div>
+<div class="legend-right"><span class="pct">--</span></div>
+</div>
+<div class="legend-row" data-key="CASH">
+<div class="legend-left"><span class="dot c4"></span><span class="name">CASH</span></div>
+<div class="legend-right"><span class="pct">--</span></div>
+</div>
+</div>
+</div>
+  <div class="overview-grid">
+<div class="mini-card" style="--card-color:#f5a623;">
+<div class="mini-top">
+<div class="mini-top-left">
+<div class="mini-top-icon">₿</div>
+<div class="mini-top-title">BTC</div>
+</div>
+</div>
+<div class="mini-body">
+<div class="mini-amt">NT$ <span>575,000</span></div>
+<div class="mini-sub">
+<span class="mini-pct">28.8%</span>
+<span class="mini-change up">+1.2%</span>
+</div>
+</div>
+</div>
+<div class="mini-card" style="--card-color:#4a90e2;">
+<div class="mini-top">
+<div class="mini-top-left">
+<div class="mini-top-icon">50</div>
+<div class="mini-top-title">0050</div>
+</div>
+</div>
+<div class="mini-body">
+<div class="mini-amt">NT$ <span>245,500</span></div>
+<div class="mini-sub">
+<span class="mini-pct">21.3%</span>
+<span class="mini-change down">-0.34%</span>
+</div>
+</div>
+</div>
+<div class="mini-card" style="--card-color:#7ed321;">
+<div class="mini-top">
+<div class="mini-top-left">
+<div class="mini-top-icon">Au</div>
+<div class="mini-top-title">黃金</div>
+</div>
+</div>
+<div class="mini-body">
+<div class="mini-amt">NT$ <span>161,200</span></div>
+<div class="mini-sub">
+<span class="mini-pct">14.1%</span>
+<span class="mini-change down">-10.3%</span>
+</div>
+</div>
+</div>
+<div class="mini-card" style="--card-color:#50e3c2;">
+<div class="mini-top">
+<div class="mini-top-left">
+<div class="mini-top-icon">$</div>
+<div class="mini-top-title">現金</div>
+</div>
+</div>
+<div class="mini-body">
+<div class="mini-amt">NT$ <span>250,000</span></div>
+<div class="mini-sub">
+<span class="mini-pct">35.8%</span>
+<span class="mini-change up">+10.0%</span>
+</div>
+</div>
+</div>
+</div>
   <div class="positions">
-    <div class="pos-row">
-      <div class="pos-left"><span class="chip c1">₿</span><span>BTC 出比佳</span></div>
-      <div class="pos-right">35% 轉動 目前 25%</div>
-    </div>
-    <button class="primary-btn" id="rebalance-now">立即回應</button>
-  </div>
+<div class="pos-row">
+<div class="pos-left"><span class="chip c1">₿</span><span>BTC 出比佳</span></div>
+<div class="pos-right">35% 轉動 目前 25%</div>
+</div>
+<button class="primary-btn" id="rebalance-now">立即回應</button>
+</div>
 </div>
 
 <div id="rebalance" class="page">
-  <div class="header"><h1>再平衡</h1></div>
   <div style="padding:16px; width:100%; max-width:520px;">
     <p style="font-weight:700; font-size:16px; margin-bottom:8px;">再平衡</p>
     <p style="color:#666;">開發中</p>
