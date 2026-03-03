@@ -1304,11 +1304,12 @@ gap: 10px;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            ctx.fillStyle = "#FFFFFF";
+            const isDark = document.body.classList.contains("dark");
+            ctx.fillStyle = isDark ? "#FFFFFF" : "#1E2A38";
             ctx.font = "700 38px Arial";
             ctx.fillText(`${percent}%`, x, y - 8);
 
-            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.fillStyle = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)";
             ctx.font = "500 16px Arial";
             ctx.fillText("投報率", x, y + 22);
 
