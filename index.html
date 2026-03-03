@@ -1,1735 +1,605 @@
 <!DOCTYPE html>
-
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Asset Control System</title>
-<!-- 狀態列顏色自動隨深淺模式切換 -->
-<!-- ✅ iOS 主畫面 icon -->
 <link href="logo(3).png" rel="apple-touch-icon" sizes="192x192"/>
 <link href="logo(3).png" rel="apple-touch-icon" sizes="512x512"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Arial', sans-serif;
-      background: #0b0b0b;
-      min-height: 100vh;
-      margin: 0;
-      color: #fff;
-      overflow-x: hidden;
-    }
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Arial', sans-serif;
+  background: #0b0b0b;
+  min-height: 100vh;
+  margin: 0;
+  color: #fff;
+  overflow-x: hidden;
+}
+html, body { overflow-x: hidden; }
 
-    /* --- 開啟畫面 --- */
-    #splash {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: #fff;
-      z-index: 10;
-      animation: fadeOut 1s ease 3s forwards;
-    }
-    #splash img { width: 100px; animation: zoomIn 1s ease forwards; }
-    #splash h1 {
-      margin-top: 20px;
-      font-size: 22px;
-      font-weight: bold;
-      color: #1E2A38;
-      opacity: 0;
-      animation: fadeIn 2s ease 1s forwards;
-    }
-    @keyframes zoomIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    @keyframes fadeIn { to { opacity: 1; } }
-    @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
-    @keyframes zoomLoop {
-      0%   { transform: scale(0.6); opacity: 0; }
-      50%  { transform: scale(1); opacity: 1; }
-      100% { transform: scale(0.6); opacity: 0; }
-    }
-
-    /* --- 各頁面 --- */
-    #app, #history, .product-detail, #export, #settings, #version-detail, #about-page, #contact-page {
-      width: 100%;
-      max-width: 520px;
-      margin: 0 auto;
-      min-height: 100vh;
-      background: transparent;
-      display: none; /* 預設隱藏 */
-      flex-direction: column;
-      align-items: stretch;
-      justify-content: flex-start;
-      padding: 20px 16px 110px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      position: relative;
-    }
-
-    /* 標題區 */
-    .brand-title {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 5px;
-      text-align: center;
-      width: 100%;
-    }
-    .page-title {
-      font-size: 18px;
-      font-weight: bold;
-      text-align: center;
-      width: 100%;
-      margin: 15px 0;
-    }
-    .balance {
-      font-size: 28px;
-      font-weight: bold;
-      color: #000;
-      margin-bottom: 20px;
-    }
-
-    /* 圖表容器 */
-    .chart-container {
-      width: 90%;
-      max-width: 400px;
-      height: 200px;
-      margin-bottom: 20px;
-    }
-
-    /* 單行交易卡片 */
-    .transaction-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 20px;
-      padding: 10px 15px;
-      margin: 8px 0;
-      max-width: 400px;
-      width: 100%;
-      cursor: pointer;
-    }
-    .transaction-row .icon {
-      width: 35px; height: 35px;
-      border-radius: 50%;
-      background: #f1f1f1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .transaction-row .icon img { width: 20px; }
-    .transaction-row .title {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 600;
-      color: #1E2A38;
-      margin-left: 10px;
-      text-align: left;
-    }
-    .transaction-row .amount {
-      font-size: 14px;
-      font-weight: bold;
-      color: #1E2A38;
-    }
-
-    /* --- 底部導航列 --- */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0px; left: 0;
-      width: 100%;
-      height: 100px;
-      background: #fff;
-      border-top: 1px solid #ddd;
-      display: none;   /* ✅ 一開始隱藏 */
-      justify-content: space-around;
-      align-items: center;
-    }
-    .bottom-nav .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 12px;
-      color: #555;
-      cursor: pointer;
-      margin-top: -20px;
-    }
-    .bottom-nav svg {
-      width: 22px;
-      height: 22px;
-      margin-bottom: 4px;
-      fill: #aaa;
-      transition: fill 0.3s;
-    }
-    .bottom-nav .active svg,
-    .bottom-nav .active span {
-      fill: #007BFF;
-      color: #007BFF;
-    }
-
-    /* 商品詳情頁的清單容器 */
-    #product-list {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    #product-list .transaction-row {
-      max-width: 400px;
-      width: 100%;
-    }
-
-    /* 返回按鈕 */
-    .back-button {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent; /* 背景透明 */
-      background: none;
-      border: none;
-      cursor: pointer;
-      display: none;   /* 預設隱藏 */
-      padding: 0;    /* SVG 外留空隙 */
-      padding: 6px;    /* SVG 外留空隙 */
-      border-radius: 50%;  /* 變成圓形 */
-      line-height: 0;  /* 避免文字高度影響 */
-    }
-    .back-button svg {
-      width: 24px;
-      height: 24px;
-      
-    }
-    .back-button:hover {
-      background: #e0e0e0;
-    }
-    /* 固定標題列 */
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 0px;               /* hide title bar */
-      background: transparent;
-      border-bottom: none;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      overflow: visible;         /* allow back button to show */
-      pointer-events: none;      /* header itself not clickable */
-    }
-    .header h1 {
-      font-size: 18px;
-      font-weight: bold;
-    }
-    /* 🌞 淺色模式 */
-    body.light {
-      background: #ffffff;
-      color: #000;
-    }
-    body.light #app,
-    body.light #history,
-    body.light .product-detail,
-    body.light #export,
-    body.light #settings,
-    body.light #version-detail,
-    body.light #about-page,
-    body.light #contact-page {
-      background: #ffffff;
-    }
-    body.light .transaction-row {
-      background: #fff;
-      border: 1px solid #ddd;
-    }
-    body.light .transaction-row .title,
-    body.light .transaction-row .amount {
-      color: #1E2A38;
-    }
-    body.light .brand-title { color: #888; }
-    body.light .balance { color: #000; }
-    body.light .page-title { color: #000; }
-    body.light .back-button { background: transparent; }
-    body.light .header {
-      background: #fff;
-      border-bottom: 1px solid #ddd;
-    }
-    body.light .header h1 { color: #000; }
-    body.light .bottom-nav {
-      background: #fff;
-      border-top: 1px solid #ddd;
-    }
-    body.light .bottom-nav .nav-item { color: #555; }
-        /* 🌞 淺色模式下的設定頁 */
-    body.light .list-container {
-      background: #fff;
-      border-top: 1px solid #eee;
-      border-bottom: 1px solid #eee;
-    }
-    
-    body.light .list-row {
-      color: #000;
-      border-bottom: 1px solid #eee;
-    }
-    
-    body.light .list-row .value {
-      color: #999; /* 右邊版本號文字 */
-    }
-    
-    body.light .popup-content {
-      background: #fff;
-    }
-    
-    body.light .popup-item {
-      color: #000;
-      border-bottom: 1px solid #eee;
-    }
-    
-    body.light .popup-cancel {
-      color: #007BFF;
-    }
-    
-    /* 🌙 深色模式 */
-    body.dark {
-      background: #121212;
-      color: #eee;
-    }
-    body.dark #app,
-    body.dark #history,
-    body.dark .product-detail,
-    body.dark #export,
-    body.dark #settings,
-    body.dark #version-detail,
-    body.dark #about-page,
-    body.dark #contact-page {
-      background: #121212;
-    }
-    body.dark .transaction-row {
-      background: #1e1e1e;
-      border: 1px solid #333;
-    }
-    body.dark .transaction-row .title,
-    body.dark .transaction-row .amount {
-      color: #eee;
-    }
-    body.dark .brand-title { color: #aaa; }
-    body.dark .balance { color: #fff; }
-    body.dark .page-title { color: #fff; }
-    body.dark .back-button { background: #2c2c2c; }
-    body.dark .back-button svg circle { fill: #2c2c2c; }
-    body.dark .back-button svg path { stroke: #eee; }
-    body.dark .header {
-      background: #1e1e1e;
-      border-bottom: 1px solid #333;
-    }
-    body.dark .header h1 { color: #fff; }
-    body.dark .bottom-nav {
-      background: #1e1e1e;
-      border-top: 1px solid #333;
-    }
-    body.dark .bottom-nav .nav-item { color: #aaa; }
-    /* 🌙 深色模式下的設定頁 */
-    body.dark .list-container {
-      background: #1e1e1e;
-      border-top: 1px solid #333;
-      border-bottom: 1px solid #333;
-    }
-    
-    body.dark .list-row {
-      color: #eee;
-      border-bottom: 1px solid #333;
-    }
-    
-    body.dark .list-row .value {
-      color: #aaa; /* 深色模式版本號文字 */
-    }
-    
-    body.dark .popup-content {
-      background: #1e1e1e;
-    }
-    
-    body.dark .popup-item {
-      color: #eee;
-      border-bottom: 1px solid #333;
-    }
-    
-    body.dark .popup-cancel {
-      color: #4da3ff; /* 深色背景上更清楚 */
-    }
-
-
-
-
-
-    
-     /* ==================== */
-  /* 設定頁標題 */
-.section-title {
-  font-size: 12px;
-  color: #999;
-  margin: 20px 0 8px;
-  padding-left: 15px;
+/* --- 開啟畫面 --- */
+#splash {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  background: #fff; z-index: 10;
+  animation: fadeOut 1s ease 3s forwards;
+}
+#splash img { width: 100px; animation: zoomIn 1s ease forwards; }
+#splash h1 {
+  margin-top: 20px; font-size: 22px; font-weight: bold;
+  color: #1E2A38; opacity: 0; animation: fadeIn 2s ease 1s forwards;
+}
+@keyframes zoomIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+@keyframes zoomLoop {
+  0% { transform: scale(0.6); opacity: 0; }
+  50% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0; }
 }
 
-
-
-/* 下拉選單樣式 */
-.list-row select {
-  border: none;
+/* --- 各頁面 --- */
+#app, #rebalance, #history, #export, #settings, #version-detail, #about-page, #contact-page {
+  width: 100%; max-width: 520px;
+  margin: 0 auto; min-height: 100vh;
   background: transparent;
-  font-size: 14px;
-  color: #666;
-  outline: none;
-  appearance: none;
-}
-
-/* 箭頭樣式 */
-.list-row .arrow {
-  color: #bbb;
-  font-size: 14px;
-}
-
-
-  #settings {
-    align-items: stretch;
-  }
-  /* Popup 背景 */
-    .popup {
-      display: none;
-      position: fixed;
-      left: 0; right: 0; bottom: 0; top: 0;
-      background: rgba(0,0,0,0.4);
-      justify-content: center;   /* 改成置中 */
-      align-items: flex-end;     /* 貼底部 */
-      z-index: 20;
-    }
-
-    
-    /* 選單容器 */
-    .popup-content {
-      background: #fff;
-      border-radius: 12px 12px 0 0;
-      padding: 10px 0;
-      animation: slideUp 0.3s ease;
-    
-      width: 100%;
-      max-height: 50%;
-    
-      
-      padding-bottom: 35px;
-    }
-    
-    /* 選項 */
-    .popup-item {
-      padding: 14px;
-      text-align: center;
-      font-size: 16px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-    }
-    
-    .popup-item:last-child {
-      border-bottom: none;
-    }
-    
-    .popup-cancel {
-      padding: 14px;
-      text-align: center;
-      font-size: 16px;
-      font-weight: bold;
-      color: #007BFF;
-      cursor: pointer;
-    }
-    
-    /* 動畫 */
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-    .arrow-icon {
-        width: 18px;
-        height: 18px;
-        margin-left: 8px;
-        color: #bbb; /* 淺色模式預設 */
-        vertical-align: middle; /* ✅ 對齊文字中線 */
-      }
-      
-      /* 🌞 淺色模式箭頭 */
-      body.light .arrow-icon {
-        color: #bbb;
-      }
-      
-      /* 🌙 深色模式箭頭 */
-      body.dark .arrow-icon {
-        color: #888;
-      }
-    /*版本詳情頁--------------------------------*/
-    .version-page {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 20px 20px 100px;
+  display: none;
+  flex-direction: column;
+  align-items: stretch; justify-content: flex-start;
+  padding: 20px 16px 110px;
   box-sizing: border-box;
-      overflow-y: auto;
-      align-items: center;
-      justify-content: flex-start;
-    }
-    
-    /* 立即更新按鈕 */
-    .update-btn {
-      background: #f1f1f1;
-      border: none;
-      border-radius: 20px;
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      display: block;       /* 變成區塊 */
-      margin: 20px auto; /* ⬅️ 左右自動置中 */
-    }
-    body.dark .update-btn {
-      background: #2c2c2c;
-      color: #fff;
-    }
-    
-
-    body.dark .version-row {
-      border-bottom: 1px solid #333;
-    }
-
-
-
-    #version-detail .section-title {
-      text-align: center;
-      padding-left: 0;  /* 移除左邊 padding */
-    }
-    #version-detail .version-list {
-      width: 100%;          /* 跟設定頁一樣滿版 */
-      border-top: 1px solid #eee;
-      border-bottom: 1px solid #eee;
-    }
-    #version-detail  {
-      align-items: stretch; /* 讓內部元素能貼齊左右 */
-    }
-    .version-page{
-      align-items: stretch;
-    }
-    /* ✅ 共用清單容器 */
-    .list-container {
-      width: 100%;
-      background: inherit; /* 跟主題走 */
-      border-top: 1px solid #eee;
-      border-bottom: 1px solid #eee;
-    }
-    
-    /* ✅ 共用清單行 */
-    .list-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 16px;
-      font-size: 14px;
-      border-bottom: 1px solid #eee;
-    }
-    
-    /* 最後一行去掉底線 */
-    .list-row:last-child {
-      border-bottom: none;
-    }
-    
-    /* 灰字 */
-    .list-row .value {
-      font-size: 13px;
-      color: #999;
-    }
-    
-    /* 🌙 深色模式 */
-    body.dark .list-container {
-      border-top: 1px solid #333;
-      border-bottom: 1px solid #333;
-    }
-    body.dark .list-row {
-      border-bottom: 1px solid #333;
-    }
-    body.dark .list-row .value {
-      color: #aaa;
-    }
-
-    
-  
-    /* ===== 總覽頁（資產量控） ===== */
-    .overview-page{
-      width: 100%;
-      height: 100%;
-      padding: 14px 14px 120px 14px; /* 底部留給 nav */
-      display:flex;
-      flex-direction:column;
-      align-items:stretch;
-gap: 10px;
-      background: transparent;
-}
-    .overview-topbar{
-      width:100%;
-      max-width:520px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 6px 4px 0 4px;
-    }
-    .topbar-spacer{ width:40px; height:40px; }
-    .topbar-title{ font-weight:800; font-size:16px; color:#1E2A38; }
-    .topbar-icon{
-      width:40px;height:40px;border:0;background:transparent;
-      display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;
-      color:#1E2A38;
-    }
-    .topbar-icon svg{ width:22px;height:22px; fill: currentColor; opacity:.85; }
-    .topbar-icon .dot{
-      position:absolute; right:10px; top:10px;
-      width:8px;height:8px;border-radius:50%;
-      background:#ff3b30;
-      border:2px solid #f4f5f7;
-    }
-
-    .overview-header{
-      width:100%;
-      max-width:520px;
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap:10px;
-    }
-    .overview-header .label{ font-weight:700; color:#1E2A38; font-size:14px; }
-    .overview-header .updated{ color:#8a8f98; font-size:11px; white-space:nowrap; }
-
-    .overview-balance{
-      width:100%;
-      max-width:520px;
-      background:#fff;
-      border-radius:16px;
-      padding: 12px 14px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.06);
-    }
-    .overview-balance .amount{ font-weight:900; font-size:22px; color:#1E2A38; }
-    .overview-balance .delta{ margin-top:6px; color:#7b8088; font-size:12px; }
-    
-    
-
-    .overview-maincard{
-      width:100%;
-      max-width:520px;
-      display:flex;
-      gap: 12px;
-      background:#fff;
-      border-radius:16px;
-      padding: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.06);
-      align-items:center;
-    }
-    .donut-wrap{ width: 160px; height: 160px; }
-    #assetDonut{ width:100% !important; height:100% !important; }
-
-    .legend{ flex:1; display:flex; flex-direction:column; gap:10px; }
-    .legend-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .legend-left{ display:flex; align-items:center; gap:8px; min-width:0; }
-    .legend-left .name{ color:#1E2A38; font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .legend-right{ display:flex; align-items:center; gap:8px; }
-    .legend-right .pct{ color:#1E2A38; font-weight:800; font-size:12px; }
-    .legend-right .tag{
-      font-size:11px; padding: 2px 8px; border-radius:999px;
-      background:#eef1f6; color:#4b5563; font-weight:700;
-    }
-
-        .overview-grid{
-      width:100%;
-      max-width:520px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    /* 2x2 資產卡片（上半部滿版色塊） */
-    .mini-card{
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius:16px;
-      overflow:hidden;
-      box-shadow: 0 10px 26px rgba(0,0,0,.28);
-    }
-    .mini-top{
-      background: var(--card-color);
-      padding: 8px 12px;
-      min-height: 44px;
-      display:flex;
-      align-items:center;
-      justify-content:flex-start;
-    }
-    .mini-top-left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      color:#fff;
-      font-weight:900;
-    }
-    .mini-top-icon{
-      width:26px;height:26px;
-      border-radius:10px;
-      background: rgba(0,0,0,0.18);
-      display:flex; align-items:center; justify-content:center;
-      font-weight:900; color:#fff; font-size:13px;
-    }
-    
-.mini-top-title{
-  font-size: 20px;
-  font-weight: 700;
+  overflow-y: auto; position: relative;
 }
 
-    .mini-body{
-      padding: 10px 12px 12px;
-    }
-    
-.mini-amt{
-  font-size: 20px;
-  font-weight: 500;
+.brand-title { font-size: 14px; color: #888; margin-bottom: 5px; text-align: center; width: 100%; }
+.page-title { font-size: 18px; font-weight: bold; text-align: center; width: 100%; margin: 15px 0; }
+
+/* --- 底部導航列 --- */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0;
+  width: 100%; height: 100px;
+  background: #fff; border-top: 1px solid #ddd;
+  display: none;
+  justify-content: space-around; align-items: center;
+  z-index: 100;
 }
-
-    .mini-sub{
-      margin-top:6px;
-      display:flex;
-      justify-content:space-between; /* 佔比左、漲跌%右 */
-      align-items:baseline;
-      gap:10px;
-      width:100%;
-      font-size:12px;
-      color: rgba(255,255,255,0.75);
-      font-weight:700;
-    }
-    .mini-pct{opacity:0.75;}
-    .mini-change{font-weight:800;}
-    .mini-change{
-      font-weight:900;
-    }
-    
-    
-
-    .positions{
-      width:100%;
-      max-width:520px;
-      background:#fff;
-      border-radius:16px;
-      padding: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.06);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .pos-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12px; }
-    .pos-left{ display:flex; align-items:center; gap:8px; font-weight:800; color:#1E2A38; }
-    .pos-right{ color:#6b7280; font-weight:700; }
-    .chip{
-      width:22px;height:22px;border-radius:8px;
-      display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:900;font-size:12px;
-    }
-
-    .primary-btn{
-      width:100%;
-      border:0;
-      border-radius:12px;
-      padding: 12px 14px;
-      font-weight:900;
-      color:#fff;
-      background:#2d7ef7;
-      cursor:pointer;
-    }
-
-    /* 色票（對應圓餅/標籤） */
-    .dot{ width:10px;height:10px;border-radius:50%; display:inline-block; }
-    .c1{ background:#f5a623; }
-    .c2{ background:#7396c6; }
-    .c3{ background:#dfb199; }
-    .c4{ background:#9eb995; }
-
-    /* 深色模式下的總覽 */
-    body.dark .overview-page{ background:#121212; }
-    body.dark .overview-balance,
-    body.dark .overview-maincard,
-    body.dark .mini-card,
-    body.dark .positions{
-      background:#1e1e1e;
-      box-shadow:none;
-      border:1px solid #2a2a2a;
-    }
-    body.dark .topbar-title,
-    body.dark .overview-header .label,
-    body.dark .overview-balance .amount,
-    body.dark .legend-left .name,
-    body.dark .legend-right .pct,
-    body.dark .mini-title,
-    body.dark .mini-amt,
-    body.dark .pos-left{
-      color:#eee;
-    }
-    body.dark .overview-header .updated,
-    body.dark .overview-balance .delta,
-    body.dark .mini-sub,
-    body.dark .pos-right{
-      color:#a0a0a0;
-    }
-    body.dark .legend-right .tag{ background:#2a2a2a; color:#cfd3da; }
-    body.dark .topbar-icon .dot{ border-color:#121212; }
-
-
-    /* ===== Header bar hidden, keep back button ===== */
-    #page-title{ display:none; }
-    .back-button{
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(0,0,0,0.06);
-      box-shadow: 0 6px 22px rgba(0,0,0,0.18);
-      display: none; /* controlled by JS via inline style */
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      pointer-events: auto;
-      backdrop-filter: blur(10px);
-    }
-    body.dark .back-button{
-      background: rgba(30,30,30,0.92);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    /* prevent accidental horizontal scroll (right gray bar) */
-    html, body {
-      font-family: 'Arial', sans-serif;
-      background: #0b0b0b;
-      min-height: 100vh;
-      margin: 0;
-      color: #fff;
-      overflow-x: hidden;
-    }
-
-    /* ===== overview balance header inside card ===== */
-    .overview-balance-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom: 6px;
-    }
-    .overview-balance-head .label{ font-weight:700; color:#1E2A38; font-size:13px; }
-    .overview-balance-head .updated{ color:#8a8f98; font-size:11px; white-space:nowrap; }
-    body.dark .overview-balance-head .label{ color:#e6e6e6; }
-    body.dark .overview-balance-head .updated{ color:#9aa0a6; }
-
-
-/* Asset card bottom row: percent left, change right */
-.asset-bottom {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
+.bottom-nav .nav-item {
+  display: flex; flex-direction: column;
+  align-items: center; font-size: 12px;
+  color: #555; cursor: pointer; margin-top: -20px;
 }
-.asset-bottom .pct {
-  opacity: 0.75;
+.bottom-nav svg { width: 22px; height: 22px; margin-bottom: 4px; fill: #aaa; transition: fill 0.3s; }
+.bottom-nav .active svg, .bottom-nav .active span { fill: #007BFF; color: #007BFF; }
+
+/* 返回按鈕 */
+.back-button {
+  position: fixed; top: 12px; left: 12px;
+  width: 40px; height: 40px; border-radius: 12px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.18);
+  display: none; align-items: center; justify-content: center;
+  z-index: 2000; pointer-events: auto; cursor: pointer;
+  backdrop-filter: blur(10px);
 }
-.asset-bottom .chg {
-  font-weight: 700;
+body.dark .back-button { background: rgba(30,30,30,0.92); border: 1px solid rgba(255,255,255,0.08); }
+
+/* Header */
+.header {
+  position: fixed; top: 0; left: 0; width: 100%; height: 0px;
+  background: transparent; border-bottom: none;
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000; overflow: visible; pointer-events: none;
 }
+#page-title { display: none; }
 
+/* 🌞 淺色 */
+body.light { background: #ffffff; color: #000; }
+body.light #app, body.light #rebalance, body.light #history,
+body.light #export, body.light #settings,
+body.light #version-detail, body.light #about-page, body.light #contact-page { background: #ffffff; }
+body.light .page-title { color: #000; }
+body.light .bottom-nav { background: #fff; border-top: 1px solid #ddd; }
+body.light .bottom-nav .nav-item { color: #555; }
+body.light .list-container { background: #fff; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+body.light .list-row { color: #000; border-bottom: 1px solid #eee; }
+body.light .list-row .value { color: #999; }
+body.light .popup-content { background: #fff; }
+body.light .popup-item { color: #000; border-bottom: 1px solid #eee; }
+body.light .popup-cancel { color: #007BFF; }
 
-/* Updated gain/loss colors */
-.mini-change.up,
-.up {
-  color: #e8706f; /* 漲 */
+/* 🌙 深色 */
+body.dark { background: #121212; color: #eee; }
+body.dark #app, body.dark #rebalance, body.dark #history,
+body.dark #export, body.dark #settings,
+body.dark #version-detail, body.dark #about-page, body.dark #contact-page { background: #121212; }
+body.dark .page-title { color: #fff; }
+body.dark .bottom-nav { background: #1e1e1e; border-top: 1px solid #333; }
+body.dark .bottom-nav .nav-item { color: #aaa; }
+body.dark .list-container { background: #1e1e1e; border-top: 1px solid #333; border-bottom: 1px solid #333; }
+body.dark .list-row { color: #eee; border-bottom: 1px solid #333; }
+body.dark .list-row .value { color: #aaa; }
+body.dark .popup-content { background: #1e1e1e; }
+body.dark .popup-item { color: #eee; border-bottom: 1px solid #333; }
+body.dark .popup-cancel { color: #4da3ff; }
+
+/* 設定頁 */
+.section-title { font-size: 12px; color: #999; margin: 20px 0 8px; padding-left: 15px; }
+.list-container { width: 100%; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+.list-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px; font-size: 14px; border-bottom: 1px solid #eee;
 }
+.list-row:last-child { border-bottom: none; }
+.list-row .value { font-size: 13px; color: #999; }
+.arrow-icon { width: 18px; height: 18px; margin-left: 8px; color: #bbb; vertical-align: middle; }
+body.dark .arrow-icon { color: #888; }
 
-.mini-change.down,
-.down {
-  color: #77a478; /* 跌 */
+/* Popup */
+.popup {
+  display: none; position: fixed;
+  left: 0; right: 0; bottom: 0; top: 0;
+  background: rgba(0,0,0,0.4);
+  justify-content: center; align-items: flex-end; z-index: 200;
 }
-
-
-
-/* === Typography upgrade (correct selectors) === */
-
-/* 資產總額（左上標題） */
-.overview-balance-head .label{
-  font-size: 20px;
-  font-weight: 800;
+.popup-content {
+  background: #fff; border-radius: 12px 12px 0 0;
+  padding: 10px 0 35px; animation: slideUp 0.3s ease;
+  width: 100%; max-height: 50%;
 }
+.popup-item { padding: 14px; text-align: center; font-size: 16px; border-bottom: 1px solid #eee; cursor: pointer; }
+.popup-cancel { padding: 14px; text-align: center; font-size: 16px; font-weight: bold; color: #007BFF; cursor: pointer; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-/* 今日變動 */
-.overview-balance .delta{
-  font-size: 18px;
-  font-weight: 700;
+/* 版本頁 */
+.version-page {
+  width: 100%; display: flex; flex-direction: column;
+  padding: 20px 20px 100px; box-sizing: border-box;
+  overflow-y: auto; align-items: stretch;
 }
-
-/* 圓餅圖右側四行（名稱＋百分比） */
-
-/* === FINAL overrides (ensure legend font applies) === */
-#assetLegend .legend-left .name{
-  font-size: 16px !important;
-  font-weight: 700 !important;
+.update-btn {
+  background: #f1f1f1; border: none; border-radius: 20px;
+  padding: 12px 24px; font-size: 16px; font-weight: bold;
+  cursor: pointer; display: block; margin: 20px auto;
 }
-#assetLegend .legend-right .pct{
-  font-size: 16px !important;
-  font-weight: 800 !important;
+body.dark .update-btn { background: #2c2c2c; color: #fff; }
+
+/* ===== 總覽頁 ===== */
+.overview-page {
+  width: 100%; padding: 14px 14px 120px;
+  display: flex; flex-direction: column;
+  align-items: stretch; gap: 10px; background: transparent;
 }
-
-</style>
-<style>
-/* === Overview total NT font size override === */
-#total-nt{
-  font-size: 44px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  line-height: 1.1;
+.overview-balance {
+  width: 100%; max-width: 520px;
+  background: #fff; border-radius: 16px;
+  padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,.06);
 }
+.overview-balance-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.overview-balance-head .label { font-weight: 800; color: #1E2A38; font-size: 20px; }
+.overview-balance-head .updated { color: #8a8f98; font-size: 11px; white-space: nowrap; }
+.overview-balance .amount { font-weight: 900; font-size: 22px; color: #1E2A38; }
+.overview-balance .delta { margin-top: 6px; color: #7b8088; font-size: 18px; font-weight: 700; }
+body.dark .overview-balance { background: #1e1e1e; box-shadow: none; border: 1px solid #2a2a2a; }
+body.dark .overview-balance-head .label { color: #e6e6e6; }
+body.dark .overview-balance-head .updated { color: #9aa0a6; }
+body.dark .overview-balance .amount { color: #eee; }
+body.dark .overview-balance .delta { color: #a0a0a0; }
 
-
-/* === Typography upgrade (correct selectors) === */
-
-/* 資產總額（左上標題） */
-.overview-balance-head .label{
-  font-size: 20px;
-  font-weight: 800;
+.overview-maincard {
+  width: 100%; max-width: 520px;
+  display: flex; gap: 12px; background: #fff;
+  border-radius: 16px; padding: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06); align-items: center;
 }
+.donut-wrap { width: 160px; height: 160px; }
+#assetDonut { width: 100% !important; height: 100% !important; }
+.legend { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.legend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.legend-left { display: flex; align-items: center; gap: 8px; }
+.legend-left .name { color: #1E2A38; font-weight: 700; font-size: 20px; }
+.legend-right .pct { color: #1E2A38; font-weight: 800; font-size: 20px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.c1 { background: #f5a623; } .c2 { background: #7396c6; }
+.c3 { background: #dfb199; } .c4 { background: #9eb995; }
+body.dark .overview-maincard { background: #1e1e1e; box-shadow: none; border: 1px solid #2a2a2a; }
+body.dark .legend-left .name, body.dark .legend-right .pct { color: #eee; }
 
-/* 今日變動 */
-.overview-balance .delta{
-  font-size: 18px;
-  font-weight: 700;
+.overview-grid { width: 100%; max-width: 520px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini-card { border-radius: 16px; overflow: hidden; box-shadow: 0 10px 26px rgba(0,0,0,.28); }
+.mini-top { background: var(--card-color); padding: 8px 12px; min-height: 44px; display: flex; align-items: center; }
+.mini-top-left { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 900; }
+.mini-top-icon {
+  width: 26px; height: 26px; border-radius: 10px;
+  background: rgba(0,0,0,0.18); display: flex; align-items: center;
+  justify-content: center; font-weight: 900; color: #fff; font-size: 13px;
 }
+.mini-top-title { font-size: 20px; font-weight: 700; color: #fff; }
+.mini-body { padding: 10px 12px 12px; background: #fff; }
+body.dark .mini-body { background: #1e1e1e; }
+.mini-amt { font-size: 16px; font-weight: 700; color: #1E2A38; }
+body.dark .mini-amt { color: #eee; }
+.mini-sub { margin-top: 6px; display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 700; color: #6b7280; }
+.mini-change.up { color: #e8706f; }
+.mini-change.down { color: #77a478; }
 
-/* 圓餅圖右側四行（名稱＋百分比） */
+#total-nt { font-size: 44px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; }
 
-/* === FINAL overrides (ensure legend font applies) === */
-#assetLegend .legend-left .name{
-  font-size: 20px !important;
-  font-weight: 700 !important;
-}
-#assetLegend .legend-right .pct{
-  font-size: 20px !important;
-  font-weight: 800 !important;
-}
-
+/* Splash */
+#offline-hint { display: none; margin-top: 20px; text-align: center; }
+#install-hint { display: none; margin-top: 20px; text-align: center; }
 </style>
 </head>
 <body>
+
 <!-- 固定標題列 -->
 <div class="header">
-<button class="back-button" id="back-button" style="display:none;">
-<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 18L9 12L15 6" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</button>
-<h1 id="page-title">總覽頁面</h1>
+  <button class="back-button" id="back-button">
+    <svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M15 18L9 12L15 6" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+    </svg>
+  </button>
+  <h1 id="page-title">總覽頁面</h1>
 </div>
+
 <!-- 開啟畫面 -->
 <div id="splash">
-<img alt="WealthNova Logo" src="logo(3).png"/>
-<h1>Asset Control System</h1>
-<!-- 安裝教學容器（預設隱藏） --> <!-- 新增 -->
-<div id="install-hint" style="display:none; margin-top:20px; text-align:center;"> <!-- 新增 -->
-<p style="font-size:18px; font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p> <!-- 新增 -->
-<p style="font-size:16px; color:#666; line-height:2;">在瀏覽器選單中點選「加入主畫面」<br/>需安裝成 App 才可使用</p> <!-- 新增 -->
-</div> <!-- 新增 -->
-<!-- 🚨 新增無網路提示 -->
-<div id="offline-hint" style="display:none; margin-top:20px; text-align:center;">
-<p style="font-size:16px; color:#e74c3c;">請檢查網路狀態</p>
-</div>
-</div>
-<!-- 總覽頁面 -->
-<div id="app" class="page overview-page">
-  <div class="overview-balance">
-<div class="overview-balance-head">
-<div class="label">資產總額</div>
-<div class="updated" id="overview-updated">動態更新：2024/04/26 08:00 AM</div>
-</div>
-<div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
-<div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
-</div>
-  <div class="overview-maincard">
-<div class="donut-wrap">
-<canvas id="assetDonut"></canvas>
-</div>
-<div class="legend" id="assetLegend">
-<div class="legend-row" data-key="BTC">
-<div class="legend-left"><span class="dot c1"></span><span class="name">BTC</span></div>
-<div class="legend-right"><span class="pct">--</span></div>
-</div>
-<div class="legend-row" data-key="0050">
-<div class="legend-left"><span class="dot c2"></span><span class="name">0050</span></div>
-<div class="legend-right"><span class="pct">--</span></div>
-</div>
-<div class="legend-row" data-key="GOLD">
-<div class="legend-left"><span class="dot c3"></span><span class="name">GOLD</span></div>
-<div class="legend-right"><span class="pct">--</span></div>
-</div>
-<div class="legend-row" data-key="CASH">
-<div class="legend-left"><span class="dot c4"></span><span class="name">CASH</span></div>
-<div class="legend-right"><span class="pct">--</span></div>
-</div>
-</div>
-</div>
-  <div class="overview-grid">
-<div class="mini-card" style="--card-color:#f5a623;">
-<div class="mini-top">
-<div class="mini-top-left">
-<div class="mini-top-icon">₿</div>
-<div class="mini-top-title">BTC</div>
-</div>
-</div>
-<div class="mini-body">
-<div class="mini-amt">NT$ <span>575,000</span></div>
-<div class="mini-sub">
-<span class="mini-pct">28.8%</span>
-<span class="mini-change up">+1.2%</span>
-</div>
-</div>
-</div>
-<div class="mini-card" style="--card-color:#7396c6;">
-<div class="mini-top">
-<div class="mini-top-left">
-<div class="mini-top-icon">TW</div>
-<div class="mini-top-title">0050</div>
-</div>
-</div>
-<div class="mini-body">
-<div class="mini-amt">NT$ <span>245,500</span></div>
-<div class="mini-sub">
-<span class="mini-pct">21.3%</span>
-<span class="mini-change down">-0.34%</span>
-</div>
-</div>
-</div>
-<div class="mini-card" style="--card-color:#dfb199;">
-<div class="mini-top">
-<div class="mini-top-left">
-<div class="mini-top-icon">Au</div>
-<div class="mini-top-title">黃金</div>
-</div>
-</div>
-<div class="mini-body">
-<div class="mini-amt">NT$ <span>161,200</span></div>
-<div class="mini-sub">
-<span class="mini-pct">14.1%</span>
-<span class="mini-change down">-10.3%</span>
-</div>
-</div>
-</div>
-<div class="mini-card" style="--card-color:#9eb995;">
-<div class="mini-top">
-<div class="mini-top-left">
-<div class="mini-top-icon">$</div>
-<div class="mini-top-title">現金</div>
-</div>
-</div>
-<div class="mini-body">
-<div class="mini-amt">NT$ <span>250,000</span></div>
-<div class="mini-sub">
-<span class="mini-pct">35.8%</span>
-<span class="mini-change up">+10.0%</span>
-</div>
-</div>
-</div>
-</div>
-  
-
-</div>
-</div>
-
-<div id="rebalance" class="page">
-  <div style="padding:16px; width:100%; max-width:520px;">
-    <p style="font-weight:700; font-size:16px; margin-bottom:8px;">再平衡</p>
-    <p style="color:#666;">開發中</p>
+  <img alt="Logo" src="logo(3).png"/>
+  <h1>Asset Control System</h1>
+  <div id="install-hint">
+    <p style="font-size:18px;font-weight:bold;line-height:4;">📲 請將此網站加到主畫面</p>
+    <p style="font-size:16px;color:#666;line-height:2;">在瀏覽器選單中點選「加入主畫面」<br/>需安裝成 App 才可使用</p>
+  </div>
+  <div id="offline-hint">
+    <p style="font-size:16px;color:#e74c3c;">請檢查網路狀態</p>
   </div>
 </div>
 
-<!-- 歷史績效頁面 -->
-<div id="history">
-<div class="header"><h1>歷史頁面</h1></div>
-<p class="brand-title">查詢績效</p>
-<h2 class="page-title">選擇商品</h2>
-<div class="transaction-row" data-target="tx">
-<div class="icon"><img alt="TX" src="2.png"/></div>
-<span class="title">台指期</span>
-<span class="amount">+ 12.5%</span>
+<!-- 總覽頁面 -->
+<div id="app" class="page overview-page">
+  <div class="overview-balance">
+    <div class="overview-balance-head">
+      <div class="label">資產總額</div>
+      <div class="updated" id="overview-updated">動態更新：--</div>
+    </div>
+    <div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
+    <div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
+  </div>
+
+  <div class="overview-maincard">
+    <div class="donut-wrap"><canvas id="assetDonut"></canvas></div>
+    <div class="legend" id="assetLegend">
+      <div class="legend-row" data-key="BTC">
+        <div class="legend-left"><span class="dot c1"></span><span class="name">BTC</span></div>
+        <div class="legend-right"><span class="pct">--</span></div>
+      </div>
+      <div class="legend-row" data-key="0050">
+        <div class="legend-left"><span class="dot c2"></span><span class="name">0050</span></div>
+        <div class="legend-right"><span class="pct">--</span></div>
+      </div>
+      <div class="legend-row" data-key="GOLD">
+        <div class="legend-left"><span class="dot c3"></span><span class="name">GOLD</span></div>
+        <div class="legend-right"><span class="pct">--</span></div>
+      </div>
+      <div class="legend-row" data-key="CASH">
+        <div class="legend-left"><span class="dot c4"></span><span class="name">CASH</span></div>
+        <div class="legend-right"><span class="pct">--</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overview-grid">
+    <div class="mini-card" style="--card-color:#f5a623;">
+      <div class="mini-top"><div class="mini-top-left"><div class="mini-top-icon">₿</div><div class="mini-top-title">BTC</div></div></div>
+      <div class="mini-body">
+        <div class="mini-amt">NT$ 575,000</div>
+        <div class="mini-sub"><span>28.8%</span><span class="mini-change up">+1.2%</span></div>
+      </div>
+    </div>
+    <div class="mini-card" style="--card-color:#7396c6;">
+      <div class="mini-top"><div class="mini-top-left"><div class="mini-top-icon">TW</div><div class="mini-top-title">0050</div></div></div>
+      <div class="mini-body">
+        <div class="mini-amt">NT$ 245,500</div>
+        <div class="mini-sub"><span>21.3%</span><span class="mini-change down">-0.34%</span></div>
+      </div>
+    </div>
+    <div class="mini-card" style="--card-color:#dfb199;">
+      <div class="mini-top"><div class="mini-top-left"><div class="mini-top-icon">Au</div><div class="mini-top-title">黃金</div></div></div>
+      <div class="mini-body">
+        <div class="mini-amt">NT$ 161,200</div>
+        <div class="mini-sub"><span>14.1%</span><span class="mini-change down">-10.3%</span></div>
+      </div>
+    </div>
+    <div class="mini-card" style="--card-color:#9eb995;">
+      <div class="mini-top"><div class="mini-top-left"><div class="mini-top-icon">$</div><div class="mini-top-title">現金</div></div></div>
+      <div class="mini-body">
+        <div class="mini-amt">NT$ 250,000</div>
+        <div class="mini-sub"><span>35.8%</span><span class="mini-change up">+10.0%</span></div>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="transaction-row" data-target="dj">
-<div class="icon"><img alt="DJ" src="3.png"/></div>
-<span class="title">小道瓊</span>
-<span class="amount">+ 8.3%</span>
+
+<!-- 再平衡 -->
+<div id="rebalance" class="page">
+  <div style="padding:16px;"><p style="font-weight:700;font-size:16px;margin-bottom:8px;">再平衡</p><p style="color:#666;">開發中</p></div>
 </div>
-<div class="transaction-row" data-target="nq">
-<div class="icon"><img alt="NQ" src="4.png"/></div>
-<span class="title">小那指</span>
-<span class="amount">+ 15.7%</span>
+
+<!-- 歷史紀錄 -->
+<div id="history" class="page">
+  <p class="page-title">歷史紀錄</p><p style="text-align:center;color:#888;">開發中</p>
 </div>
+
+<!-- 交易 -->
+<div id="export" class="page">
+  <p class="brand-title">每日盤前盤後報告</p>
+  <h2 class="page-title">報告內容 (開發中)</h2>
 </div>
-<!-- 商品詳情頁 -->
-<div class="product-detail" id="product-detail">
-<p class="brand-title" id="product-name"></p>
-<div class="balance" id="product-balance"></div>
-<div class="chart-container">
-<canvas id="productChart"></canvas>
+
+<!-- 設定 -->
+<div id="settings" class="page">
+  <p class="section-title">顯示設定</p>
+  <div class="list-container">
+    <div class="list-row" id="theme-setting">
+      <span>主題</span>
+      <div style="display:flex;align-items:center;">
+        <span id="theme-current">系統&amp;自動</span>
+        <svg class="arrow-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </div>
+    </div>
+  </div>
+  <p class="section-title">其他</p>
+  <div class="list-container">
+    <div class="list-row" id="about-setting" style="cursor:pointer;">
+      <span>關於</span>
+      <svg class="arrow-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+    </div>
+    <div class="list-row" id="contact-setting" style="cursor:pointer;">
+      <span>聯絡我們</span>
+      <svg class="arrow-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+    </div>
+    <div class="list-row" id="version-setting" style="cursor:pointer;">
+      <span>版本更新</span>
+      <div style="display:flex;align-items:center;">
+        <span class="value">V1.0.0</span>
+        <svg class="arrow-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+      </div>
+    </div>
+  </div>
 </div>
-<div id="product-list"></div>
+
+<!-- 版本詳情 -->
+<div id="version-detail" class="page version-page">
+  <p class="brand-title">版本</p>
+  <h2 class="page-title">V0.0.4</h2>
+  <button class="update-btn">立即更新</button>
+  <p class="section-title" style="text-align:center;">歷史版本</p>
+  <div class="list-container">
+    <div class="list-row"><span>日期: 2025-09-07</span><span class="value">V0.0.3</span></div>
+    <div class="list-row"><span>日期: 2025-09-03</span><span class="value">V0.0.2</span></div>
+    <div class="list-row"><span>日期: 2025-09-01</span><span class="value">V0.0.1</span></div>
+  </div>
 </div>
-<!-- 報告頁面 -->
-<div class="export-page" id="export">
-<p class="brand-title">每日盤前盤後報告</p>
-<h2 class="page-title">報告內容 (開發中)</h2>
-</div>
-<!-- 版本更新詳情頁 -->
-<div class="version-page" id="version-detail" style="display:none;">
-<div class="content">
-<p class="brand-title">版本</p>
-<h2 class="page-title" id="current-version">V0.0.4</h2>
-<button class="update-btn">立即更新</button>
-<p class="section-title" style="text-align:center;">歷史版本</p>
-<div class="list-container">
-<div class="list-row">
-<span>日期:2025-09-07</span>
-<span class="value">版本:V0.0.3</span>
-</div>
-<div class="list-row">
-<span>日期:2025-09-03</span>
-<span class="value">版本:V0.0.2</span>
-</div>
-<div class="list-row">
-<span>日期:2025-09-01</span>
-<span class="value">版本:V0.0.1</span>
-</div>
-</div>
-</div>
-</div>
-<!-- 設定頁面 -->
-<div class="settings-page" id="settings">
-<!-- 顯示設定 -->
-<p class="section-title">顯示設定</p>
-<div class="list-container">
-<!-- 🔽 把這裡的 select 全部換掉 -->
-<div class="list-row" id="language-setting">
-<span>語言</span>
-<div class="settings-right">
-<span id="language-current">中文繁體</span>
-<!-- SVG 箭頭 -->
-<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</div>
-</div>
-<div class="list-row" id="theme-setting">
-<span>主題</span>
-<div class="settings-right">
-<span id="theme-current">系統&amp;自動</span>
-<!-- SVG 箭頭 -->
-<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</div>
-</div>
-</div>
+
 <!-- 關於 -->
-<p class="section-title">其他</p>
-<div class="list-container">
-<div class="list-row clickable" id="about-setting">
-<span>關於</span>
-<!-- SVG 箭頭 -->
-<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
+<div id="about-page" class="page">
+  <p class="brand-title">關於</p><h2 class="page-title">開發中</h2>
 </div>
-<div class="list-row clickable" id="contact-setting">
-<span>聯絡我們</span>
-<!-- SVG 箭頭 -->
-<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
+
+<!-- 聯絡我們 -->
+<div id="contact-page" class="page">
+  <p class="brand-title">聯絡我們</p><h2 class="page-title">開發中</h2>
 </div>
-<div class="list-row" id="version-setting">
-<span>版本更新</span>
-<div class="settings-right">
-<span class="value">V1.0.0</span>
-<!-- SVG 箭頭 -->
-<svg class="arrow-icon" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</div>
-</div>
-</div>
-</div>
-<!-- 語言選單 Popup -->
-<div class="popup" id="language-popup">
-<div class="popup-content">
-<div class="popup-item" data-value="zh">中文繁體</div>
-<div class="popup-item" data-value="en">English</div>
-<div class="popup-cancel">取消</div>
-</div>
-</div>
-<!-- 主題選單 Popup -->
+
+<!-- 主題 Popup -->
 <div class="popup" id="theme-popup">
-<div class="popup-content">
-<div class="popup-item" data-value="system">系統&amp;自動</div>
-<div class="popup-item" data-value="light">淺色模式</div>
-<div class="popup-item" data-value="dark">深色模式</div>
-<div class="popup-cancel">取消</div>
+  <div class="popup-content">
+    <div class="popup-item" data-value="system">系統&amp;自動</div>
+    <div class="popup-item" data-value="light">淺色模式</div>
+    <div class="popup-item" data-value="dark">深色模式</div>
+    <div class="popup-cancel">取消</div>
+  </div>
 </div>
-</div>
-<!-- 關於頁面 -->
-<div class="about-page" id="about-page" style="display:none;">
-<p class="brand-title">關於</p>
-<h2 class="page-title">開發中</h2>
-</div>
-<!-- 聯絡我們頁面 -->
-<div class="contact-page" id="contact-page" style="display:none;">
-<p class="brand-title">聯絡我們</p>
-<h2 class="page-title">開發中</h2>
-</div>
+
 <!-- 底部導航列 -->
 <div class="bottom-nav">
+  <div class="nav-item active" data-target="app">
+    <svg viewBox="0 0 24 24"><path d="M12 3 3 10v11h6v-6h6v6h6V10l-9-7z"></path></svg><span>總覽</span>
+  </div>
+  <div class="nav-item" data-target="rebalance">
+    <svg viewBox="0 0 24 24"><path d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5 5 0 0 1-9.5 2H5.3A7 7 0 0 0 19 13c0-3.87-3.13-7-7-7z"></path><path d="M12 18v3l4-4-4-4v3c-2.76 0-5-2.24-5-5a5 5 0 0 1 9.5-2h2.2A7 7 0 0 0 5 11c0 3.87 3.13 7 7 7z"></path></svg><span>再平衡</span>
+  </div>
+  <div class="nav-item" data-target="export">
+    <svg viewBox="0 0 24 24"><path d="M4 19h16v2H4v-2zM7 14l3-3 3 3 6-6 1.4 1.4-7.4 7.4-3-3-3 3L3.6 12.8 5 11.4 7 13.4z"></path></svg><span>交易</span>
+  </div>
+  <div class="nav-item" data-target="history">
+    <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 1 0 8.94 10h-2.02A7 7 0 1 1 13 5V3z"></path><path d="M12 8h2v6l5 3-1 1.73-6-3.73V8z"></path></svg><span>歷史紀錄</span>
+  </div>
+  <div class="nav-item" data-target="settings">
+    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 12.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L1.7 7.88a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L1.82 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.4 1.05.71 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.23 1.12-.54 1.63-.94l2.39.96c.22.09.48 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.56zM11 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"></path></svg><span>設定</span>
+  </div>
+</div>
 
-
-
-
-<div class="nav-item active" data-target="app"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 3 10v11h6v-6h6v6h6V10l-9-7z"></path></svg><span>總覽</span></div><div class="nav-item" data-target="rebalance"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5 5 0 0 1-9.5 2H5.3A7 7 0 0 0 19 13c0-3.87-3.13-7-7-7z"></path><path d="M12 18v3l4-4-4-4v3c-2.76 0-5-2.24-5-5a5 5 0 0 1 9.5-2h2.2A7 7 0 0 0 5 11c0 3.87 3.13 7 7 7z"></path></svg><span>再平衡</span></div><div class="nav-item" data-target="trade"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 19h16v2H4v-2zM7 14l3-3 3 3 6-6 1.4 1.4-7.4 7.4-3-3-3 3L3.6 12.8 5 11.4 7 13.4z"></path></svg><span>交易</span></div><div class="nav-item" data-target="history"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 3a9 9 0 1 0 8.94 10h-2.02A7 7 0 1 1 13 5V3z"></path><path d="M12 8h2v6l5 3-1 1.73-6-3.73V8z"></path></svg><span>歷史紀錄</span></div><div class="nav-item" data-target="settings"><svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 12.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L1.7 7.88a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L1.82 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.4 1.05.71 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.23 1.12-.54 1.63-.94l2.39.96c.22.09.48 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.56zM11 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"></path></svg><span>設定</span></div></div>
 <script>
-    
-    
-    // Chart.js Asset Donut (Overview)
-    (function initAssetDonut(){
-      const el = document.getElementById('assetDonut');
-      if (!el) return;
+// ===== 頁面定義 =====
+const pages = {
+  app: document.getElementById('app'),
+  rebalance: document.getElementById('rebalance'),
+  history: document.getElementById('history'),
+  export: document.getElementById('export'),
+  settings: document.getElementById('settings'),
+  version: document.getElementById('version-detail'),
+  about: document.getElementById('about-page'),
+  contact: document.getElementById('contact-page')
+};
 
-      // Sample values (can be replaced by real portfolio data later)
-      const assets = [
-        { key: 'BTC',  label: 'BTC',  value: 330000, color: '#f5a623' },
-        { key: '0050', label: '0050', value: 245500, color: '#7396c6' },
-        { key: 'GOLD', label: 'GOLD', value: 161200, color: '#dfb199' },
-        { key: 'CASH', label: 'CASH', value: 409850, color: '#9eb995' }
-      ];
+const pageStack = [];
+const backButton = document.getElementById('back-button');
+const navItems = document.querySelectorAll('.bottom-nav .nav-item');
 
-      const total = assets.reduce((s,a)=>s+a.value,0) || 1;
-      const pct = (v)=> (Math.round((v/total)*1000)/10).toFixed(1) + '%';
-
-      // Update legend (percent only)
-      const legend = document.getElementById('assetLegend');
-      if (legend){
-        legend.querySelectorAll('.legend-row').forEach(row=>{
-          const key = row.getAttribute('data-key');
-          const a = assets.find(x=>x.key===key);
-          const pctEl = row.querySelector('.pct');
-          if (a && pctEl) pctEl.textContent = pct(a.value);
-        });
-      }
-
-      // Update "動態更新" to current time (and keep it fresh)
-      function pad2(n){ return String(n).padStart(2,'0'); }
-      function formatNow(d){
-        const yyyy = d.getFullYear();
-        const mm = pad2(d.getMonth()+1);
-        const dd = pad2(d.getDate());
-        let hh = d.getHours();
-        const ap = hh >= 12 ? 'PM' : 'AM';
-        hh = hh % 12; if (hh === 0) hh = 12;
-        const mi = pad2(d.getMinutes());
-        return `${yyyy}/${mm}/${dd} ${pad2(hh)}:${mi} ${ap}`;
-      }
-      function updateOverviewTime(){
-        const t = document.getElementById('overview-updated');
-        if (t) t.textContent = '動態更新：' + formatNow(new Date());
-      }
-      updateOverviewTime();
-      if (!window.__overviewTimeTimer){
-        window.__overviewTimeTimer = setInterval(updateOverviewTime, 60000);
-      }
-
-      const dctx = el.getContext('2d');
-      if (window.assetDonutChart) window.assetDonutChart.destroy();
-
-      window.assetDonutChart = new Chart(dctx, {
-        type: 'doughnut',
-        data: {
-          labels: assets.map(a=>a.label),
-          datasets: [{
-            borderRadius: 999,
-            spacing: 4,
-            data: assets.map(a=>a.value),
-            backgroundColor: assets.map(a=>a.color),
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: "84%",
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx)=>{
-                  const v = ctx.parsed || 0;
-                  return ` ${ctx.label}: NT$ ${v.toLocaleString()} (${pct(v)})`;
-                }
-              }
-            }
-          }
-        }
-      
-        ,
-        plugins: [{
-          id: "centerText",
-          afterDraw(chart) {
-            const { ctx } = chart;
-            const meta = chart.getDatasetMeta(0);
-            if (!meta?.data?.[0]) return;
-            const x = meta.data[0].x;
-            const y = meta.data[0].y;
-
-            const percent = Math.floor(Math.random() * 71) + 10;
-
-            ctx.save();
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-
-            const isDark = document.body.classList.contains("dark");
-            ctx.fillStyle = isDark ? "#FFFFFF" : "#1E2A38";
-            ctx.font = "700 38px Arial";
-            ctx.fillText(`${percent}%`, x, y - 8);
-
-            ctx.fillStyle = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)";
-            ctx.font = "500 16px Arial";
-            ctx.fillText("投報率", x, y + 22);
-
-            ctx.restore();
-          }
-        }]
-
-      }
-    );
-})();
-// 頁面切換
-    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
-    const pages = {
-      app: document.getElementById('app'),
-      rebalance: document.getElementById('rebalance'),
-      history: document.getElementById('history'),
-      product: document.getElementById('product-detail'),
-      trade: document.getElementById('export'),
-      export: document.getElementById('export'),
-      settings: document.getElementById('settings'),
-      version: document.getElementById('version-detail'),
-      about: document.getElementById('about-page'),
-      contact: document.getElementById('contact-page')
-    };
-
-
-    navItems.forEach(item => {
-      item.addEventListener('click', () => {
-        navItems.forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-    
-        const target = item.getAttribute("data-target");
-        if (target && pages[target]) {
-          showPage(target, item.querySelector("span").textContent);
-    
-          // 狀態列顏色跟隨主題
-          if (document.body.classList.contains("dark")) {
-            setThemeColor("#1e1e1e");
-          } else {
-            setThemeColor("#ffffff");
-          }
-        }
-      });
-    });
-
-
-    // 商品詳情頁切換邏輯
-    const productData = {
-      tx: { name: "台指期", balance: "$9,200.00", icon: "2.png" },
-      dj: { name: "小道瓊", balance: "$8,545.00", icon: "3.png" },
-      nq: { name: "小那指", balance: "$10,120.00", icon: "4.png" }
-    };
-
-    document.querySelectorAll("#history .transaction-row").forEach(row => {
-      row.addEventListener("click", () => {
-        const target = row.getAttribute("data-target");
-        if (target && productData[target]) {
-          showPage("product", "商品詳情");
-          backButton.style.display = "flex";  
-          document.getElementById("product-name").textContent = productData[target].name;
-          document.getElementById("product-balance").textContent = productData[target].balance;
-          
-          const list = document.getElementById("product-list");
-          list.innerHTML = "";
-          ["8月績效", "7月績效", "6月績效", "5月績效", "4月績效"].forEach(m => {
-            list.innerHTML += `
-              <div class="transaction-row">
-                <div class="icon"><img src="${productData[target].icon}" alt="${productData[target].name}"></div>
-                <span class="title">${m}</span>
-                <span class="amount">- $5.99</span>
-              </div>`;
-          });
-
-          const productCtx = document.getElementById('productChart').getContext('2d');
-          new Chart(productCtx, {
-            type: 'line',
-            data: {
-              labels: ["Apr","May","Jun","Jul","Aug"],
-              datasets: [{
-                label: productData[target].name,
-                data: [5000, 6000, 7000, 8545, 9200],
-                borderColor: "#007BFF",
-                backgroundColor: "rgba(0,123,255,0.1)",
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: "#007BFF",
-                pointRadius: 5
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { grid: { display: false } },
-                y: { display: false }
-              }
-            }
-          });
-        }
-      });
-    });
-        // 📌 返回堆疊
-    const pageStack = [];
-    const backButton = document.getElementById("back-button");
-
-
-
-    // 語言翻譯字典
-    const translations = {
-      zh: {
-        overview: "總覽",
-        rebalance: "再平衡",
-        trade: "交易",
-        history: "歷史紀錄",
-        settings: "設定",
-        productDetail: "商品詳情",
-      },
-      en: {
-        overview: "Overview",
-        rebalance: "Rebalance",
-        trade: "Trade",
-        history: "History",
-        settings: "Settings",
-        productDetail: "Product Detail",
-      }
-    };
-    
-    // 切換語言
-    function setLanguage(lang) {
-      localStorage.setItem("lang", lang);
-      const t = translations[lang];
-      document.querySelector(".bottom-nav [data-target='app'] span").textContent = t.overview;
-      document.querySelector(".bottom-nav [data-target='rebalance'] span").textContent = t.rebalance;
-      document.querySelector(".bottom-nav [data-target='trade'] span").textContent = t.trade;
-      document.querySelector(".bottom-nav [data-target='history'] span").textContent = t.history;
-      document.querySelector(".bottom-nav [data-target='settings'] span").textContent = t.settings;
-
-      document.getElementById("page-title").textContent = t.overview; // 初始化標題
-    }
-    
-
-    
-    // 主題切換
-    // 主題切換
-    function setTheme(mode) {
-      localStorage.setItem("theme", mode);
-    
-      // 先清掉舊的 class
-      document.body.classList.remove("light", "dark");
-    
-      if (mode === "light") {
-        document.body.classList.add("light");
-        setThemeColor("#ffffff");
-      } else if (mode === "dark") {
-        document.body.classList.add("dark");
-        setThemeColor("#1e1e1e");
-      } else if (mode === "system") {
-        // 跟隨系統
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        if (prefersDark) {
-          document.body.classList.add("dark");
-          setThemeColor("#1e1e1e");
-        } else {
-          document.body.classList.add("light");
-          setThemeColor("#ffffff");
-        }
-      }
-    }
-    
-    // 監聽主題選單變動
-
-    
-    // 🚀 另外監聽系統深淺色變動（只有在「跟隨系統」模式才會觸發）
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-      const savedTheme = localStorage.getItem("theme") || "system";
-      if (savedTheme === "system") {
-        setTheme("system"); // 重新套用
-      }
-    });
-    
-
-    
-    // 初始化設定
-    const savedLang = localStorage.getItem("lang") || "zh";
-
-    setLanguage(savedLang);
-    
-   // 初始化
-    const savedTheme = localStorage.getItem("theme") || "system";
-
-    setTheme(savedTheme);
-    
-    // ========================
-    // 判斷是否從主畫面開啟 // 新增
-    // ========================
-    function isStandalone() { 
-      return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true); 
-    } 
-    // 顯示無網路提示
-    function showOffline() {
-      const splash = document.getElementById("splash");
-      splash.style.display = "flex";
-      splash.style.opacity = "1";
-      splash.style.animation = "none";
-        // 讓 logo 循環動畫
-      const logo = splash.querySelector("img");
-      logo.style.animation = "zoomLoop 2s ease-in-out infinite";
-      document.getElementById("offline-hint").style.display = "block";
-    }
-    // 監聽網路狀態
-    window.addEventListener("offline", () => { showOffline(); });
-    window.addEventListener("online", () => {
-      const logo = document.querySelector("#splash img");
-      logo.style.animation = "zoomIn 1s ease forwards"; // 回到原本動畫
-      window.location.reload();
-    });
-    // 🚀 頁面載入 → 強制 splash 狀態列為白色
-    setThemeColor("#ffffff");
-        
-    setTimeout(() => { 
-        if (!navigator.onLine) {
-          showOffline();
-          return;
-        }
-//      if (isStandalone()) {
-        document.getElementById("splash").style.display = "none";
-        document.getElementById("app").style.display = "flex";
-        document.querySelector(".bottom-nav").style.display = "flex"; // ✅ 顯示導覽列
-        // 🚀 同步狀態列顏色到 header
-        const savedTheme = localStorage.getItem("theme") || "system";
-            setTheme(savedTheme);
-//      } else { // 新增
-//        splash.style.animation = "none";  // 停止動畫 ✅
-//        splash.style.opacity = "1";       // 保持顯示 ✅
-//        document.getElementById("install-hint").style.display = "block";
-//      } // 新增
-    }, 4000); // 新增
-
-    function setThemeColor(color) {
-      let metaTheme = document.querySelector('meta[name="theme-color"]');
-      if (!metaTheme) {
-        metaTheme = document.createElement("meta");
-        metaTheme.setAttribute("name", "theme-color");
-        document.head.appendChild(metaTheme);
-      }
-      metaTheme.setAttribute("content", color);
-    }
-    // 🚀 語言切換
-    document.getElementById("language-setting").addEventListener("click", () => {
-      document.getElementById("language-popup").style.display = "flex";
-    });
-    
-    document.querySelectorAll("#language-popup .popup-item").forEach(item => {
-      item.addEventListener("click", () => {
-        const lang = item.getAttribute("data-value");
-        const labels = { zh: "中文繁體", en: "English" };
-    
-        document.getElementById("language-current").textContent = labels[lang];
-        localStorage.setItem("lang", lang);
-        setLanguage(lang);
-    
-        document.getElementById("language-popup").style.display = "none";
-      });
-    });
-    
-    document.querySelector("#language-popup .popup-cancel").addEventListener("click", () => {
-      document.getElementById("language-popup").style.display = "none";
-    });
-    
-    // 🚀 主題切換
-    document.getElementById("theme-setting").addEventListener("click", () => {
-      document.getElementById("theme-popup").style.display = "flex";
-    });
-    
-    document.querySelectorAll("#theme-popup .popup-item").forEach(item => {
-      item.addEventListener("click", () => {
-        const mode = item.getAttribute("data-value");
-        const labels = { system: "系統&自動", light: "淺色模式", dark: "深色模式" };
-    
-        document.getElementById("theme-current").textContent = labels[mode];
-        localStorage.setItem("theme", mode);
-        setTheme(mode);
-    
-        document.getElementById("theme-popup").style.display = "none";
-      });
-    });
-    
-    document.querySelector("#theme-popup .popup-cancel").addEventListener("click", () => {
-      document.getElementById("theme-popup").style.display = "none";
-    });
-    
-    document.getElementById("version-setting").addEventListener("click", () => {
-      showPage("version", "版本更新");
-    });
-    document.getElementById("about-setting").addEventListener("click", () => {
-      showPage("about", "關於");
-    });
-    
-    document.getElementById("contact-setting").addEventListener("click", () => {
-      showPage("contact", "聯絡我們");
-    });
-
-
-    
-
-    
-    // 📌 顯示某個頁面
-    function showPage(pageId, title = "", isBack = false) {
-  Object.values(pages).forEach(p => p.style.display = "none");
-  pages[pageId].style.display = "flex";
+// ===== 顯示頁面 =====
+function showPage(pageId, title, isBack) {
+  Object.values(pages).forEach(p => { if (p) p.style.display = 'none'; });
+  if (!pages[pageId]) return;
+  pages[pageId].style.display = 'flex';
 
   if (!isBack && pageStack[pageStack.length - 1] !== pageId) {
     pageStack.push(pageId);
   }
 
-  if (title) {
-    document.getElementById("page-title").textContent = title;
-  }
-
-  if (["app","rebalance","history","export","settings"].includes(pageId)) {
-    backButton.style.display = "none";
-  } else {
-    backButton.style.display = "flex";
-  }
+  const topLevel = ['app','rebalance','history','export','settings'];
+  backButton.style.display = topLevel.includes(pageId) ? 'none' : 'flex';
 }
 
-    // ✅ 初次載入：固定顯示「總覽」避免閃到其他頁
-    showPage("app", "");
+// ===== 導覽列點擊 =====
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    navItems.forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    const target = item.getAttribute('data-target');
+    const label = item.querySelector('span').textContent;
+    if (target && pages[target]) showPage(target, label);
+  });
+});
 
-
-
-    
-    // 📌 點擊返回鍵
-    // 📌 點擊返回鍵
-    backButton.addEventListener("click", () => {
-      if (pageStack.length > 1) {
-        pageStack.pop(); // 移除當前頁
-        const prevPage = pageStack[pageStack.length - 1];
-    
-        // 🚀 改用 showPage，才會觸發黑名單邏輯
-        const navItem = document.querySelector(`.bottom-nav [data-target='${prevPage}'] span`);
-        const title = navItem ? navItem.textContent : "";
-        showPage(prevPage, title, true); // ← true = 代表返回，不再 push
-      }
+// ===== 返回按鈕 =====
+backButton.addEventListener('click', () => {
+  if (pageStack.length > 1) {
+    pageStack.pop();
+    const prev = pageStack[pageStack.length - 1];
+    showPage(prev, '', true);
+    // 同步導覽列 active 狀態
+    navItems.forEach(i => {
+      i.classList.toggle('active', i.getAttribute('data-target') === prev);
     });
-    
+  }
+});
 
+// ===== 設定頁跳轉 =====
+document.getElementById('version-setting').addEventListener('click', () => showPage('version', '版本更新'));
+document.getElementById('about-setting').addEventListener('click', () => showPage('about', '關於'));
+document.getElementById('contact-setting').addEventListener('click', () => showPage('contact', '聯絡我們'));
 
+// ===== 主題 Popup =====
+document.getElementById('theme-setting').addEventListener('click', () => {
+  document.getElementById('theme-popup').style.display = 'flex';
+});
+document.querySelectorAll('#theme-popup .popup-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const labels = { system: '系統&自動', light: '淺色模式', dark: '深色模式' };
+    document.getElementById('theme-current').textContent = labels[item.dataset.value];
+    setTheme(item.dataset.value);
+    document.getElementById('theme-popup').style.display = 'none';
+  });
+});
+document.querySelector('#theme-popup .popup-cancel').addEventListener('click', () => {
+  document.getElementById('theme-popup').style.display = 'none';
+});
 
-  </script>
-<!-- ✅ PWA：只新增，完全不改動上面任何一行 -->
-<script>
-    (function () {
-      // 動態建立 manifest（不用額外檔案）
-      const manifest = {
-        name: "Asset Control System",
-        short_name: "WealthNova",
-        start_url: ".",
-        display: "standalone",
-        background_color: "#ffffff",
-        theme_color: "#ffffff",
-        icons: [
-          { "src": "logo(3).png", "sizes": "192x192", "type": "image/png" },
-          { "src": "logo(3).png", "sizes": "512x512", "type": "image/png" }
-        ]
-      };
-      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-      const manifestURL = URL.createObjectURL(manifestBlob);
-      const link = document.createElement("link");
-      link.rel = "manifest";
-      link.href = manifestURL;
-      document.head.appendChild(link);
+// ===== 主題切換 =====
+function setTheme(mode) {
+  document.body.classList.remove('light', 'dark');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
+  document.body.classList.add(isDark ? 'dark' : 'light');
+  if (window.assetDonutChart) window.assetDonutChart.update();
+}
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => setTheme('system'));
+setTheme('system');
 
-      // theme-color（若沒有就補上）
-      if (!document.querySelector('meta[name="theme-color"]')) {
-        const m = document.createElement('meta');
-        m.name = 'theme-color';
-        m.content = '#ffffff';
-        document.head.appendChild(m);
+// ===== 網路狀態 =====
+function showOffline() {
+  const splash = document.getElementById('splash');
+  splash.style.cssText = 'display:flex;opacity:1;animation:none;';
+  splash.querySelector('img').style.animation = 'zoomLoop 2s ease-in-out infinite';
+  document.getElementById('offline-hint').style.display = 'block';
+}
+window.addEventListener('offline', showOffline);
+window.addEventListener('online', () => window.location.reload());
+
+// ===== 時間更新 =====
+function pad2(n) { return String(n).padStart(2, '0'); }
+function formatNow() {
+  const d = new Date();
+  let hh = d.getHours(); const ap = hh >= 12 ? 'PM' : 'AM';
+  hh = hh % 12 || 12;
+  return `${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())} ${pad2(hh)}:${pad2(d.getMinutes())} ${ap}`;
+}
+function updateTime() {
+  const el = document.getElementById('overview-updated');
+  if (el) el.textContent = '動態更新：' + formatNow();
+}
+updateTime();
+setInterval(updateTime, 60000);
+
+// ===== 圓餅圖 =====
+(function initDonut() {
+  const el = document.getElementById('assetDonut');
+  if (!el) return;
+  const assets = [
+    { key: 'BTC',  label: 'BTC',  value: 330000, color: '#f5a623' },
+    { key: '0050', label: '0050', value: 245500, color: '#7396c6' },
+    { key: 'GOLD', label: 'GOLD', value: 161200, color: '#dfb199' },
+    { key: 'CASH', label: 'CASH', value: 409850, color: '#9eb995' }
+  ];
+  const total = assets.reduce((s, a) => s + a.value, 0) || 1;
+  const pct = v => (Math.round(v / total * 1000) / 10).toFixed(1) + '%';
+
+  document.querySelectorAll('#assetLegend .legend-row').forEach(row => {
+    const a = assets.find(x => x.key === row.dataset.key);
+    const el = row.querySelector('.pct');
+    if (a && el) el.textContent = pct(a.value);
+  });
+
+  if (window.assetDonutChart) window.assetDonutChart.destroy();
+  window.assetDonutChart = new Chart(el.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: assets.map(a => a.label),
+      datasets: [{ borderRadius: 999, spacing: 4, data: assets.map(a => a.value), backgroundColor: assets.map(a => a.color), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '84%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: NT$ ${(ctx.parsed||0).toLocaleString()} (${pct(ctx.parsed||0)})` } }
       }
-
-      // 動態註冊 Service Worker（無需 sw.js 檔）
-      if ("serviceWorker" in navigator) {
-        const swCode = `
-          const CACHE = 'wnova-runtime';
-          self.addEventListener('install', (e) => { self.skipWaiting(); });
-          self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
-
-          // 網路優先：每次都嘗試抓新版本，失敗才回 cache
-          self.addEventListener('fetch', (event) => {
-            event.respondWith(fetch(event.request));
-          });
-
-          // 可選：收到主頁訊息時立即啟用新 SW
-          self.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
-          });
-        `;
-        const swBlob = new Blob([swCode], { type: "text/javascript" });
-        const swUrl = URL.createObjectURL(swBlob);
-
-        navigator.serviceWorker.register(swUrl).then((reg) => {
-          // 偵測更新，安裝完成就切換並重新載入（確保最新）
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            if (!newWorker) return;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-            });
-          });
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            // 新 SW 接手後強制刷新一次內容
-            window.location.reload();
-          });
-        }).catch(console.error);
+    },
+    plugins: [{
+      id: 'centerText',
+      afterDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta?.data?.[0]) return;
+        const { x, y } = meta.data[0];
+        if (!chart._percent) chart._percent = Math.floor(Math.random() * 71) + 10;
+        const isDark = document.body.classList.contains('dark');
+        ctx.save();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = isDark ? '#FFFFFF' : '#1E2A38';
+        ctx.font = '700 38px Arial';
+        ctx.fillText(chart._percent + '%', x, y - 8);
+        ctx.fillStyle = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)';
+        ctx.font = '500 16px Arial';
+        ctx.fillText('投報率', x, y + 22);
+        ctx.restore();
       }
-    })();
-  </script>
+    }]
+  });
+})();
+
+// ===== 啟動：延遲後顯示主畫面 =====
+setTimeout(() => {
+  if (!navigator.onLine) { showOffline(); return; }
+  document.getElementById('splash').style.display = 'none';
+  document.querySelector('.bottom-nav').style.display = 'flex';
+  showPage('app', '總覽');
+}, 2000);
+</script>
 </body>
 </html>
