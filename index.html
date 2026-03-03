@@ -1278,17 +1278,27 @@ gap: 10px;
         i < filled ? activeColors[i] : "rgba(255,255,255,0.12)"
       );
 
+      
+      const percent = Math.floor(Math.random() * 71) + 10;
+
+      const assets = [
+        { label: "BTC",  value: 330000, color: "#f5a623" },
+        { label: "0050", value: 245500, color: "#7396c6" },
+        { label: "GOLD", value: 161200, color: "#dfb199" },
+        { label: "CASH", value: 409850, color: "#9eb995" }
+      ];
+
       window.assetDonutChart = new Chart(dctx, {
         type: "doughnut",
         data: {
-          labels: Array.from({ length: segments }),
+          labels: assets.map(a => a.label),
           datasets: [{
-            data: new Array(segments).fill(1),
-            backgroundColor: backgroundColors,
+            data: assets.map(a => a.value),
+            backgroundColor: assets.map(a => a.color),
             borderWidth: 0,
             borderRadius: 999,
-            spacing: 10,
-            cutout: "78%"
+            spacing: 8,
+            cutout: "75%"
           }]
         },
         options: {
