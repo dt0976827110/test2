@@ -857,29 +857,29 @@ gap: 10px;
 }
 
 
-/* === Typography upgrade (overview header + legend) === */
 
-/* 總覽看板標題 */
-.overview-title{
-  font-size: 50px;
+/* === Typography upgrade (correct selectors) === */
+
+/* 總覽看板（左上標題） */
+.overview-balance-head .label{
+  font-size: 20px;
   font-weight: 800;
 }
 
 /* 今日變動 */
-.overview-delta{
+.overview-balance .delta{
   font-size: 18px;
   font-weight: 700;
 }
 
-/* 圓餅圖右側四行 */
-.legend-item{
-  font-size: 30px;
+/* 圓餅圖右側四行（名稱＋百分比） */
+#assetLegend .legend-row .name{
+  font-size: 16px;
   font-weight: 700;
 }
-
-.legend-item .legend-pct{
-  font-size: 15px;
-  font-weight: 700;
+#assetLegend .legend-row .pct{
+  font-size: 16px;
+  font-weight: 800;
 }
 
 </style>
@@ -892,29 +892,29 @@ gap: 10px;
   line-height: 1.1;
 }
 
-/* === Typography upgrade (overview header + legend) === */
 
-/* 總覽看板標題 */
-.overview-title{
+/* === Typography upgrade (correct selectors) === */
+
+/* 總覽看板（左上標題） */
+.overview-balance-head .label{
   font-size: 20px;
   font-weight: 800;
 }
 
 /* 今日變動 */
-.overview-delta{
+.overview-balance .delta{
   font-size: 18px;
   font-weight: 700;
 }
 
-/* 圓餅圖右側四行 */
-.legend-item{
+/* 圓餅圖右側四行（名稱＋百分比） */
+#assetLegend .legend-row .name{
   font-size: 16px;
   font-weight: 700;
 }
-
-.legend-item .legend-pct{
-  font-size: 15px;
-  font-weight: 700;
+#assetLegend .legend-row .pct{
+  font-size: 16px;
+  font-weight: 800;
 }
 
 </style>
