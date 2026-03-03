@@ -621,7 +621,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
   <div id="rb-suggestions" style="display:none; width:100%; flex-direction:column; gap:8px;"></div>
 
   <div class="rb-footer-note" id="rb-footer-note">
-    系統會持續監測您的資產配置，若有任何異動，會即時通知您進行再平衡。
+    系統持續監測中，若有任何異動，請立即進行調整。
   </div>
   <div class="rb-timestamp" id="rb-timestamp">最後更新時間・--</div>
 
@@ -1108,6 +1108,36 @@ document.querySelector('#theme-popup .popup-cancel').addEventListener('click', (
 });
 
 // ===== 開發人員模式：套用數值 =====
+function saveDevSettings() {
+  const data = {
+    btcStart:     document.getElementById('dev-btc-start').value,
+    btcCurrent:   document.getElementById('dev-btc-current').value,
+    zeroStart:    document.getElementById('dev-0050-start').value,
+    zeroCurrent:  document.getElementById('dev-0050-current').value,
+    goldStart:    document.getElementById('dev-gold-start').value,
+    goldCurrent:  document.getElementById('dev-gold-current').value,
+    cashStart:    document.getElementById('dev-cash-start').value,
+    cashCurrent:  document.getElementById('dev-cash-current').value,
+  };
+  try { localStorage.setItem('acs_dev_settings', JSON.stringify(data)); } catch(e) {}
+}
+
+function loadDevSettings() {
+  try {
+    const raw = localStorage.getItem('acs_dev_settings');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.btcStart)    document.getElementById('dev-btc-start').value    = d.btcStart;
+    if (d.btcCurrent)  document.getElementById('dev-btc-current').value  = d.btcCurrent;
+    if (d.zeroStart)   document.getElementById('dev-0050-start').value   = d.zeroStart;
+    if (d.zeroCurrent) document.getElementById('dev-0050-current').value = d.zeroCurrent;
+    if (d.goldStart)   document.getElementById('dev-gold-start').value   = d.goldStart;
+    if (d.goldCurrent) document.getElementById('dev-gold-current').value = d.goldCurrent;
+    if (d.cashStart)   document.getElementById('dev-cash-start').value   = d.cashStart;
+    if (d.cashCurrent) document.getElementById('dev-cash-current').value = d.cashCurrent;
+  } catch(e) {}
+}
+
 function applyDevValues(navigateHome) {
   const assetMap = [
     { key: 'BTC',  startId: 'dev-btc-start',  currentId: 'dev-btc-current',  cardIdx: 0 },
@@ -1181,6 +1211,9 @@ function applyDevValues(navigateHome) {
     { key: 'CASH', displayName: '現金', color: '#9eb995', current: assets[3].value, start: assets[3].start },
   ];
 
+  // 儲存設定
+  saveDevSettings();
+
   // 返回總覽（按鈕按下才跳頁）
   if (navigateHome) {
     showPage('app', '總覽', false);
@@ -1195,9 +1228,18 @@ function setTheme(mode) {
   const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
   document.body.classList.add(isDark ? 'dark' : 'light');
   if (window.assetDonutChart) window.assetDonutChart.update();
+  try { localStorage.setItem('acs_theme', mode); } catch(e) {}
 }
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => setTheme('system'));
-setTheme('system');
+// 讀取上次主題
+const savedTheme = (() => { try { return localStorage.getItem('acs_theme'); } catch(e) { return null; } })();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => setTheme(savedTheme || 'system'));
+setTheme(savedTheme || 'system');
+// 同步主題選單顯示
+if (savedTheme) {
+  const labels = { system: '系統&自動', light: '淺色模式', dark: '深色模式' };
+  const el = document.getElementById('theme-current');
+  if (el && labels[savedTheme]) el.textContent = labels[savedTheme];
+}
 
 // ===== 網路狀態 =====
 function showOffline() {
@@ -1299,6 +1341,7 @@ setInterval(updateTime, 60000);
 // ===== 啟動：延遲後顯示主畫面 =====
 setTimeout(() => {
   if (!navigator.onLine) { showOffline(); return; }
+  loadDevSettings();
   document.getElementById('splash').style.display = 'none';
   document.querySelector('.bottom-nav').style.display = 'flex';
   showPage('app', '總覽');
