@@ -893,7 +893,7 @@ gap: 10px;
 #total-nt{
   font-size: 44px;
   font-weight: 900;
-  letter-spacing: 4.5px;
+  letter-spacing: 0.5px;
   line-height: 1.1;
 }
 
@@ -1002,11 +1002,7 @@ gap: 10px;
 <div class="mini-card" style="--card-color:#7396c6;">
 <div class="mini-top">
 <div class="mini-top-left">
-<div class="mini-top-icon">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="white">
-<path d="M3 17h18v2H3zM5 15l4-4 3 3 5-6 2 2-7 8-3-3-4 4z"/>
-</svg>
-</div>
+<div class="mini-top-icon">TW</div>
 <div class="mini-top-title">0050</div>
 </div>
 </div>
@@ -1021,11 +1017,7 @@ gap: 10px;
 <div class="mini-card" style="--card-color:#dfb199;">
 <div class="mini-top">
 <div class="mini-top-left">
-<div class="mini-top-icon">
-<svg viewBox="0 0 24 24" width="16" height="16" fill="white">
-<path d="M2 16l4-8h12l4 8H2zm3-6l-2 4h18l-2-4H5z"/>
-</svg>
-</div>
+<div class="mini-top-icon">Au</div>
 <div class="mini-top-title">黃金</div>
 </div>
 </div>
@@ -1053,12 +1045,8 @@ gap: 10px;
 </div>
 </div>
 </div>
-  <div class="positions">
-<div class="pos-row">
-<div class="pos-left"><span class="chip c1">₿</span><span>BTC 出比佳</span></div>
-<div class="pos-right">35% 轉動 目前 25%</div>
-</div>
-<button class="primary-btn" id="rebalance-now">立即回應</button>
+  
+
 </div>
 </div>
 
@@ -1271,18 +1259,16 @@ gap: 10px;
       const dctx = el.getContext('2d');
       if (window.assetDonutChart) window.assetDonutChart.destroy();
 
-      const roi = Math.floor(Math.random() * 71) + 10; // 10~80 隨機投報率%
       window.assetDonutChart = new Chart(dctx, {
         type: 'doughnut',
         data: {
           labels: assets.map(a=>a.label),
           datasets: [{
+            borderRadius: 999,
+            spacing: 4,
             data: assets.map(a=>a.value),
             backgroundColor: assets.map(a=>a.color),
-            borderWidth: 0,
-            borderRadius: 999,
-            spacing: 4
-          
+            borderWidth: 0
           }]
         },
         options: {
@@ -1300,28 +1286,39 @@ gap: 10px;
               }
             }
           }
-        },
+        }
+      
+        ,
         plugins: [{
-          id: 'centerTextROI',
+          id: "centerText",
           afterDraw(chart) {
             const { ctx } = chart;
             const meta = chart.getDatasetMeta(0);
-            if (!meta || !meta.data || !meta.data[0]) return;
+            if (!meta?.data?.[0]) return;
             const x = meta.data[0].x;
             const y = meta.data[0].y;
+
+            const percent = Math.floor(Math.random() * 71) + 10;
+
             ctx.save();
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = 'rgba(255,255,255,0.92)';
-            ctx.font = '700 34px Arial';
-            ctx.fillText(`${roi}%`, x, y - 6);
-            ctx.fillStyle = 'rgba(255,255,255,0.55)';
-            ctx.font = '500 14px Arial';
-            ctx.fillText('投報率', x, y + 22);
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "700 38px Arial";
+            ctx.fillText(`${percent}%`, x, y - 8);
+
+            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.font = "500 16px Arial";
+            ctx.fillText("投報率", x, y + 22);
+
             ctx.restore();
           }
         }]
-      });})();
+
+      }
+    );
+})();
 // 頁面切換
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
     const pages = {
