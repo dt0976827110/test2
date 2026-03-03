@@ -228,6 +228,55 @@ body.dark .mini-amt { color: #eee; }
 .mini-change.up { color: #e8706f; }
 .mini-change.down { color: #77a478; }
 
+/* 行情區塊 */
+.market-section { width: 100%; max-width: 520px; margin-top: 4px; }
+.market-section-title { font-size: 13px; font-weight: 700; color: #999; margin-bottom: 8px; padding-left: 4px; }
+.market-card {
+  width: 100%; background: #fff; border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+body.dark .market-card { background: #1e1e1e; border: 1px solid #2a2a2a; box-shadow: none; }
+.market-header-row {
+  display: grid;
+  grid-template-columns: 46px 1fr 64px 64px 72px;
+  align-items: center;
+  padding: 8px 16px; background: #f8f8f8;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 0;
+}
+body.dark .market-header-row { background: #252525; border-bottom: 1px solid #2a2a2a; }
+.market-header-row span { font-size: 11px; color: #aaa; font-weight: 600; }
+.mh-icon-placeholder { /* 佔位 */ }
+.mh-name { text-align: left; }
+.mh-price { text-align: right; }
+.mh-change { text-align: right; }
+.mh-avg { text-align: right; }
+
+.market-row {
+  display: grid;
+  grid-template-columns: 46px 1fr 64px 64px 72px;
+  align-items: center;
+  padding: 14px 16px; border-bottom: 1px solid #f0f0f0;
+  gap: 0;
+}
+body.dark .market-row { border-bottom: 1px solid #2a2a2a; }
+.market-row:last-child { border-bottom: none; }
+.market-icon {
+  width: 36px; height: 36px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 13px; color: #fff; flex-shrink: 0;
+}
+.market-name { font-size: 15px; font-weight: 700; color: #1E2A38; padding-left: 10px; }
+body.dark .market-name { color: #eee; }
+.market-price { font-size: 14px; font-weight: 700; color: #1E2A38; text-align: right; }
+body.dark .market-price { color: #eee; }
+.market-change { font-size: 13px; font-weight: 700; text-align: right; }
+.market-change.up { color: #e8706f; }
+.market-change.down { color: #77a478; }
+.market-avg { font-size: 13px; font-weight: 600; color: #888; text-align: right; }
+body.dark .market-avg { color: #777; }
+
 #total-nt { font-size: 44px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; }
 
 /* Splash */
@@ -323,9 +372,42 @@ body.dark .mini-amt { color: #eee; }
       </div>
     </div>
   </div>
-</div>
 
-<!-- 再平衡 -->
+  <!-- 行情區塊 -->
+  <div class="market-section">
+    <div class="market-section-title">市場行情</div>
+    <div class="market-card">
+      <div class="market-header-row">
+        <span class="mh-icon-placeholder"></span>
+        <span class="mh-name">商品</span>
+        <span class="mh-price">最新價位</span>
+        <span class="mh-change">漲跌</span>
+        <span class="mh-avg">持有均價</span>
+      </div>
+      <div class="market-row">
+        <div class="market-icon" style="background:#f5a623;">₿</div>
+        <div class="market-name">BTC</div>
+        <div class="market-price">419,500</div>
+        <div class="market-change up">+2.34%</div>
+        <div class="market-avg">385,200</div>
+      </div>
+      <div class="market-row">
+        <div class="market-icon" style="background:#7396c6;">TW</div>
+        <div class="market-name">0050</div>
+        <div class="market-price">242,300</div>
+        <div class="market-change down">-0.58%</div>
+        <div class="market-avg">198,750</div>
+      </div>
+      <div class="market-row">
+        <div class="market-icon" style="background:#dfb199;">Au</div>
+        <div class="market-name">黃金</div>
+        <div class="market-price">209,800</div>
+        <div class="market-change up">+1.12%</div>
+        <div class="market-avg">175,600</div>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="rebalance" class="page">
   <div style="padding:16px;"><p style="font-weight:700;font-size:16px;margin-bottom:8px;">再平衡</p><p style="color:#666;">開發中</p></div>
 </div>
