@@ -4,8 +4,23 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Asset Control System</title>
-<link href="logo(3).png" rel="apple-touch-icon" sizes="192x192"/>
-<link href="logo(3).png" rel="apple-touch-icon" sizes="512x512"/>
+
+<!-- PWA iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="ACS"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0b0b0b"/>
+
+<!-- Icons -->
+<link href="logo(3).png" rel="apple-touch-icon"/>
+<link href="logo(3).png" rel="apple-touch-icon" sizes="152x152"/>
+<link href="logo(3).png" rel="apple-touch-icon" sizes="167x167"/>
+<link href="logo(3).png" rel="apple-touch-icon" sizes="180x180"/>
+<link rel="icon" href="logo(3).png"/>
+
+<!-- Manifest -->
+<link rel="manifest" href="manifest.json"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; }
@@ -1347,6 +1362,11 @@ setTimeout(() => {
   showPage('app', '總覽');
   applyDevValues(false);
 }, 2000);
+
+// ===== Service Worker 註冊 =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
