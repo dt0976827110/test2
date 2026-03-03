@@ -1259,32 +1259,71 @@ gap: 10px;
       const dctx = el.getContext('2d');
       if (window.assetDonutChart) window.assetDonutChart.destroy();
 
+      
+      const percent = Math.floor(Math.random() * 71) + 10;
+
+      const segments = 6;
+      const filled = Math.round((percent / 100) * segments);
+
+      const activeColors = [
+        "#f5a623",
+        "#7396c6",
+        "#dfb199",
+        "#9eb995",
+        "#b58cff",
+        "#ff7aa2"
+      ];
+
+      const backgroundColors = Array.from({ length: segments }, (_, i) =>
+        i < filled ? activeColors[i] : "rgba(255,255,255,0.12)"
+      );
+
       window.assetDonutChart = new Chart(dctx, {
-        type: 'doughnut',
+        type: "doughnut",
         data: {
-          labels: assets.map(a=>a.label),
+          labels: Array.from({ length: segments }),
           datasets: [{
-            data: assets.map(a=>a.value),
-            backgroundColor: assets.map(a=>a.color),
-            borderWidth: 0
+            data: new Array(segments).fill(1),
+            backgroundColor: backgroundColors,
+            borderWidth: 0,
+            borderRadius: 999,
+            spacing: 10,
+            cutout: "78%"
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '55%',
           plugins: {
             legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx)=>{
-                  const v = ctx.parsed || 0;
-                  return ` ${ctx.label}: NT$ ${v.toLocaleString()} (${pct(v)})`;
-                }
-              }
-            }
+            tooltip: { enabled: false }
           }
-        }
+        },
+        plugins: [{
+          id: "centerText",
+          afterDraw(chart) {
+            const { ctx } = chart;
+            const meta = chart.getDatasetMeta(0);
+            if (!meta?.data?.[0]) return;
+
+            const x = meta.data[0].x;
+            const y = meta.data[0].y;
+
+            ctx.save();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            ctx.fillStyle = "#1E2A38";
+            ctx.font = "700 38px Arial";
+            ctx.fillText(`${percent}%`, x, y - 8);
+
+            ctx.fillStyle = "rgba(0,0,0,0.4)";
+            ctx.font = "500 16px Arial";
+            ctx.fillText("投報率", x, y + 22);
+
+            ctx.restore();
+          }
+        }]
       });
     })();
 // 頁面切換
