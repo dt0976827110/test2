@@ -44,7 +44,7 @@ html, body { overflow-x: hidden; }
 }
 
 /* --- 各頁面 --- */
-#app, #rebalance, #history, #export, #settings, #version-detail, #about-page, #contact-page {
+#app, #rebalance, #history, #export, #settings, #version-detail, #about-page, #contact-page, #devmode-page {
   width: 100%; max-width: 520px;
   margin: 0 auto; min-height: 100vh;
   background: transparent;
@@ -102,7 +102,7 @@ body.dark .back-button { background: rgba(30,30,30,0.92); border: 1px solid rgba
 body.light { background: #ffffff; color: #000; }
 body.light #app, body.light #rebalance, body.light #history,
 body.light #export, body.light #settings,
-body.light #version-detail, body.light #about-page, body.light #contact-page { background: #ffffff; }
+body.light #version-detail, body.light #about-page, body.light #contact-page, body.light #devmode-page { background: #ffffff; }
 body.light .page-title { color: #000; }
 body.light .bottom-nav { background: #fff; border-top: 1px solid #ddd; }
 body.light .bottom-nav .nav-item { color: #555; }
@@ -117,7 +117,7 @@ body.light .popup-cancel { color: #007BFF; }
 body.dark { background: #121212; color: #eee; }
 body.dark #app, body.dark #rebalance, body.dark #history,
 body.dark #export, body.dark #settings,
-body.dark #version-detail, body.dark #about-page, body.dark #contact-page { background: #121212; }
+body.dark #version-detail, body.dark #about-page, body.dark #contact-page, body.dark #devmode-page { background: #121212; }
 body.dark .page-title { color: #fff; }
 body.dark .bottom-nav { background: #1e1e1e; border-top: 1px solid #333; }
 body.dark .bottom-nav .nav-item { color: #aaa; }
@@ -222,7 +222,7 @@ body.dark .legend-left .name, body.dark .legend-right .pct { color: #eee; }
 .mini-top-title { font-size: 20px; font-weight: 700; color: #fff; }
 .mini-body { padding: 10px 12px 12px; background: #fff; }
 body.dark .mini-body { background: #1e1e1e; }
-.mini-amt { font-size: 16px; font-weight: 700; color: #1E2A38; }
+.mini-amt { font-size: 18px; font-weight: 700; color: #1E2A38; }
 body.dark .mini-amt { color: #eee; }
 .mini-sub { margin-top: 6px; display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 700; color: #6b7280; }
 .mini-change.up { color: #e8706f; }
@@ -276,6 +276,101 @@ body.dark .market-price { color: #eee; }
 .market-change.down { color: #77a478; }
 .market-avg { font-size: 13px; font-weight: 600; color: #888; text-align: right; }
 body.dark .market-avg { color: #777; }
+
+/* ===== 再平衡頁面 ===== */
+.rb-header {
+  width: 100%; text-align: center; padding: 20px 0 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.rb-shield {
+  width: 72px; height: 72px; border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+}
+.rb-shield.safe   { background: rgba(119,164,120,0.18); }
+.rb-shield.danger { background: rgba(232,112,111,0.18); }
+.rb-title { font-size: 18px; font-weight: 800; color: #1E2A38; }
+body.dark .rb-title { color: #eee; }
+.rb-subtitle { font-size: 13px; color: #888; text-align: center; line-height: 1.6; padding: 0 10px; }
+
+.rb-section-label { font-size: 13px; font-weight: 700; color: #999; margin: 4px 0 8px; padding-left: 4px; }
+
+.rb-card {
+  width: 100%; background: #fff; border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06); padding: 14px 16px;
+  margin-bottom: 12px;
+}
+body.dark .rb-card { background: #1e1e1e; border: 1px solid #2a2a2a; box-shadow: none; }
+
+/* 主要資產警示列 */
+.rb-alert-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.rb-alert-name { font-size: 18px; font-weight: 800; color: #1E2A38; }
+body.dark .rb-alert-name { color: #eee; }
+.rb-alert-badge {
+  font-size: 12px; font-weight: 700; padding: 4px 10px;
+  border-radius: 20px; border: 1.5px solid;
+}
+.rb-alert-badge.over  { color: #e8706f; border-color: #e8706f; background: rgba(232,112,111,0.08); }
+.rb-alert-badge.under { color: #77a478; border-color: #77a478; background: rgba(119,164,120,0.08); }
+.rb-alert-badge.safe  { color: #888;    border-color: #ccc;    background: transparent; }
+.rb-alert-value { font-size: 13px; color: #888; margin-top: 2px; }
+
+/* 四格小圓圈 grid */
+.rb-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 4px; }
+.rb-mini {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.rb-ring-wrap { position: relative; width: 64px; height: 64px; }
+.rb-ring-wrap canvas { position: absolute; top: 0; left: 0; }
+.rb-ring-label {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 12px; font-weight: 800; color: #1E2A38; white-space: nowrap;
+}
+body.dark .rb-ring-label { color: #eee; }
+.rb-mini-range { font-size: 10px; color: #aaa; font-weight: 600; }
+.rb-mini-name  { font-size: 12px; font-weight: 700; color: #555; }
+body.dark .rb-mini-name { color: #bbb; }
+
+/* 底部提示 */
+.rb-footer-note {
+  font-size: 12px; color: #aaa; text-align: center; line-height: 1.7;
+  padding: 0 8px; margin-top: 4px;
+}
+.rb-timestamp { font-size: 11px; color: #bbb; text-align: center; margin-top: 12px; }
+
+/* ===== 開發人員模式 ===== */
+.dev-asset-row {
+  display: flex; flex-direction: column;
+  padding: 14px 16px; border-bottom: 1px solid #eee; gap: 10px;
+}
+body.dark .dev-asset-row { border-bottom: 1px solid #2a2a2a; }
+.dev-asset-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 700; color: #1E2A38;
+}
+body.dark .dev-asset-label { color: #eee; }
+.dev-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dev-fields { display: flex; gap: 10px; }
+.dev-field-group {
+  display: flex; flex-direction: column; gap: 4px; flex: 1;
+}
+.dev-field-group label { font-size: 11px; color: #aaa; font-weight: 600; }
+.dev-input {
+  border: 1px solid #e0e0e0; border-radius: 10px;
+  padding: 9px 12px; font-size: 14px; font-weight: 600;
+  color: #1E2A38; background: #f8f8f8; width: 100%;
+  outline: none; transition: border 0.2s;
+}
+.dev-input:focus { border-color: #007BFF; background: #fff; }
+body.dark .dev-input { background: #2a2a2a; border-color: #3a3a3a; color: #eee; }
+body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
+.dev-apply-btn {
+  width: 100%; padding: 14px; background: #007BFF;
+  color: #fff; font-size: 15px; font-weight: 700;
+  border: none; border-radius: 14px; cursor: pointer;
+  margin-top: 4px; transition: background 0.2s;
+}
+.dev-apply-btn:active { background: #005ecb; }
+.dev-hint { font-size: 12px; color: #bbb; text-align: center; margin-top: 10px; }
 
 #total-nt { font-size: 44px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; }
 
@@ -409,7 +504,70 @@ body.dark .market-avg { color: #777; }
   </div>
 </div>
 <div id="rebalance" class="page">
-  <div style="padding:16px;"><p style="font-weight:700;font-size:16px;margin-bottom:8px;">再平衡</p><p style="color:#666;">開發中</p></div>
+
+  <!-- 狀態標頭 -->
+  <div class="rb-header">
+    <div class="rb-shield safe" id="rb-shield">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L4 6v6c0 5.1 3.4 9.9 8 11 4.6-1.1 8-5.9 8-11V6l-8-4z" fill="#77a478" opacity="0.3"/>
+        <path d="M12 2L4 6v6c0 5.1 3.4 9.9 8 11 4.6-1.1 8-5.9 8-11V6l-8-4z" stroke="#77a478" stroke-width="1.5" fill="none"/>
+        <path d="M9 12l2 2 4-4" stroke="#77a478" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="rb-title" id="rb-title">目前資產配置安全平衡</div>
+    <div class="rb-subtitle" id="rb-subtitle">所有資產占比均在 15 – 35% 的目標範圍內，暫無需要調整。</div>
+  </div>
+
+  <!-- 資產狀況卡片 -->
+  <div class="rb-section-label">資產狀況</div>
+  <div class="rb-card" id="rb-main-card">
+    <div class="rb-alert-row">
+      <div class="rb-alert-name" id="rb-alert-name">資產總值 NT$ 500,000</div>
+      <div class="rb-alert-badge safe" id="rb-alert-badge">安全範圍</div>
+    </div>
+
+    <!-- 四格圓圈 -->
+    <div class="rb-grid" id="rb-grid">
+      <div class="rb-mini">
+        <div class="rb-ring-wrap">
+          <canvas id="rb-ring-BTC" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-BTC">25%</div>
+        </div>
+        <div class="rb-mini-range">15 ~ 35%</div>
+        <div class="rb-mini-name">BTC</div>
+      </div>
+      <div class="rb-mini">
+        <div class="rb-ring-wrap">
+          <canvas id="rb-ring-0050" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-0050">25%</div>
+        </div>
+        <div class="rb-mini-range">15 ~ 35%</div>
+        <div class="rb-mini-name">0050</div>
+      </div>
+      <div class="rb-mini">
+        <div class="rb-ring-wrap">
+          <canvas id="rb-ring-GOLD" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-GOLD">25%</div>
+        </div>
+        <div class="rb-mini-range">15 ~ 35%</div>
+        <div class="rb-mini-name">黃金</div>
+      </div>
+      <div class="rb-mini">
+        <div class="rb-ring-wrap">
+          <canvas id="rb-ring-CASH" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-CASH">25%</div>
+        </div>
+        <div class="rb-mini-range">15 ~ 35%</div>
+        <div class="rb-mini-name">現金</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rb-footer-note" id="rb-footer-note">
+    系統會持續監測您的資產配置，若有任何異動，會即時通知您進行再平衡。
+  </div>
+  <div class="rb-timestamp" id="rb-timestamp">最後更新時間・--</div>
+
 </div>
 
 <!-- 歷史紀錄 -->
@@ -437,6 +595,10 @@ body.dark .market-avg { color: #777; }
   </div>
   <p class="section-title">其他</p>
   <div class="list-container">
+    <div class="list-row" id="devmode-setting" style="cursor:pointer;">
+      <span>開發人員模式</span>
+      <svg class="arrow-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+    </div>
     <div class="list-row" id="about-setting" style="cursor:pointer;">
       <span>關於</span>
       <svg class="arrow-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -488,7 +650,73 @@ body.dark .market-avg { color: #777; }
   </div>
 </div>
 
-<!-- 底部導航列 -->
+<!-- 開發人員模式 -->
+<div id="devmode-page" class="page">
+  <p class="page-title" style="text-align:left;margin-bottom:4px;">開發人員模式</p>
+  <p class="section-title" style="margin-top:0;">資產數值設定</p>
+  <div class="list-container" style="margin-bottom:16px;">
+
+    <div class="dev-asset-row">
+      <div class="dev-asset-label"><span class="dev-dot" style="background:#f5a623;"></span>BTC</div>
+      <div class="dev-fields">
+        <div class="dev-field-group">
+          <label>起始價值 (NT$)</label>
+          <input class="dev-input" id="dev-btc-start" type="number" value="125000" placeholder="125000"/>
+        </div>
+        <div class="dev-field-group">
+          <label>現有價值 (NT$)</label>
+          <input class="dev-input" id="dev-btc-current" type="number" value="125000" placeholder="125000"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-asset-row">
+      <div class="dev-asset-label"><span class="dev-dot" style="background:#7396c6;"></span>0050</div>
+      <div class="dev-fields">
+        <div class="dev-field-group">
+          <label>起始價值 (NT$)</label>
+          <input class="dev-input" id="dev-0050-start" type="number" value="125000" placeholder="125000"/>
+        </div>
+        <div class="dev-field-group">
+          <label>現有價值 (NT$)</label>
+          <input class="dev-input" id="dev-0050-current" type="number" value="125000" placeholder="125000"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-asset-row">
+      <div class="dev-asset-label"><span class="dev-dot" style="background:#dfb199;"></span>黃金</div>
+      <div class="dev-fields">
+        <div class="dev-field-group">
+          <label>起始價值 (NT$)</label>
+          <input class="dev-input" id="dev-gold-start" type="number" value="125000" placeholder="125000"/>
+        </div>
+        <div class="dev-field-group">
+          <label>現有價值 (NT$)</label>
+          <input class="dev-input" id="dev-gold-current" type="number" value="125000" placeholder="125000"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-asset-row" style="border-bottom:none;">
+      <div class="dev-asset-label"><span class="dev-dot" style="background:#9eb995;"></span>現金</div>
+      <div class="dev-fields">
+        <div class="dev-field-group">
+          <label>起始價值 (NT$)</label>
+          <input class="dev-input" id="dev-cash-start" type="number" value="125000" placeholder="125000"/>
+        </div>
+        <div class="dev-field-group">
+          <label>現有價值 (NT$)</label>
+          <input class="dev-input" id="dev-cash-current" type="number" value="125000" placeholder="125000"/>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <button class="dev-apply-btn" id="dev-apply-btn">套用到總覽頁面</button>
+  <p class="dev-hint">* 漲跌幅將依據起始價值與現有價值自動計算</p>
+</div>
 <div class="bottom-nav">
   <div class="nav-item active" data-target="app">
     <svg viewBox="0 0 24 24"><path d="M12 3 3 10v11h6v-6h6v6h6V10l-9-7z"></path></svg><span>總覽</span>
@@ -517,7 +745,8 @@ const pages = {
   settings: document.getElementById('settings'),
   version: document.getElementById('version-detail'),
   about: document.getElementById('about-page'),
-  contact: document.getElementById('contact-page')
+  contact: document.getElementById('contact-page'),
+  devmode: document.getElementById('devmode-page')
 };
 
 const pageStack = [];
@@ -546,6 +775,7 @@ navItems.forEach(item => {
     const target = item.getAttribute('data-target');
     const label = item.querySelector('span').textContent;
     if (target && pages[target]) showPage(target, label);
+    if (target === 'rebalance') renderRebalance();
   });
 });
 
@@ -562,10 +792,102 @@ backButton.addEventListener('click', () => {
   }
 });
 
+// ===== 再平衡頁面渲染 =====
+window.rbAssets = [
+  { key: 'BTC',  label: 'BTC',  displayName: 'BTC',  color: '#f5a623', current: 125000, start: 125000 },
+  { key: '0050', label: '0050', displayName: '0050', color: '#7396c6', current: 125000, start: 125000 },
+  { key: 'GOLD', label: '黃金', displayName: '黃金', color: '#dfb199', current: 125000, start: 125000 },
+  { key: 'CASH', label: '現金', displayName: '現金', color: '#9eb995', current: 125000, start: 125000 },
+];
+
+function drawRbRing(canvasId, pct, color, isSafe) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 32, cy = 32, r = 26, lw = 6;
+  ctx.clearRect(0, 0, 64, 64);
+  // 背景軌道
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = document.body.classList.contains('dark') ? '#2a2a2a' : '#f0f0f0';
+  ctx.lineWidth = lw; ctx.stroke();
+  // 進度弧
+  const start = -Math.PI / 2;
+  const end   = start + (Math.PI * 2 * Math.min(pct, 100) / 100);
+  ctx.beginPath(); ctx.arc(cx, cy, r, start, end);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.stroke();
+}
+
+function renderRebalance() {
+  const assets = window.rbAssets;
+  const total  = assets.reduce((s, a) => s + a.current, 0) || 1;
+  const SAFE_MIN = 15, SAFE_MAX = 35;
+
+  // 找最偏離的資產用來顯示在頂部
+  let worstAsset = assets[0], worstDiff = 0;
+  const pcts = assets.map(a => {
+    const p = Math.round(a.current / total * 1000) / 10;
+    const diff = p > SAFE_MAX ? p - SAFE_MAX : p < SAFE_MIN ? SAFE_MIN - p : 0;
+    if (diff > worstDiff) { worstDiff = diff; worstAsset = a; }
+    return { ...a, pct: p, diff };
+  });
+
+  const allSafe = pcts.every(a => a.pct >= SAFE_MIN && a.pct <= SAFE_MAX);
+  const worst   = pcts.find(a => a.key === worstAsset.key);
+
+  // 更新標頭
+  const shield = document.getElementById('rb-shield');
+  const title  = document.getElementById('rb-title');
+  const sub    = document.getElementById('rb-subtitle');
+  if (allSafe) {
+    shield.className = 'rb-shield safe';
+    shield.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L4 6v6c0 5.1 3.4 9.9 8 11 4.6-1.1 8-5.9 8-11V6l-8-4z" fill="#77a478" opacity="0.3"/>
+      <path d="M12 2L4 6v6c0 5.1 3.4 9.9 8 11 4.6-1.1 8-5.9 8-11V6l-8-4z" stroke="#77a478" stroke-width="1.5" fill="none"/>
+      <path d="M9 12l2 2 4-4" stroke="#77a478" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    title.textContent = '目前資產配置安全平衡';
+    sub.textContent   = '所有資產占比均在 15 – 35% 的目標範圍內，暫無需要調整。';
+  } else {
+    shield.className = 'rb-shield danger';
+    shield.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L4 6v6c0 5.1 3.4 9.9 8 11 4.6-1.1 8-5.9 8-11V6l-8-4z" fill="#e8706f" opacity="0.3"/>
+      <path d="M12 2L4 6v6c0 5.1 3.4 9.9 8 11 4.6-1.1 8-5.9 8-11V6l-8-4z" stroke="#e8706f" stroke-width="1.5" fill="none"/>
+      <path d="M12 8v4M12 16h.01" stroke="#e8706f" stroke-width="2" stroke-linecap="round"/></svg>`;
+    title.textContent = '資產配置需要調整';
+    sub.textContent   = '部分資產占比已超出 15 – 35% 的目標範圍，建議進行再平衡。';
+  }
+
+  // 更新主資訊列（顯示資產總值）
+  document.getElementById('rb-alert-name').textContent =
+    `資產總值 NT$ ${total.toLocaleString()}`;
+  const badge = document.getElementById('rb-alert-badge');
+  if (worst.pct > SAFE_MAX) {
+    badge.textContent = '> 35%'; badge.className = 'rb-alert-badge over';
+  } else if (worst.pct < SAFE_MIN) {
+    badge.textContent = '< 15%'; badge.className = 'rb-alert-badge under';
+  } else {
+    badge.textContent = '安全範圍'; badge.className = 'rb-alert-badge safe';
+  }
+
+  // 畫四個小圓圈
+  pcts.forEach(a => {
+    const isSafe = a.pct >= SAFE_MIN && a.pct <= SAFE_MAX;
+    const ringColor = a.pct > SAFE_MAX ? '#e8706f' : a.pct < SAFE_MIN ? '#77a478' : a.color;
+    drawRbRing('rb-ring-' + a.key, a.pct, ringColor, isSafe);
+    const lbl = document.getElementById('rb-rlabel-' + a.key);
+    if (lbl) lbl.textContent = a.pct.toFixed(1) + '%';
+  });
+
+  // 更新時間
+  const tsEl = document.getElementById('rb-timestamp');
+  if (tsEl) tsEl.textContent = '最後更新時間・' + formatNow();
+}
+
 // ===== 設定頁跳轉 =====
 document.getElementById('version-setting').addEventListener('click', () => showPage('version', '版本更新'));
 document.getElementById('about-setting').addEventListener('click', () => showPage('about', '關於'));
 document.getElementById('contact-setting').addEventListener('click', () => showPage('contact', '聯絡我們'));
+document.getElementById('devmode-setting').addEventListener('click', () => showPage('devmode', '開發人員模式'));
 
 // ===== 主題 Popup =====
 document.getElementById('theme-setting').addEventListener('click', () => {
@@ -583,7 +905,88 @@ document.querySelector('#theme-popup .popup-cancel').addEventListener('click', (
   document.getElementById('theme-popup').style.display = 'none';
 });
 
-// ===== 主題切換 =====
+// ===== 開發人員模式：套用數值 =====
+function applyDevValues(navigateHome) {
+  const assetMap = [
+    { key: 'BTC',  startId: 'dev-btc-start',  currentId: 'dev-btc-current',  cardIdx: 0 },
+    { key: '0050', startId: 'dev-0050-start', currentId: 'dev-0050-current', cardIdx: 1 },
+    { key: 'GOLD', startId: 'dev-gold-start', currentId: 'dev-gold-current', cardIdx: 2 },
+    { key: 'CASH', startId: 'dev-cash-start', currentId: 'dev-cash-current', cardIdx: 3 },
+  ];
+
+  const assets = assetMap.map(a => {
+    const start   = parseInt(document.getElementById(a.startId).value)   || 0;
+    const current = parseInt(document.getElementById(a.currentId).value) || 0;
+    const changePct = start > 0 ? ((current - start) / start * 100) : 0;
+    const changeStr = (changePct >= 0 ? '+' : '') + changePct.toFixed(2) + '%';
+    return { ...a, start, value: current, change: changeStr, isUp: changePct >= 0 };
+  });
+
+  const total = assets.reduce((s, a) => s + a.value, 0) || 1;
+  const totalStart = assets.reduce((s, a) => s + a.start, 0) || 1;
+
+  // 更新四張 mini-card
+  const miniCards = document.querySelectorAll('.mini-card');
+  assets.forEach((a, i) => {
+    const card = miniCards[i];
+    if (!card) return;
+    const pctVal = Math.round(a.value / total * 1000) / 10;
+    card.querySelector('.mini-amt').textContent = 'NT$ ' + a.value.toLocaleString();
+    const sub = card.querySelector('.mini-sub');
+    sub.querySelector('span:first-child').textContent = pctVal.toFixed(1) + '%';
+    const changeEl = sub.querySelector('.mini-change');
+    changeEl.textContent = a.change;
+    changeEl.className = 'mini-change ' + (a.isUp ? 'up' : 'down');
+  });
+
+  // 更新總額
+  document.getElementById('total-nt').textContent = total.toLocaleString();
+
+  // 更新今日變動
+  const totalDelta = total - totalStart;
+  const totalDeltaPct = (totalDelta / totalStart * 100).toFixed(2);
+  const deltaEl = document.querySelector('.overview-balance .delta');
+  if (deltaEl) {
+    const sign = totalDelta >= 0 ? '+' : '';
+    const cls = totalDelta >= 0 ? 'up' : 'down';
+    deltaEl.innerHTML = `今日變動 <span class="${cls}">${sign}${totalDelta.toLocaleString()}</span> (<span class="${cls}">${sign}${totalDeltaPct}%</span>)`;
+  }
+
+  // 重繪圓餅圖＋圖例
+  if (window.assetDonutChart) {
+    window.assetDonutChart.data.datasets[0].data = assets.map(a => a.value);
+    window.assetDonutChart._totalStart   = totalStart;
+    window.assetDonutChart._totalCurrent = total;
+    window.assetDonutChart.update();
+  }
+  document.querySelectorAll('#assetLegend .legend-row').forEach(row => {
+    const a = assets.find(x => x.key === row.dataset.key);
+    const el = row.querySelector('.pct');
+    if (a && el) {
+      const pctVal = Math.round(a.value / total * 1000) / 10;
+      el.textContent = pctVal.toFixed(1) + '%';
+      if (pctVal > 35) el.style.color = '#e8706f';
+      else if (pctVal < 15) el.style.color = '#77a478';
+      else el.style.color = '';
+    }
+  });
+
+  // 同步 rbAssets 供再平衡頁使用
+  window.rbAssets = [
+    { key: 'BTC',  displayName: 'BTC',  color: '#f5a623', current: assets[0].value, start: assets[0].start },
+    { key: '0050', displayName: '0050', color: '#7396c6', current: assets[1].value, start: assets[1].start },
+    { key: 'GOLD', displayName: '黃金', color: '#dfb199', current: assets[2].value, start: assets[2].start },
+    { key: 'CASH', displayName: '現金', color: '#9eb995', current: assets[3].value, start: assets[3].start },
+  ];
+
+  // 返回總覽（按鈕按下才跳頁）
+  if (navigateHome) {
+    showPage('app', '總覽', false);
+    navItems.forEach(i => i.classList.toggle('active', i.getAttribute('data-target') === 'app'));
+  }
+}
+
+document.getElementById('dev-apply-btn').addEventListener('click', () => applyDevValues(true));
 function setTheme(mode) {
   document.body.classList.remove('light', 'dark');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -624,10 +1027,10 @@ setInterval(updateTime, 60000);
   const el = document.getElementById('assetDonut');
   if (!el) return;
   const assets = [
-    { key: 'BTC',  label: 'BTC',  value: 330000, color: '#f5a623' },
-    { key: '0050', label: '0050', value: 245500, color: '#7396c6' },
-    { key: 'GOLD', label: 'GOLD', value: 161200, color: '#dfb199' },
-    { key: 'CASH', label: 'CASH', value: 409850, color: '#9eb995' }
+    { key: 'BTC',  label: 'BTC',  value: 125000, color: '#f5a623' },
+    { key: '0050', label: '0050', value: 125000, color: '#7396c6' },
+    { key: 'GOLD', label: 'GOLD', value: 125000, color: '#dfb199' },
+    { key: 'CASH', label: 'CASH', value: 125000, color: '#9eb995' }
   ];
   const total = assets.reduce((s, a) => s + a.value, 0) || 1;
   const pct = v => (Math.round(v / total * 1000) / 10).toFixed(1) + '%';
@@ -635,10 +1038,22 @@ setInterval(updateTime, 60000);
   document.querySelectorAll('#assetLegend .legend-row').forEach(row => {
     const a = assets.find(x => x.key === row.dataset.key);
     const el = row.querySelector('.pct');
-    if (a && el) el.textContent = pct(a.value);
+    if (a && el) {
+      const pctVal = Math.round(a.value / total * 1000) / 10;
+      el.textContent = pctVal.toFixed(1) + '%';
+      if (pctVal > 35) el.style.color = '#e8706f';
+      else if (pctVal < 15) el.style.color = '#77a478';
+      else el.style.color = '';
+    }
   });
 
   if (window.assetDonutChart) window.assetDonutChart.destroy();
+
+  // 初始投報率計算（以預設起始值換算）
+  const startValues = { BTC: 125000, '0050': 125000, GOLD: 125000, CASH: 125000 };
+  const initTotalStart   = Object.values(startValues).reduce((s, v) => s + v, 0);
+  const initTotalCurrent = assets.reduce((s, a) => s + a.value, 0);
+
   window.assetDonutChart = new Chart(el.getContext('2d'), {
     type: 'doughnut',
     data: {
@@ -659,13 +1074,17 @@ setInterval(updateTime, 60000);
         const meta = chart.getDatasetMeta(0);
         if (!meta?.data?.[0]) return;
         const { x, y } = meta.data[0];
-        if (!chart._percent) chart._percent = Math.floor(Math.random() * 71) + 10;
+        // 用 chart 上存的總值計算投報率
+        const tStart   = chart._totalStart   || initTotalStart;
+        const tCurrent = chart._totalCurrent || initTotalCurrent;
+        const roi = tStart > 0 ? ((tCurrent - tStart) / tStart * 100) : 0;
+        const roiText = Math.abs(roi).toFixed(1) + '%';
         const isDark = document.body.classList.contains('dark');
         ctx.save();
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillStyle = isDark ? '#FFFFFF' : '#1E2A38';
+        ctx.fillStyle = roi >= 0 ? '#e8706f' : '#77a478';
         ctx.font = '700 38px Arial';
-        ctx.fillText(chart._percent + '%', x, y - 8);
+        ctx.fillText(roiText, x, y - 8);
         ctx.fillStyle = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)';
         ctx.font = '500 16px Arial';
         ctx.fillText('投報率', x, y + 22);
@@ -681,6 +1100,7 @@ setTimeout(() => {
   document.getElementById('splash').style.display = 'none';
   document.querySelector('.bottom-nav').style.display = 'flex';
   showPage('app', '總覽');
+  applyDevValues(false);
 }, 2000);
 </script>
 </body>
