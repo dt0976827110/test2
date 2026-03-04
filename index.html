@@ -1356,6 +1356,17 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
     return;
   }
 
+  // 檢查同名稱同種類是否已存在
+  const duplicate = Array.from(document.querySelectorAll('#trade-list .trade-card')).some(card => {
+    const cardName = card.querySelector('.trade-name')?.childNodes[0]?.textContent.trim();
+    const cardTag  = card.querySelector('.trade-tag')?.textContent.trim();
+    return cardName === name && cardTag === type;
+  });
+  if (duplicate) {
+    alert(`「${name}」已存在於 ${type} 類別中，無法重複新增`);
+    return;
+  }
+
   // 產生新卡片 HTML 並加入列表
   const colors = { '加密貨幣': '#f5a623', 'ETF': '#7396c6', '股票': '#7396c6', '貴金屬': '#dfb199', '法幣': '#9eb995', '其他': '#aaa' };
   const initials = { '加密貨幣': name.substring(0,2).toUpperCase(), 'ETF': name.substring(0,2).toUpperCase(), '股票': name.substring(0,2).toUpperCase(), '貴金屬': 'Au', '法幣': '$', '其他': name.substring(0,1).toUpperCase() };
@@ -1457,7 +1468,24 @@ document.querySelectorAll('.td-tab').forEach(btn => {
 document.getElementById('td-confirm-btn').addEventListener('click', () => {
   const price = parseFloat(document.getElementById('td-price').value) || 0;
   const qty   = parseFloat(document.getElementById('td-qty-input').value) || 0;
+
   if (!price || !qty) { alert('請輸入價格和數量'); return; }
+
+  // 買入：數量不能小於等於 0
+  if (tdCurrentType === 'buy' && qty <= 0) {
+    alert('買入數量必須大於 0');
+    return;
+  }
+
+  // 賣出：數量不能大於持有數量
+  if (tdCurrentType === 'sell') {
+    const holdingQty = parseFloat(document.getElementById('td-qty').textContent) || 0;
+    if (qty <= 0) { alert('賣出數量必須大於 0'); return; }
+    if (qty > holdingQty) {
+      alert(`賣出數量（${qty}）不能大於持有數量（${holdingQty}）`);
+      return;
+    }
+  }
   const total    = Math.round(price * qty);
   const name     = document.getElementById('td-name').textContent;
   const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
