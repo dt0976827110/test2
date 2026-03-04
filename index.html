@@ -1118,7 +1118,10 @@ function getPrices(symbols) {
         const idMap = { 'BTC':'bitcoin','ETH':'ethereum','BNB':'binancecoin','SOL':'solana','XRP':'ripple','ADA':'cardano','DOGE':'dogecoin','AVAX':'avalanche-2','DOT':'polkadot','MATIC':'matic-network','LTC':'litecoin','LINK':'chainlink','UNI':'uniswap','ATOM':'cosmos','ETC':'ethereum-classic','XLM':'stellar','NEAR':'near','APT':'aptos','OP':'optimism','ARB':'arbitrum','FTM':'fantom','SAND':'the-sandbox','MANA':'decentraland','AXS':'axie-infinity','THETA':'theta-token','FIL':'filecoin','HBAR':'hedera-hashgraph','VET':'vechain','ALGO':'algorand','ICP':'internet-computer','USDT':'tether','USDC':'usd-coin','DAI':'dai' };
         const id = idMap[symbol.toUpperCase()] || symbol.toLowerCase();
         const url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + id + '&vs_currencies=twd';
-        const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+        const data = JSON.parse(UrlFetchApp.fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+          muteHttpExceptions: true
+        }).getContentText());
         results[symbol] = { price: data[id] ? data[id].twd : null };
       } else if (type === 'metal_two') {
         // 台灣櫃買中心黃金現貨：AU9901台銀金、AU9902一銀金
