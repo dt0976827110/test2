@@ -896,11 +896,22 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
 
 <!-- 歷史紀錄 -->
 <div id="history" class="page">
-  <p class="page-title" style="margin-bottom:16px;">歷史紀錄</p>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <p class="page-title" style="margin:0;">歷史紀錄</p>
+    <button id="history-refresh-btn" style="
+      background:none;border:none;cursor:pointer;
+      display:flex;align-items:center;gap:6px;
+      font-size:13px;font-weight:700;color:#888;padding:6px 4px;">
+      <svg id="history-refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M4 12a8 8 0 0 1 14.93-4H15v2h6V4h-2v3.06A10 10 0 1 0 22 12h-2a8 8 0 0 1-8 8 8 8 0 0 1-8-8z" fill="currentColor"/>
+      </svg>
+      重新整理
+    </button>
+  </div>
 
   <!-- 載入狀態 -->
-  <div id="history-loading" style="text-align:center;padding:40px 0;color:#aaa;font-size:14px;">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="animation:spin 1s linear infinite;margin-bottom:10px;">
+  <div id="history-loading" style="display:none;text-align:center;padding:40px 0;color:#aaa;font-size:14px;">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="animation:spin 1s linear infinite;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;">
       <circle cx="12" cy="12" r="10" stroke="#ddd" stroke-width="2"/>
       <path d="M12 2a10 10 0 0 1 10 10" stroke="#888" stroke-width="2" stroke-linecap="round"/>
     </svg>
@@ -1370,6 +1381,9 @@ navItems.forEach(item => {
     if (target && pages[target]) showPage(target, label);
     if (target === 'rebalance') renderRebalance();
     if (target === 'history') loadHistory();
+
+// 重新整理按鈕
+document.getElementById('history-refresh-btn').addEventListener('click', () => loadHistory());
   });
 });
 
@@ -1570,7 +1584,7 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
   const total     = Math.round(price * qty);
   const name      = document.getElementById('td-name').textContent;
   const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
-  const datetime  = new Date().toLocaleString('zh-TW');
+  const datetime  = getTWDatetime();
 
   // 更新交易頁卡片的持有數量＋現有價值
   const holdingQty = parseFloat(document.getElementById('td-qty').textContent) || 0;
@@ -1598,8 +1612,9 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
   // 同步更新 Sheet 商品工作表持有數量＋現有價值
   gsWrite('updateProduct', { name, qty: newQtyRounded, value: newValue });
 
-  // 寫入 Google Sheet 歷史紀錄
+  // 寫入 Google Sheet 歷史紀錄，並在背景重新讀取
   gsWrite('addHistory', { datetime, name, tradeType, qty, price, total });
+  setTimeout(() => loadHistory(false), 3000); // 3 秒後背景更新
 
   alert(`${tradeType}成功！\n${name} ${qty} 份\n換算價值 NT$ ${total.toLocaleString()}`);
 
@@ -1971,16 +1986,57 @@ function gsWrite(action, data) {
 }
 
 // ===== 歷史紀錄頁面 =====
-async function loadHistory() {
+function getTWDatetime() {
+  // 強制台灣時間 UTC+8
+  const now = new Date();
+  const tw  = new Date(now.getTime() + (8 * 60 - now.getTimezoneOffset()) * 60000);
+  const pad = n => String(n).padStart(2, '0');
+  return `${tw.getFullYear()}/${pad(tw.getMonth()+1)}/${pad(tw.getDate())} ${pad(tw.getHours())}:${pad(tw.getMinutes())}:${pad(tw.getSeconds())}`;
+}
+
+function renderHistoryRows(rows) {
+  const list  = document.getElementById('history-list');
+  const empty = document.getElementById('history-empty');
+  list.innerHTML = '';
+  if (!rows || rows.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  [...rows].reverse().forEach(row => {
+    const [datetime, name, tradeType, qty, price, total] = row;
+    const isBuy = tradeType === '買入';
+    const card = document.createElement('div');
+    card.className = 'hist-card';
+    card.innerHTML = `
+      <div class="hist-top">
+        <span class="hist-name">${name}</span>
+        <span class="hist-type ${isBuy ? 'buy' : 'sell'}">${tradeType}</span>
+      </div>
+      <div class="hist-grid">
+        <div class="hist-cell">
+          <span class="hist-cell-label">數量</span>
+          <span class="hist-cell-value">${qty}</span>
+        </div>
+        <div class="hist-cell">
+          <span class="hist-cell-label">價格</span>
+          <span class="hist-cell-value">NT$ ${Number(price).toLocaleString()}</span>
+        </div>
+        <div class="hist-cell">
+          <span class="hist-cell-label">換算價值</span>
+          <span class="hist-cell-value" style="color:${isBuy ? '#e8706f' : '#77a478'}">NT$ ${Number(total).toLocaleString()}</span>
+        </div>
+      </div>
+      <div class="hist-date">${datetime}</div>`;
+    list.appendChild(card);
+  });
+}
+
+async function loadHistory(showLoading = true) {
   const loading = document.getElementById('history-loading');
   const noBind  = document.getElementById('history-no-bind');
   const empty   = document.getElementById('history-empty');
-  const list    = document.getElementById('history-list');
+  const icon    = document.getElementById('history-refresh-icon');
 
-  loading.style.display = 'block';
-  noBind.style.display  = 'none';
-  empty.style.display   = 'none';
-  list.innerHTML        = '';
+  noBind.style.display = 'none';
+  empty.style.display  = 'none';
 
   if (!gsScriptUrl) {
     loading.style.display = 'none';
@@ -1988,52 +2044,36 @@ async function loadHistory() {
     return;
   }
 
+  // 先顯示快取
+  try {
+    const cached = localStorage.getItem('acs_history_cache');
+    if (cached) {
+      renderHistoryRows(JSON.parse(cached));
+      if (showLoading) loading.style.display = 'none';
+    } else if (showLoading) {
+      loading.style.display = 'block';
+    }
+  } catch(e) {}
+
+  // 旋轉 icon
+  if (icon) icon.style.animation = 'spin 0.8s linear infinite';
+
   try {
     const url = gsScriptUrl + '?action=getHistory';
     const res = await fetch(url);
     const data = await res.json();
-
     loading.style.display = 'none';
-
-    if (!data.rows || data.rows.length === 0) {
+    if (data.rows) {
+      try { localStorage.setItem('acs_history_cache', JSON.stringify(data.rows)); } catch(e) {}
+      renderHistoryRows(data.rows);
+    } else {
       empty.style.display = 'block';
-      return;
     }
-
-    // 最新的排在最上面
-    const rows = [...data.rows].reverse();
-    rows.forEach(row => {
-      // row: [日期時間, 商品, 類型, 數量, 價格, 換算價值]
-      const [datetime, name, tradeType, qty, price, total] = row;
-      const isBuy = tradeType === '買入';
-      const card = document.createElement('div');
-      card.className = 'hist-card';
-      card.innerHTML = `
-        <div class="hist-top">
-          <span class="hist-name">${name}</span>
-          <span class="hist-type ${isBuy ? 'buy' : 'sell'}">${tradeType}</span>
-        </div>
-        <div class="hist-grid">
-          <div class="hist-cell">
-            <span class="hist-cell-label">數量</span>
-            <span class="hist-cell-value">${qty}</span>
-          </div>
-          <div class="hist-cell">
-            <span class="hist-cell-label">價格</span>
-            <span class="hist-cell-value">NT$ ${Number(price).toLocaleString()}</span>
-          </div>
-          <div class="hist-cell">
-            <span class="hist-cell-label">換算價值</span>
-            <span class="hist-cell-value ${isBuy ? 'hist-total-value' : ''}" style="color:${isBuy ? '#e8706f' : '#77a478'}">NT$ ${Number(total).toLocaleString()}</span>
-          </div>
-        </div>
-        <div class="hist-date">${datetime}</div>`;
-      list.appendChild(card);
-    });
   } catch(e) {
     loading.style.display = 'none';
-    empty.style.display   = 'block';
-    empty.querySelector('p').textContent = '讀取失敗，請確認網路狀態';
+    // 快取已顯示，不顯示錯誤
+  } finally {
+    if (icon) icon.style.animation = '';
   }
 }
 
@@ -2361,6 +2401,8 @@ setTimeout(() => {
   document.querySelector('.bottom-nav').style.display = 'flex';
   showPage('app', '總覽');
   updateOverview();
+  // 背景預載歷史紀錄
+  setTimeout(() => loadHistory(false), 1000);
 }, 2000);
 
 // ===== Service Worker 註冊 =====
