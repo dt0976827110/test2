@@ -998,7 +998,19 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
   <div class="trade-list" id="trade-list"></div>
 </div>
 
-<!-- 交易確認浮窗 -->
+<!-- 交易完成 Toast -->
+<div id="trade-toast" style="
+  position:fixed; top:-80px; left:0; right:0; z-index:99999;
+  padding:10px 20px;
+  background:rgba(30,42,56,0.88); color:#fff;
+  box-shadow:0 4px 20px rgba(0,0,0,0.25);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  transition:top 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;
+  display:flex; align-items:center; justify-content:space-between;">
+  <div id="trade-toast-title" style="font-size:12px;font-weight:600;opacity:0.55;letter-spacing:0.5px;white-space:nowrap;"></div>
+  <div id="trade-toast-body" style="font-size:14px;font-weight:700;text-align:right;"></div>
+</div>
 <div id="trade-confirm-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
   <div id="trade-confirm-inner" style="background:#fff;border-radius:20px;padding:32px 28px;width:300px;max-width:90vw;box-shadow:0 16px 48px rgba(0,0,0,0.22);">
     <div id="trade-confirm-title" style="font-size:18px;font-weight:800;margin-bottom:4px;color:#1E2A38;"></div>
@@ -2005,10 +2017,31 @@ document.getElementById('trade-confirm-cancel').addEventListener('click', () => 
 });
 document.getElementById('trade-confirm-ok').addEventListener('click', () => {
   document.getElementById('trade-confirm-modal').style.display = 'none';
+  const name      = document.getElementById('td-name').textContent;
+  const qty       = parseFloat(document.getElementById('td-qty-input').value) || 0;
+  const price     = parseFloat(document.getElementById('td-price').value) || 0;
+  const total     = Math.round(price * qty);
+  const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
   executeTrade();
   showPage('export', '交易');
   navItems.forEach(i => i.classList.toggle('active', i.getAttribute('data-target') === 'export'));
+  showTradeToast(tradeType, name, qty, total);
 });
+
+function showTradeToast(tradeType, name, qty, total) {
+  const isBuy = tradeType === '買入';
+  const toast = document.getElementById('trade-toast');
+  toast.style.background = isBuy
+    ? 'rgba(30,42,56,0.82)'
+    : 'rgba(58,82,64,0.82)';
+  document.getElementById('trade-toast-title').textContent = tradeType + '成功';
+  document.getElementById('trade-toast-body').innerHTML =
+    `${name} ×${qty} &nbsp;<span style="opacity:0.65;font-weight:400;">NT$ ${total.toLocaleString()}</span>`;
+
+  toast.style.top = '0px';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.top = '-80px'; }, 3000);
+}
 function calcTdResult() {
   const price = parseFloat(document.getElementById('td-price').value) || 0;
   const qty   = parseFloat(document.getElementById('td-qty-input').value) || 0;
