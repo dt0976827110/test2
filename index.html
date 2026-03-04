@@ -1341,6 +1341,9 @@ function doGet(e) {
       <span>持有：<strong id="td-qty">--</strong></span>
       <span>均價：<strong id="td-avg">--</strong></span>
     </div>
+    <div class="td-holding" style="margin-top:4px;">
+      <span>現有價值：<strong id="td-current-value">--</strong></span>
+    </div>
   </div>
 
   <!-- 買入 / 賣出 切換 -->
@@ -1885,6 +1888,11 @@ document.getElementById('trade-list').addEventListener('click', e => {
   document.getElementById('td-tag').textContent    = tag;
   document.getElementById('td-avg').textContent    = avg;
   document.getElementById('td-qty').textContent    = qty;
+
+  // 現有價值
+  const totalEl = card.querySelector('.trade-total');
+  const currentVal = totalEl ? totalEl.textContent.trim() : '--';
+  document.getElementById('td-current-value').textContent = currentVal !== '--' ? 'NT$ ' + currentVal : '--';
   document.getElementById('td-price').value        = '';
   document.getElementById('td-qty-input').value    = '';
   document.getElementById('td-result-value').textContent = 'NT$ 0';
@@ -1894,7 +1902,7 @@ document.getElementById('trade-list').addEventListener('click', e => {
   document.getElementById('td-tab-buy').classList.add('active');
   document.getElementById('td-tab-sell').classList.remove('active');
   document.getElementById('td-confirm-btn').textContent = '確認買入';
-  document.getElementById('td-confirm-btn').style.background = '';
+  document.getElementById('td-confirm-btn').style.background = '#e8706f';
 
   showPage('tradedetail', name);
 });
@@ -1907,7 +1915,7 @@ document.querySelectorAll('.td-tab').forEach(btn => {
     tdCurrentType = btn.dataset.type;
     const isBuy = tdCurrentType === 'buy';
     document.getElementById('td-confirm-btn').textContent = isBuy ? '確認買入' : '確認賣出';
-    document.getElementById('td-confirm-btn').style.background = isBuy ? '' : 'rgba(119,164,120,0.85)';
+    document.getElementById('td-confirm-btn').style.background = isBuy ? '#e8706f' : 'rgba(119,164,120,0.85)';
   });
 });
 
@@ -2000,6 +2008,13 @@ function executeTrade() {
 
   document.getElementById('td-qty').textContent = newQtyRounded;
 
+  // 更新詳情頁現有價值
+  const updatedCard = document.querySelector(`#trade-list .trade-card[data-name="${document.getElementById('td-name').textContent}"]`);
+  if (updatedCard) {
+    const updatedTotal = updatedCard.querySelector('.trade-total')?.textContent.trim();
+    document.getElementById('td-current-value').textContent = (updatedTotal && updatedTotal !== '--') ? 'NT$ ' + updatedTotal : '--';
+  }
+
   updateOverview();
   scheduleFetchPrices(300);
 
@@ -2031,9 +2046,7 @@ document.getElementById('trade-confirm-ok').addEventListener('click', () => {
 function showTradeToast(tradeType, name, qty, total) {
   const isBuy = tradeType === '買入';
   const toast = document.getElementById('trade-toast');
-  toast.style.background = isBuy
-    ? 'rgba(30,42,56,0.82)'
-    : 'rgba(58,82,64,0.82)';
+  toast.style.background = 'rgba(30,42,56,0.88)';
   document.getElementById('trade-toast-title').textContent = tradeType + '成功';
   document.getElementById('trade-toast-body').innerHTML =
     `${name} ×${qty} &nbsp;<span style="opacity:0.65;font-weight:400;">NT$ ${total.toLocaleString()}</span>`;
