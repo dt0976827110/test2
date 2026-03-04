@@ -1976,12 +1976,12 @@ function executeTrade() {
         avgEl.textContent = '--';
       } else {
         const avg = newCost / newQtyRounded;
-        avgEl.textContent = avg >= 1 ? Math.round(avg).toLocaleString() : avg.toFixed(4);
+        avgEl.textContent = avg.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
     }
 
     const marketPrice = parseFloat(card.getAttribute('data-market-price')) || price;
-    if (totalEl) totalEl.textContent = newQtyRounded <= 0 ? '--' : Math.round(newQtyRounded * marketPrice).toLocaleString();
+    if (totalEl) totalEl.textContent = newQtyRounded <= 0 ? '--' : (newQtyRounded * marketPrice).toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     gsWrite('updateProduct', { name, qty: newQtyRounded, value: newCost });
   });
@@ -2006,6 +2006,8 @@ document.getElementById('trade-confirm-cancel').addEventListener('click', () => 
 document.getElementById('trade-confirm-ok').addEventListener('click', () => {
   document.getElementById('trade-confirm-modal').style.display = 'none';
   executeTrade();
+  showPage('export', '交易');
+  navItems.forEach(i => i.classList.toggle('active', i.getAttribute('data-target') === 'export'));
 });
 function calcTdResult() {
   const price = parseFloat(document.getElementById('td-price').value) || 0;
@@ -2697,7 +2699,7 @@ function recalcAllAvg() {
     const avgEl = card.querySelector('.trade-avg');
     if (!avgEl || qty === 0) return;
     const avg = cost / qty;
-    avgEl.textContent = avg >= 1 ? Math.round(avg).toLocaleString() : avg.toFixed(4);
+    avgEl.textContent = avg.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   });
 }
 
@@ -2824,13 +2826,34 @@ function updateOverview() {
 
       const row = document.createElement('div');
       row.className = 'market-row';
-      row.dataset.symbol = name;
+      const isCrypto = tag === '加密貨幣';
+      row.dataset.symbol  = name;
+      row.dataset.isCrypto = isCrypto ? '1' : '0';
+      row.dataset.showUsdt = '0';
       row.innerHTML = `
         <div class="market-icon" style="background:${bg};">${iconTxt}</div>
         <div class="market-name">${name}</div>
         <div class="market-price" data-avg="${avgNum}">--</div>
         <div class="market-change">--</div>
         <div class="market-avg">${avg}</div>`;
+
+      if (isCrypto) {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => {
+          const isUsdt = row.dataset.showUsdt === '1';
+          row.dataset.showUsdt = isUsdt ? '0' : '1';
+          const priceEl = row.querySelector('.market-price');
+          const twdPrice = parseFloat(priceEl?.dataset.twd);
+          const usdtPrice = parseFloat(priceEl?.dataset.usdt);
+          if (!twdPrice) return;
+          if (!isUsdt && usdtPrice) {
+            priceEl.textContent = usdtPrice.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT';
+          } else {
+            priceEl.textContent = twdPrice.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          }
+        });
+      }
+
       marketBody.appendChild(row);
     });
   }
@@ -2928,19 +2951,35 @@ async function fetchMarketPrices() {
 }
 
 function applyMarketPrices(prices) {
+  // 取得 USDT/TWD 匯率（用 USDT 報價反推）
+  const usdtTwd = prices['USDT']?.price || 32;
+
   document.querySelectorAll('#market-card-body .market-row').forEach(row => {
-    const symbol = row.dataset.symbol;
-    const info   = prices[symbol];
+    const symbol   = row.dataset.symbol;
+    const info     = prices[symbol];
     if (!info || info.price == null) return;
 
     const priceEl  = row.querySelector('.market-price');
     const changeEl = row.querySelector('.market-change');
     const avgNum   = parseFloat(priceEl?.dataset.avg) || 0;
-    const price    = Math.round(info.price * 100) / 100;
-    const changePct = avgNum > 0 ? ((price - avgNum) / avgNum * 100) : 0;
+    const priceTwd = Math.round(info.price * 100) / 100;
+    const priceUsdt = usdtTwd > 0 ? Math.round(priceTwd / usdtTwd * 100) / 100 : null;
+
+    // 存兩種價格
+    if (priceEl) {
+      priceEl.dataset.twd  = priceTwd;
+      priceEl.dataset.usdt = priceUsdt || '';
+    }
+
+    const changePct = avgNum > 0 ? ((priceTwd - avgNum) / avgNum * 100) : 0;
     const changeStr = (changePct >= 0 ? '+' : '') + changePct.toFixed(2) + '%';
 
-    if (priceEl)  priceEl.textContent = price.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // 顯示：依目前切換狀態決定
+    const showUsdt = row.dataset.showUsdt === '1' && row.dataset.isCrypto === '1';
+    if (priceEl) priceEl.textContent = showUsdt && priceUsdt
+      ? priceUsdt.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT'
+      : priceTwd.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     if (changeEl) {
       changeEl.textContent = changeStr;
       changeEl.className   = 'market-change ' + (changePct >= 0 ? 'up' : 'down');
@@ -2949,12 +2988,11 @@ function applyMarketPrices(prices) {
     // 把最新價格寫回交易卡片，供 getTradeCategories 使用
     const tradeCard = document.querySelector(`#trade-list .trade-card[data-name="${symbol}"]`);
     if (tradeCard) {
-      tradeCard.setAttribute('data-market-price', price);
-      const qty      = parseFloat(tradeCard.getAttribute('data-qty')) || 0;
-      const totalEl  = tradeCard.querySelector('.trade-total');
+      tradeCard.setAttribute('data-market-price', priceTwd);
+      const qty     = parseFloat(tradeCard.getAttribute('data-qty')) || 0;
+      const totalEl = tradeCard.querySelector('.trade-total');
       if (totalEl && qty > 0) {
-        const marketVal = Math.round(price * qty);
-        totalEl.textContent = marketVal.toLocaleString();
+        totalEl.textContent = (qty * priceTwd).toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
     }
   });
