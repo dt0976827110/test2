@@ -1163,7 +1163,7 @@ function doGet(e) {
       if (sheet.getLastRow() === 0) {
         sheet.appendRow(['商品名稱','種類','持有數量','現有價值','新增時間']);
       }
-      sheet.appendRow([String(p.name), p.type, p.qty, p.value,
+      sheet.appendRow(['#' + String(p.name), p.type, p.qty, p.value,
         new Date().toLocaleString('zh-TW')]);
     }
 
@@ -1171,7 +1171,7 @@ function doGet(e) {
       const sheet = ss.getSheetByName('商品');
       const data  = sheet.getDataRange().getValues();
       for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === p.name) {
+        if (String(data[i][0]) === '#' + String(p.name)) {
           sheet.getRange(i + 1, 3).setValue(p.qty);
           sheet.getRange(i + 1, 4).setValue(p.value);
           break;
@@ -1183,7 +1183,7 @@ function doGet(e) {
       const sheet = ss.getSheetByName('商品');
       const data  = sheet.getDataRange().getValues();
       for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === p.name) {
+        if (String(data[i][0]) === '#' + String(p.name)) {
           sheet.deleteRow(i + 1);
           break;
         }
@@ -1211,7 +1211,7 @@ function doGet(e) {
     if (p.action === 'getProducts') {
       const sheet = ss.getSheetByName('商品');
       const data  = sheet.getDataRange().getValues();
-      const rows  = data.slice(1);
+      const rows  = data.slice(1).map(r => [String(r[0]).replace(/^#/, ''), r[1], r[2], r[3], r[4]]);
       return ContentService
         .createTextOutput(JSON.stringify({ success: true, rows }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -2838,11 +2838,11 @@ function applyMarketPrices(prices) {
     const priceEl  = row.querySelector('.market-price');
     const changeEl = row.querySelector('.market-change');
     const avgNum   = parseFloat(priceEl?.dataset.avg) || 0;
-    const price    = Math.round(info.price);
+    const price    = Math.round(info.price * 100) / 100;
     const changePct = avgNum > 0 ? ((price - avgNum) / avgNum * 100) : 0;
     const changeStr = (changePct >= 0 ? '+' : '') + changePct.toFixed(2) + '%';
 
-    if (priceEl)  priceEl.textContent  = price.toLocaleString();
+    if (priceEl)  priceEl.textContent  = price.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (changeEl) {
       changeEl.textContent  = changeStr;
       changeEl.className    = 'market-change ' + (changePct >= 0 ? 'up' : 'down');
