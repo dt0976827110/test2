@@ -1280,7 +1280,7 @@ function doGet(e) {
     </div>
 
     <div class="ap-field">
-      <label class="ap-label">現有價值 (NT$)</label>
+      <label class="ap-label">購入成本 (NT$)</label>
       <input class="ap-input" id="ap-value" type="number" placeholder="例：125000"/>
     </div>
 
@@ -1772,16 +1772,16 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
     return;
   }
 
-  // 產生新卡片 HTML 並加入列表
   const colors   = { '加密貨幣': '#f5a623', 'ETF/股票': '#7396c6', '貴金屬': '#dfb199', '現金': '#9eb995' };
   const color    = colors[type] || '#aaa';
   const icon     = type === '貴金屬' ? 'Au' : type === '現金' ? '$' : name.substring(0,2).toUpperCase();
-  const valNum   = parseInt(value) || 0;
+  const costNum  = parseInt(value) || 0;
 
   const card = document.createElement('div');
   card.className = 'trade-card';
   card.setAttribute('data-name', name);
   card.setAttribute('data-qty', qty);
+  card.setAttribute('data-cost', costNum);
   card.innerHTML = `
     <div class="trade-card-left">
       <div class="trade-icon" style="background:${color};">${icon}</div>
@@ -1792,7 +1792,7 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
     </div>
     <div class="trade-card-right">
       <div class="trade-col"><div class="trade-avg">--</div></div>
-      <div class="trade-col"><div class="trade-total">${valNum.toLocaleString()}</div></div>
+      <div class="trade-col"><div class="trade-total">--</div></div>
     </div>`;
   document.getElementById('trade-list').appendChild(card);
   recalcAllAvg();
@@ -1800,12 +1800,12 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
   scheduleFetchPrices(500);
 
   // 寫入 Google Sheet 商品工作表
-  gsWrite('addProduct', { name, type, qty: parseFloat(qty), value: valNum });
+  gsWrite('addProduct', { name, type, qty: parseFloat(qty), value: costNum });
   // 更新本地快取
   try {
     const cached = localStorage.getItem('acs_products_cache');
     const rows = cached ? JSON.parse(cached) : [];
-    rows.push([name, type, qty, valNum, '']);
+    rows.push([name, type, qty, costNum, '']);
     localStorage.setItem('acs_products_cache', JSON.stringify(rows));
   } catch(e) {}
 
@@ -2309,13 +2309,14 @@ const CAT_COLORS   = { '加密貨幣':'#f5a623','ETF/股票':'#7396c6','貴金�
 const CAT_INITIALS = { '加密貨幣': n => n.substring(0,2).toUpperCase(), 'ETF/股票': n => n.substring(0,2).toUpperCase(), '貴金屬': () => 'Au', '現金': () => '$' };
 
 function buildTradeCard(name, type, qty, value) {
-  const color = CAT_COLORS[type] || '#aaa';
-  const icon  = (CAT_INITIALS[type] ? CAT_INITIALS[type](name) : name.substring(0,2).toUpperCase());
-  const valNum = parseInt(String(value).replace(/,/g,'')) || 0;
+  const color   = CAT_COLORS[type] || '#aaa';
+  const icon    = (CAT_INITIALS[type] ? CAT_INITIALS[type](name) : name.substring(0,2).toUpperCase());
+  const costNum = parseInt(String(value).replace(/,/g,'')) || 0;
   const card = document.createElement('div');
   card.className = 'trade-card';
   card.setAttribute('data-name', name);
   card.setAttribute('data-qty', qty);
+  card.setAttribute('data-cost', costNum);
   card.innerHTML = `
     <div class="trade-card-left">
       <div class="trade-icon" style="background:${color};">${icon}</div>
@@ -2326,7 +2327,7 @@ function buildTradeCard(name, type, qty, value) {
     </div>
     <div class="trade-card-right">
       <div class="trade-col"><div class="trade-avg">--</div></div>
-      <div class="trade-col"><div class="trade-total">${valNum.toLocaleString()}</div></div>
+      <div class="trade-col"><div class="trade-total">--</div></div>
     </div>`;
   return card;
 }
@@ -2626,12 +2627,11 @@ setInterval(updateTime, 60000);
 // 重新計算所有卡片的持有均價（現有價值 ÷ 持有數量）
 function recalcAllAvg() {
   document.querySelectorAll('#trade-list .trade-card').forEach(card => {
-    const qty     = parseFloat(card.dataset.qty) || 0;
-    const totalEl = card.querySelector('.trade-total');
-    const avgEl   = card.querySelector('.trade-avg');
-    if (!totalEl || !avgEl || qty === 0) return;
-    const total = parseInt(totalEl.textContent.replace(/,/g, '')) || 0;
-    const avg   = total / qty;
+    const qty   = parseFloat(card.dataset.qty) || 0;
+    const cost  = parseFloat(card.dataset.cost) || 0;
+    const avgEl = card.querySelector('.trade-avg');
+    if (!avgEl || qty === 0) return;
+    const avg = cost / qty;
     avgEl.textContent = avg >= 1 ? Math.round(avg).toLocaleString() : avg.toFixed(4);
   });
 }
@@ -2883,7 +2883,15 @@ function applyMarketPrices(prices) {
 
     // 把最新價格寫回交易卡片，供 getTradeCategories 使用
     const tradeCard = document.querySelector(`#trade-list .trade-card[data-name="${symbol}"]`);
-    if (tradeCard) tradeCard.setAttribute('data-market-price', price);
+    if (tradeCard) {
+      tradeCard.setAttribute('data-market-price', price);
+      const qty      = parseFloat(tradeCard.getAttribute('data-qty')) || 0;
+      const totalEl  = tradeCard.querySelector('.trade-total');
+      if (totalEl && qty > 0) {
+        const marketVal = Math.round(price * qty);
+        totalEl.textContent = marketVal.toLocaleString();
+      }
+    }
   });
 
   // 報價更新後重新計算分類金額
