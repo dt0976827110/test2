@@ -300,6 +300,10 @@ body.dark .market-avg { color: #777; }
 
 /* ===== 歷史紀錄 ===== */
 @keyframes spin { to { transform: rotate(360deg); } }
+#history-refresh-btn { transition: opacity 0.2s; }
+#history-refresh-btn:active { opacity: 0.6; }
+body.dark #history-refresh-btn { background: #2a2a2a !important; }
+body.dark #history-refresh-btn path { fill: #eee; }
 .hist-card {
   width: 100%; background: #fff; border-radius: 14px;
   padding: 14px 16px; margin-bottom: 10px;
@@ -899,13 +903,13 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <p class="page-title" style="margin:0;">歷史紀錄</p>
     <button id="history-refresh-btn" style="
-      background:none;border:none;cursor:pointer;
-      display:flex;align-items:center;gap:6px;
-      font-size:13px;font-weight:700;color:#888;padding:6px 4px;">
-      <svg id="history-refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M4 12a8 8 0 0 1 14.93-4H15v2h6V4h-2v3.06A10 10 0 1 0 22 12h-2a8 8 0 0 1-8 8 8 8 0 0 1-8-8z" fill="currentColor"/>
+      background:#f2f2f2;border:none;cursor:pointer;
+      width:36px;height:36px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:opacity 0.2s;">
+      <svg id="history-refresh-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#1E2A38"/>
       </svg>
-      重新整理
     </button>
   </div>
 
