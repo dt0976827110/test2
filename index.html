@@ -1106,6 +1106,17 @@ function doGet(e) {
       }
     }
 
+    if (p.action === 'deleteProduct') {
+      const sheet = ss.getSheetByName('商品');
+      const data  = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][0] === p.name) {
+          sheet.deleteRow(i + 1);
+          break;
+        }
+      }
+    }
+
     if (p.action === 'addHistory') {
       const sheet = ss.getSheetByName('歷史紀錄');
       if (sheet.getLastRow() === 0) {
@@ -1118,7 +1129,16 @@ function doGet(e) {
     if (p.action === 'getHistory') {
       const sheet = ss.getSheetByName('歷史紀錄');
       const data  = sheet.getDataRange().getValues();
-      const rows  = data.slice(1); // 跳過標題行
+      const rows  = data.slice(1);
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, rows }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (p.action === 'getProducts') {
+      const sheet = ss.getSheetByName('商品');
+      const data  = sheet.getDataRange().getValues();
+      const rows  = data.slice(1);
       return ContentService
         .createTextOutput(JSON.stringify({ success: true, rows }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -1433,6 +1453,15 @@ document.getElementById('ap-delete-btn').addEventListener('click', () => {
         if (c.getAttribute('data-name') === name) c.remove();
       });
       clone.remove();
+      gsWrite('deleteProduct', { name });
+      // 更新快取
+      try {
+        const cached = localStorage.getItem('acs_products_cache');
+        if (cached) {
+          const rows = JSON.parse(cached).filter(r => r[0] !== name);
+          localStorage.setItem('acs_products_cache', JSON.stringify(rows));
+        }
+      } catch(e) {}
       updateOverview();
     });
     clone.appendChild(delBtn);
@@ -1495,6 +1524,13 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
 
   // 寫入 Google Sheet 商品工作表
   gsWrite('addProduct', { name, type, qty: parseFloat(qty), value: valNum });
+  // 更新本地快取
+  try {
+    const cached = localStorage.getItem('acs_products_cache');
+    const rows = cached ? JSON.parse(cached) : [];
+    rows.push([name, type, qty, valNum, '']);
+    localStorage.setItem('acs_products_cache', JSON.stringify(rows));
+  } catch(e) {}
 
   // 清空表單
   document.getElementById('ap-name').value  = '';
@@ -1985,6 +2021,71 @@ function gsWrite(action, data) {
   setTimeout(() => { try { document.head.removeChild(script); } catch(e){} }, 5000);
 }
 
+// ===== 商品從 Sheet 讀取還原 =====
+const CAT_COLORS   = { '加密貨幣':'#f5a623','ETF/股票':'#7396c6','貴金屬':'#dfb199','法幣':'#9eb995' };
+const CAT_INITIALS = { '加密貨幣': n => n.substring(0,2).toUpperCase(), 'ETF/股票': n => n.substring(0,2).toUpperCase(), '貴金屬': () => 'Au', '法幣': () => '$' };
+
+function buildTradeCard(name, type, qty, value) {
+  const color = CAT_COLORS[type] || '#aaa';
+  const icon  = (CAT_INITIALS[type] ? CAT_INITIALS[type](name) : name.substring(0,2).toUpperCase());
+  const valNum = parseInt(String(value).replace(/,/g,'')) || 0;
+  const card = document.createElement('div');
+  card.className = 'trade-card';
+  card.setAttribute('data-name', name);
+  card.setAttribute('data-qty', qty);
+  card.innerHTML = `
+    <div class="trade-card-left">
+      <div class="trade-icon" style="background:${color};">${icon}</div>
+      <div class="trade-info">
+        <div class="trade-name">${name} <span class="trade-tag">${type}</span></div>
+        <div class="trade-vol">持有數量：${qty}</div>
+      </div>
+    </div>
+    <div class="trade-card-right">
+      <div class="trade-col"><div class="trade-avg">--</div></div>
+      <div class="trade-col"><div class="trade-total">${valNum.toLocaleString()}</div></div>
+    </div>`;
+  return card;
+}
+
+async function loadProducts() {
+  if (!gsScriptUrl) {
+    // 無綁定時嘗試從 localStorage 快取還原
+    try {
+      const cached = localStorage.getItem('acs_products_cache');
+      if (cached) restoreProductsFromRows(JSON.parse(cached));
+    } catch(e) {}
+    return;
+  }
+  // 先用快取立即顯示
+  try {
+    const cached = localStorage.getItem('acs_products_cache');
+    if (cached) restoreProductsFromRows(JSON.parse(cached));
+  } catch(e) {}
+  // 再從 Sheet 拉最新
+  try {
+    const res  = await fetch(gsScriptUrl + '?action=getProducts');
+    const data = await res.json();
+    if (data.rows) {
+      try { localStorage.setItem('acs_products_cache', JSON.stringify(data.rows)); } catch(e) {}
+      restoreProductsFromRows(data.rows);
+    }
+  } catch(e) {}
+}
+
+function restoreProductsFromRows(rows) {
+  // rows: [商品名稱, 種類, 持有數量, 現有價值, 新增時間]
+  const list = document.getElementById('trade-list');
+  list.innerHTML = '';
+  rows.forEach(row => {
+    const [name, type, qty, value] = row;
+    if (!name || !type) return;
+    list.appendChild(buildTradeCard(name, type, qty, value));
+  });
+  recalcAllAvg();
+  updateOverview();
+}
+
 // ===== 歷史紀錄頁面 =====
 function getTWDatetime() {
   // 強制台灣時間 UTC+8
@@ -2400,9 +2501,8 @@ setTimeout(() => {
   document.getElementById('splash').style.display = 'none';
   document.querySelector('.bottom-nav').style.display = 'flex';
   showPage('app', '總覽');
-  updateOverview();
-  // 背景預載歷史紀錄
-  setTimeout(() => loadHistory(false), 1000);
+  loadProducts();
+  setTimeout(() => loadHistory(false), 1500);
 }, 2000);
 
 // ===== Service Worker 註冊 =====
