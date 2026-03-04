@@ -445,6 +445,27 @@ body.dark .td-result { background: #1e1e1e; border: 1px solid #2a2a2a; }
 .td-result-value { font-size: 18px; font-weight: 900; color: #1E2A38; }
 body.dark .td-result-value { color: #eee; }
 
+/* ===== 搜尋式商品下拉 ===== */
+.ap-search-select { position: relative; }
+.ap-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: #fff; border-radius: 12px; z-index: 999;
+  box-shadow: 0 8px 32px rgba(0,0,0,.15);
+  max-height: 220px; overflow-y: auto;
+  border: 1px solid #eee;
+}
+body.dark .ap-dropdown { background: #1e1e1e; border-color: #2a2a2a; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+.ap-dropdown-item {
+  padding: 12px 16px; font-size: 14px; font-weight: 600;
+  color: #1E2A38; cursor: pointer; border-bottom: 1px solid #f2f2f2;
+  transition: background 0.1s;
+}
+body.dark .ap-dropdown-item { color: #eee; border-bottom-color: #2a2a2a; }
+.ap-dropdown-item:last-child { border-bottom: none; }
+.ap-dropdown-item:active, .ap-dropdown-item.selected { background: #f5f5f5; }
+body.dark .ap-dropdown-item:active, body.dark .ap-dropdown-item.selected { background: #2a2a2a; }
+.ap-dropdown-empty { padding: 16px; text-align: center; color: #aaa; font-size: 13px; }
+
 /* ===== 新增商品頁面 ===== */
 .ap-form { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-bottom: 24px; }
 .ap-field { display: flex; flex-direction: column; gap: 6px; }
@@ -817,7 +838,10 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
 
   <!-- 行情區塊 -->
   <div class="market-section">
-    <div class="market-section-title">市場行情</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="market-section-title" style="margin-bottom:0;">市場行情</div>
+      <span id="market-last-update" style="font-size:11px;color:#bbb;">--</span>
+    </div>
     <div class="market-card" id="market-card-body">
       <div class="market-header-row">
         <span class="mh-icon-placeholder"></span>
@@ -1084,10 +1108,62 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
       </div>
       <pre class="gs-code" id="gs-code-block">const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
 
+// ===== 市場報價 =====
+function getPrices(symbols) {
+  const results = {};
+  symbols.forEach(item => {
+    try {
+      const { symbol, type } = item;
+      if (type === 'crypto') {
+        const idMap = { 'BTC':'bitcoin','ETH':'ethereum','BNB':'binancecoin','SOL':'solana','XRP':'ripple','ADA':'cardano','DOGE':'dogecoin','AVAX':'avalanche-2','DOT':'polkadot','MATIC':'matic-network','LTC':'litecoin','LINK':'chainlink','UNI':'uniswap','ATOM':'cosmos','ETC':'ethereum-classic','XLM':'stellar','NEAR':'near','APT':'aptos','OP':'optimism','ARB':'arbitrum','FTM':'fantom','SAND':'the-sandbox','MANA':'decentraland','AXS':'axie-infinity','THETA':'theta-token','FIL':'filecoin','HBAR':'hedera-hashgraph','VET':'vechain','ALGO':'algorand','ICP':'internet-computer','USDT':'tether','USDC':'usd-coin','DAI':'dai' };
+        const id = idMap[symbol.toUpperCase()] || symbol.toLowerCase();
+        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + id + '&vs_currencies=twd';
+        const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+        results[symbol] = { price: data[id] ? data[id].twd : null };
+      } else if (type === 'metal_two') {
+        // 台灣櫃買中心黃金現貨：AU9901台銀金、AU9902一銀金
+        const url = 'https://query1.finance.yahoo.com/v8/finance/chart/C:' + symbol + '.TWO?interval=1d&range=1d';
+        const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+        results[symbol] = { price: data.chart?.result?.[0]?.meta?.regularMarketPrice || null };
+      } else if (type === 'stock') {
+        // 台股/ETF 加 .TW
+        const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '.TW?interval=1d&range=1d';
+        const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+        results[symbol] = { price: data.chart?.result?.[0]?.meta?.regularMarketPrice || null };
+      } else if (type === 'us_stock') {
+        // 美股直接用代號
+        const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=1d';
+        const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+        results[symbol] = { price: data.chart?.result?.[0]?.meta?.regularMarketPrice || null };
+      } else if (type === 'fx') {
+        if (symbol === 'TWD') {
+          results[symbol] = { price: 1 };
+        } else {
+          const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + 'TWD%3DX?interval=1d&range=1d';
+          const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+          results[symbol] = { price: data.chart?.result?.[0]?.meta?.regularMarketPrice || null };
+        }
+      }
+    } catch(err) {
+      results[item.symbol] = { price: null, error: err.message };
+    }
+  });
+  return results;
+}
+
+// ===== 主處理函式 =====
 function doGet(e) {
   try {
     const p  = e.parameter;
     const ss = SpreadsheetApp.openById(SHEET_ID);
+
+    if (p.action === 'getPrices') {
+      const symbols = JSON.parse(decodeURIComponent(p.symbols || '[]'));
+      const prices  = getPrices(symbols);
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, prices }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
 
     if (p.action === 'addProduct') {
       const sheet = ss.getSheetByName('商品');
@@ -1182,11 +1258,6 @@ function doGet(e) {
   <div class="ap-form">
 
     <div class="ap-field">
-      <label class="ap-label">商品名稱</label>
-      <input class="ap-input" id="ap-name" type="text" placeholder="例：NVDA、比特幣、石油"/>
-    </div>
-
-    <div class="ap-field">
       <label class="ap-label">商品種類</label>
       <div class="ap-select-wrap">
         <select class="ap-select" id="ap-type">
@@ -1200,6 +1271,17 @@ function doGet(e) {
           <path d="M6 9l6 6 6-6" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
+    </div>
+
+    <div class="ap-field">
+      <label class="ap-label">商品名稱</label>
+      <!-- 搜尋式下拉 -->
+      <div class="ap-search-select" id="ap-search-select">
+        <input class="ap-input" id="ap-name-search" type="text" placeholder="請先選擇商品種類" disabled autocomplete="off"/>
+        <div class="ap-dropdown" id="ap-dropdown" style="display:none;"></div>
+      </div>
+      <input class="ap-input" id="ap-name-custom" type="text" placeholder="輸入自定義名稱" style="display:none;margin-top:10px;"/>
+      <input type="hidden" id="ap-name-select"/>
     </div>
 
     <div class="ap-field">
@@ -1473,13 +1555,244 @@ document.getElementById('ap-delete-btn').addEventListener('click', () => {
   });
   showPage('deleteproduct', '刪除商品');
 });
-document.getElementById('ap-submit-btn').addEventListener('click', () => {
-  const name  = document.getElementById('ap-name').value.trim();
-  const type  = document.getElementById('ap-type').value;
-  const qty   = document.getElementById('ap-qty').value.trim();
-  const value = document.getElementById('ap-value').value.trim();
+// ===== 新增商品頁：依種類動態商品名稱 =====
+// 格式：{ v: 存入的代號, l: 顯示的名稱 }
+const CATEGORY_PRODUCTS = {
+  '加密貨幣': [
+    {v:'BTC',l:'BTC - Bitcoin'},
+    {v:'ETH',l:'ETH - Ethereum'},
+    {v:'BNB',l:'BNB - BNB Chain'},
+    {v:'SOL',l:'SOL - Solana'},
+    {v:'XRP',l:'XRP - Ripple'},
+    {v:'ADA',l:'ADA - Cardano'},
+    {v:'DOGE',l:'DOGE - Dogecoin'},
+    {v:'AVAX',l:'AVAX - Avalanche'},
+    {v:'DOT',l:'DOT - Polkadot'},
+    {v:'MATIC',l:'MATIC - Polygon'},
+    {v:'LTC',l:'LTC - Litecoin'},
+    {v:'LINK',l:'LINK - Chainlink'},
+    {v:'UNI',l:'UNI - Uniswap'},
+    {v:'ATOM',l:'ATOM - Cosmos'},
+    {v:'ETC',l:'ETC - Ethereum Classic'},
+    {v:'XLM',l:'XLM - Stellar'},
+    {v:'NEAR',l:'NEAR - NEAR Protocol'},
+    {v:'APT',l:'APT - Aptos'},
+    {v:'OP',l:'OP - Optimism'},
+    {v:'ARB',l:'ARB - Arbitrum'},
+    {v:'FTM',l:'FTM - Fantom'},
+    {v:'SAND',l:'SAND - The Sandbox'},
+    {v:'MANA',l:'MANA - Decentraland'},
+    {v:'AXS',l:'AXS - Axie Infinity'},
+    {v:'THETA',l:'THETA - Theta Network'},
+    {v:'FIL',l:'FIL - Filecoin'},
+    {v:'HBAR',l:'HBAR - Hedera'},
+    {v:'VET',l:'VET - VeChain'},
+    {v:'ALGO',l:'ALGO - Algorand'},
+    {v:'ICP',l:'ICP - Internet Computer'},
+    {v:'USDT',l:'USDT - Tether'},
+    {v:'USDC',l:'USDC - USD Coin'},
+    {v:'DAI',l:'DAI - Dai'},
+  ],
+  'ETF/股票': [
+    // 台灣熱門 ETF
+    {v:'0050',l:'0050 - 元大台灣50'},
+    {v:'0056',l:'0056 - 元大高股息'},
+    {v:'00878',l:'00878 - 國泰永續高股息'},
+    {v:'00940',l:'00940 - 元大台灣價值高息'},
+    {v:'00919',l:'00919 - 群益台灣精選高息'},
+    {v:'006208',l:'006208 - 富邦台50'},
+    {v:'00713',l:'00713 - 元大台灣高息低波'},
+    {v:'00720B',l:'00720B - 元大投資級公司債'},
+    {v:'00679B',l:'00679B - 元大美債20年'},
+    {v:'0052',l:'0052 - 富邦科技'},
+    // 台灣大型股
+    {v:'2330',l:'2330 - 台積電'},
+    {v:'2317',l:'2317 - 鴻海'},
+    {v:'2454',l:'2454 - 聯發科'},
+    {v:'2382',l:'2382 - 廣達'},
+    {v:'2412',l:'2412 - 中華電'},
+    {v:'3008',l:'3008 - 大立光'},
+    {v:'2308',l:'2308 - 台達電'},
+    {v:'2303',l:'2303 - 聯電'},
+    {v:'2881',l:'2881 - 富邦金'},
+    {v:'2882',l:'2882 - 國泰金'},
+    {v:'2886',l:'2886 - 兆豐金'},
+    {v:'2891',l:'2891 - 中信金'},
+    {v:'2884',l:'2884 - 玉山金'},
+    {v:'2885',l:'2885 - 元大金'},
+    {v:'2892',l:'2892 - 第一金'},
+    {v:'2883',l:'2883 - 開發金'},
+    {v:'1301',l:'1301 - 台塑'},
+    {v:'1303',l:'1303 - 南亞'},
+    {v:'1326',l:'1326 - 台化'},
+    {v:'2002',l:'2002 - 中鋼'},
+    {v:'2207',l:'2207 - 和泰車'},
+    {v:'2301',l:'2301 - 光寶科'},
+    {v:'2357',l:'2357 - 華碩'},
+    {v:'2379',l:'2379 - 瑞昱'},
+    {v:'2395',l:'2395 - 研華'},
+    {v:'2408',l:'2408 - 南亞科'},
+    {v:'2474',l:'2474 - 可成'},
+    {v:'2475',l:'2475 - 華映'},
+    {v:'3034',l:'3034 - 聯詠'},
+    {v:'3037',l:'3037 - 欣興'},
+    {v:'3045',l:'3045 - 台灣大'},
+    {v:'3711',l:'3711 - 日月光投控'},
+    {v:'4904',l:'4904 - 遠傳'},
+    {v:'4938',l:'4938 - 和碩'},
+    {v:'5854',l:'5854 - 合庫金'},
+    {v:'6415',l:'6415 - 矽力-KY'},
+    {v:'6505',l:'6505 - 台塑化'},
+    {v:'8046',l:'8046 - 南電'},
+    // 美股
+    {v:'AAPL',l:'AAPL - Apple'},
+    {v:'MSFT',l:'MSFT - Microsoft'},
+    {v:'GOOGL',l:'GOOGL - Alphabet'},
+    {v:'AMZN',l:'AMZN - Amazon'},
+    {v:'NVDA',l:'NVDA - NVIDIA'},
+    {v:'META',l:'META - Meta'},
+    {v:'TSLA',l:'TSLA - Tesla'},
+    {v:'NFLX',l:'NFLX - Netflix'},
+    {v:'AMD',l:'AMD - AMD'},
+    {v:'INTC',l:'INTC - Intel'},
+    {v:'QCOM',l:'QCOM - Qualcomm'},
+    {v:'AVGO',l:'AVGO - Broadcom'},
+    {v:'MU',l:'MU - Micron'},
+    {v:'TSM',l:'TSM - TSMC ADR'},
+    {v:'ASML',l:'ASML - ASML'},
+    // 美股 ETF
+    {v:'SPY',l:'SPY - S&P 500 ETF'},
+    {v:'QQQ',l:'QQQ - Nasdaq 100 ETF'},
+    {v:'VOO',l:'VOO - Vanguard S&P 500'},
+    {v:'VTI',l:'VTI - Vanguard Total Market'},
+    {v:'ARKK',l:'ARKK - ARK Innovation'},
+  ],
+  '貴金屬': [
+    {v:'AU9901',l:'AU9901 - 台銀金'},
+    {v:'AU9902',l:'AU9902 - 一銀金'},
+    {v:'00738U',l:'00738U - 元大銀期貨'},
+  ],
+  '法幣': [
+    {v:'TWD',l:'TWD - 新台幣'},
+    {v:'USD',l:'USD - 美元'},
+    {v:'EUR',l:'EUR - 歐元'},
+    {v:'JPY',l:'JPY - 日圓'},
+    {v:'GBP',l:'GBP - 英鎊'},
+    {v:'AUD',l:'AUD - 澳幣'},
+    {v:'NZD',l:'NZD - 紐西蘭幣'},
+    {v:'CAD',l:'CAD - 加拿大幣'},
+    {v:'CHF',l:'CHF - 瑞士法郎'},
+    {v:'CNY',l:'CNY - 人民幣'},
+    {v:'HKD',l:'HKD - 港幣'},
+    {v:'SGD',l:'SGD - 新加坡幣'},
+    {v:'KRW',l:'KRW - 韓元'},
+    {v:'THB',l:'THB - 泰銖'},
+    {v:'MYR',l:'MYR - 馬來西亞令吉'},
+    {v:'IDR',l:'IDR - 印尼盾'},
+    {v:'INR',l:'INR - 印度盧比'},
+  ]
+};
 
-  if (!name || !type || !qty || !value) {
+// ===== 新增商品頁：依種類動態商品名稱（搜尋式）=====
+let apCurrentProducts = [];
+
+function renderDropdown(filter = '') {
+  const dropdown = document.getElementById('ap-dropdown');
+  const keyword  = filter.trim().toUpperCase();
+  const filtered = keyword
+    ? apCurrentProducts.filter(p => {
+        const label = typeof p === 'object' ? p.l : p;
+        return label.toUpperCase().includes(keyword);
+      })
+    : apCurrentProducts;
+
+  dropdown.innerHTML = '';
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div class="ap-dropdown-empty">找不到符合的商品</div>';
+  } else {
+    filtered.forEach(p => {
+      const value = typeof p === 'object' ? p.v : p;
+      const label = typeof p === 'object' ? p.l : p;
+      const item = document.createElement('div');
+      item.className = 'ap-dropdown-item';
+      item.textContent = label;
+      item.addEventListener('mousedown', () => selectProduct(value, label));
+      dropdown.appendChild(item);
+    });
+  }
+}
+
+function selectProduct(value, label) {
+  const searchInput  = document.getElementById('ap-name-search');
+  const hiddenSelect = document.getElementById('ap-name-select');
+  const nameCustom   = document.getElementById('ap-name-custom');
+  const dropdown     = document.getElementById('ap-dropdown');
+
+  searchInput.value  = label || value;
+  hiddenSelect.value = value;
+  dropdown.style.display = 'none';
+  nameCustom.style.display = 'none';
+  nameCustom.value = '';
+}
+
+document.getElementById('ap-type').addEventListener('change', function() {
+  const type        = this.value;
+  const searchInput = document.getElementById('ap-name-search');
+  const hiddenSelect= document.getElementById('ap-name-select');
+  const nameCustom  = document.getElementById('ap-name-custom');
+  const dropdown    = document.getElementById('ap-dropdown');
+
+  hiddenSelect.value = '';
+  nameCustom.style.display = 'none';
+  nameCustom.value = '';
+  dropdown.style.display = 'none';
+
+  if (!type) {
+    searchInput.value = '';
+    searchInput.disabled = true;
+    searchInput.placeholder = '請先選擇商品種類';
+    apCurrentProducts = [];
+    return;
+  }
+
+  apCurrentProducts = CATEGORY_PRODUCTS[type] || ['其他'];
+  searchInput.disabled = false;
+  searchInput.placeholder = '搜尋或選擇商品...';
+  searchInput.value = '';
+  searchInput.focus();
+});
+
+document.getElementById('ap-name-search').addEventListener('focus', function() {
+  if (apCurrentProducts.length === 0) return;
+  renderDropdown(this.value);
+  document.getElementById('ap-dropdown').style.display = 'block';
+});
+
+document.getElementById('ap-name-search').addEventListener('input', function() {
+  const dropdown = document.getElementById('ap-dropdown');
+  if (apCurrentProducts.length === 0) return;
+  renderDropdown(this.value);
+  dropdown.style.display = 'block';
+  // 清除已選的值（等使用者重新選）
+  document.getElementById('ap-name-select').value = '';
+});
+
+document.getElementById('ap-name-search').addEventListener('blur', function() {
+  // 延遲關閉讓 mousedown 先觸發
+  setTimeout(() => {
+    document.getElementById('ap-dropdown').style.display = 'none';
+  }, 150);
+});
+
+document.getElementById('ap-submit-btn').addEventListener('click', () => {
+  const type       = document.getElementById('ap-type').value;
+  const nameSelect = document.getElementById('ap-name-select').value;
+  const nameCustom = document.getElementById('ap-name-custom').value.trim();
+  const name       = nameCustom || nameSelect;
+  const qty        = document.getElementById('ap-qty').value.trim();
+  const value      = document.getElementById('ap-value').value.trim();
+
+  if (!type || !name || !qty || !value) {
     alert('請填寫所有欄位');
     return;
   }
@@ -1496,11 +1809,10 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
   }
 
   // 產生新卡片 HTML 並加入列表
-  const colors = { '加密貨幣': '#f5a623', 'ETF': '#7396c6', '股票': '#7396c6', '貴金屬': '#dfb199', '法幣': '#9eb995', '其他': '#aaa' };
-  const initials = { '加密貨幣': name.substring(0,2).toUpperCase(), 'ETF': name.substring(0,2).toUpperCase(), '股票': name.substring(0,2).toUpperCase(), '貴金屬': 'Au', '法幣': '$', '其他': name.substring(0,1).toUpperCase() };
-  const color = colors[type] || '#aaa';
-  const icon  = initials[type] || name.substring(0,2).toUpperCase();
-  const valNum = parseInt(value) || 0;
+  const colors   = { '加密貨幣': '#f5a623', 'ETF/股票': '#7396c6', '貴金屬': '#dfb199', '法幣': '#9eb995' };
+  const color    = colors[type] || '#aaa';
+  const icon     = type === '貴金屬' ? 'Au' : type === '法幣' ? '$' : name.substring(0,2).toUpperCase();
+  const valNum   = parseInt(value) || 0;
 
   const card = document.createElement('div');
   card.className = 'trade-card';
@@ -1515,12 +1827,8 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
       </div>
     </div>
     <div class="trade-card-right">
-      <div class="trade-col">
-        <div class="trade-avg">--</div>
-      </div>
-      <div class="trade-col">
-        <div class="trade-total">${valNum.toLocaleString()}</div>
-      </div>
+      <div class="trade-col"><div class="trade-avg">--</div></div>
+      <div class="trade-col"><div class="trade-total">${valNum.toLocaleString()}</div></div>
     </div>`;
   document.getElementById('trade-list').appendChild(card);
   recalcAllAvg();
@@ -1537,10 +1845,16 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
   } catch(e) {}
 
   // 清空表單
-  document.getElementById('ap-name').value  = '';
-  document.getElementById('ap-type').value  = '';
+  document.getElementById('ap-type').value = '';
+  document.getElementById('ap-name-search').value = '';
+  document.getElementById('ap-name-search').disabled = true;
+  document.getElementById('ap-name-search').placeholder = '請先選擇商品種類';
+  document.getElementById('ap-name-select').value = '';
+  document.getElementById('ap-name-custom').style.display = 'none';
+  document.getElementById('ap-name-custom').value = '';
   document.getElementById('ap-qty').value   = '';
   document.getElementById('ap-value').value = '';
+  apCurrentProducts = [];
 
   // 返回交易頁
   showPage('export', '交易');
@@ -2099,6 +2413,21 @@ function getTWDatetime() {
   return `${tw.getFullYear()}/${pad(tw.getMonth()+1)}/${pad(tw.getDate())} ${pad(tw.getHours())}:${pad(tw.getMinutes())}:${pad(tw.getSeconds())}`;
 }
 
+function formatTWTime(raw) {
+  if (!raw) return '--';
+  const str = String(raw);
+  // 已經是格式化字串（含 / 或 下午）直接顯示
+  if (str.includes('/') || str.includes('上午') || str.includes('下午')) return str;
+  // ISO 格式轉台灣時間
+  try {
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    const tw = new Date(d.getTime() + 8 * 3600000);
+    const pad = n => String(n).padStart(2, '0');
+    return `${tw.getUTCFullYear()}/${pad(tw.getUTCMonth()+1)}/${pad(tw.getUTCDate())} ${pad(tw.getUTCHours())}:${pad(tw.getUTCMinutes())}:${pad(tw.getUTCSeconds())}`;
+  } catch(e) { return str; }
+}
+
 function renderHistoryRows(rows) {
   const list  = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
@@ -2129,7 +2458,7 @@ function renderHistoryRows(rows) {
           <span class="hist-cell-value" style="color:${isBuy ? '#e8706f' : '#77a478'}">NT$ ${Number(total).toLocaleString()}</span>
         </div>
       </div>
-      <div class="hist-date">${datetime}</div>`;
+      <div class="hist-date">${formatTWTime(datetime)}</div>`;
     list.appendChild(card);
   });
 }
@@ -2409,32 +2738,30 @@ function updateOverview() {
     marketBody.querySelectorAll('.market-row').forEach(r => r.remove());
     document.querySelectorAll('#trade-list .trade-card').forEach(card => {
       const nameEl  = card.querySelector('.trade-name');
+      const tagEl   = card.querySelector('.trade-tag');
       const avgEl   = card.querySelector('.trade-avg');
       const iconEl  = card.querySelector('.trade-icon');
       if (!nameEl) return;
       const name    = nameEl.childNodes[0].textContent.trim();
+      const tag     = tagEl ? tagEl.textContent.trim() : '';
       const avg     = avgEl ? avgEl.textContent.trim() : '--';
       const bg      = iconEl ? iconEl.style.background : '#aaa';
       const iconTxt = iconEl ? iconEl.textContent.trim() : name.substring(0,2);
-
-      // 隨機最新價格（持有均價 ±15%）
-      const avgNum  = parseInt((avg || '0').replace(/,/g, '')) || 10000;
-      const rand    = 0.85 + Math.random() * 0.30;
-      const price   = Math.round(avgNum * rand);
-      const changePct = ((price - avgNum) / avgNum * 100);
-      const changeStr = (changePct >= 0 ? '+' : '') + changePct.toFixed(2) + '%';
-      const changeClass = changePct >= 0 ? 'up' : 'down';
+      const avgNum  = parseInt((avg || '0').replace(/,/g, '')) || 0;
 
       const row = document.createElement('div');
       row.className = 'market-row';
+      row.dataset.symbol = name;
       row.innerHTML = `
         <div class="market-icon" style="background:${bg};">${iconTxt}</div>
         <div class="market-name">${name}</div>
-        <div class="market-price">${price.toLocaleString()}</div>
-        <div class="market-change ${changeClass}">${changeStr}</div>
+        <div class="market-price" data-avg="${avgNum}">--</div>
+        <div class="market-change">--</div>
         <div class="market-avg">${avg}</div>`;
       marketBody.appendChild(row);
     });
+    // 建好列後立即抓價格
+    fetchMarketPrices();
   }
 
   // rbAssets 同步給再平衡頁（以分類為單位）
@@ -2442,6 +2769,117 @@ function updateOverview() {
     key, displayName: CAT_INFO[key].label, color: CAT_INFO[key].color,
     current: val, start: val // 無起始值時以現值為基準
   }));
+}
+
+// ===== 市場行情報價 =====
+// 商品名稱 → API 種類對應（使用者可在 settings 擴充）
+const SYMBOL_TYPE_MAP = {
+  // 加密貨幣
+  'BTC':'crypto','ETH':'crypto','BNB':'crypto','SOL':'crypto','XRP':'crypto','ADA':'crypto',
+  'DOGE':'crypto','AVAX':'crypto','DOT':'crypto','MATIC':'crypto','LTC':'crypto','LINK':'crypto',
+  'UNI':'crypto','ATOM':'crypto','ETC':'crypto','XLM':'crypto','NEAR':'crypto','APT':'crypto',
+  'OP':'crypto','ARB':'crypto','FTM':'crypto','SAND':'crypto','MANA':'crypto','AXS':'crypto',
+  'THETA':'crypto','FIL':'crypto','HBAR':'crypto','VET':'crypto','ALGO':'crypto','ICP':'crypto',
+  'USDT':'crypto','USDC':'crypto','DAI':'crypto',
+  // 台股/ETF
+  '0050':'stock','0056':'stock','00878':'stock','00940':'stock','00919':'stock','006208':'stock',
+  '00713':'stock','0052':'stock','2330':'stock','2317':'stock','2454':'stock','2382':'stock',
+  '2412':'stock','3008':'stock','2308':'stock','2303':'stock','2881':'stock','2882':'stock',
+  '2886':'stock','2891':'stock','2884':'stock','2885':'stock','2892':'stock','2883':'stock',
+  '1301':'stock','1303':'stock','1326':'stock','2002':'stock','2207':'stock','2301':'stock',
+  '2357':'stock','2379':'stock','2395':'stock','2408':'stock','2474':'stock','2475':'stock',
+  '3034':'stock','3037':'stock','3045':'stock','3711':'stock','4904':'stock','4938':'stock',
+  '5854':'stock','6415':'stock','6505':'stock','8046':'stock',
+  // 美股（Yahoo Finance 直接用代號，不加 .TW）
+  'AAPL':'us_stock','MSFT':'us_stock','GOOGL':'us_stock','AMZN':'us_stock','NVDA':'us_stock',
+  'META':'us_stock','TSLA':'us_stock','NFLX':'us_stock','AMD':'us_stock','INTC':'us_stock',
+  'QCOM':'us_stock','AVGO':'us_stock','MU':'us_stock','TSM':'us_stock','ASML':'us_stock',
+  'SPY':'us_stock','QQQ':'us_stock','VOO':'us_stock','VTI':'us_stock','ARKK':'us_stock',
+  // 貴金屬（TWO 交易所）
+  'AU9901':'metal_two','AU9902':'metal_two',
+  // 白銀期貨 ETF（台股）
+  '00738U':'stock',
+  // 法幣匯率（對台幣）
+  'TWD':'fx','USD':'fx','EUR':'fx','JPY':'fx','GBP':'fx','AUD':'fx','NZD':'fx','CAD':'fx','CHF':'fx',
+  'CNY':'fx','HKD':'fx','SGD':'fx','KRW':'fx','THB':'fx','MYR':'fx','IDR':'fx','INR':'fx'
+};
+
+function getSymbolType(name, tag) {
+  const upper = name.toUpperCase();
+  if (SYMBOL_TYPE_MAP[upper]) return SYMBOL_TYPE_MAP[upper];
+  if (SYMBOL_TYPE_MAP[name])  return SYMBOL_TYPE_MAP[name];
+  // 依種類標籤推測
+  if (tag === '加密貨幣') return 'crypto';
+  if (tag === 'ETF/股票')  return 'stock';
+  if (tag === '貴金屬')    return 'gold';
+  if (tag === '法幣')      return 'fx';
+  return 'stock';
+}
+
+let marketPriceCache = {};
+let marketAutoTimer  = null;
+const MARKET_INTERVAL_MS = 3 * 60 * 1000; // 3 分鐘
+
+async function fetchMarketPrices() {
+  if (!gsScriptUrl) return;
+
+  // 收集目前所有商品
+  const symbols = [];
+  document.querySelectorAll('#trade-list .trade-card').forEach(card => {
+    const nameEl = card.querySelector('.trade-name');
+    const tagEl  = card.querySelector('.trade-tag');
+    if (!nameEl) return;
+    const name = nameEl.childNodes[0].textContent.trim();
+    const tag  = tagEl ? tagEl.textContent.trim() : '';
+    symbols.push({ symbol: name, type: getSymbolType(name, tag) });
+  });
+  if (symbols.length === 0) return;
+
+  try {
+    const encoded = encodeURIComponent(JSON.stringify(symbols));
+    const url = gsScriptUrl + '?action=getPrices&symbols=' + encoded;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (!data.prices) return;
+
+    marketPriceCache = data.prices;
+    applyMarketPrices(data.prices);
+
+    // 更新最後更新時間
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const lastUpd = document.getElementById('market-last-update');
+    if (lastUpd) lastUpd.textContent = '更新於 ' + timeStr;
+  } catch(e) {
+    console.warn('market price fetch failed', e);
+  }
+}
+
+function applyMarketPrices(prices) {
+  document.querySelectorAll('#market-card-body .market-row').forEach(row => {
+    const symbol = row.dataset.symbol;
+    const info   = prices[symbol];
+    if (!info || info.price == null) return;
+
+    const priceEl  = row.querySelector('.market-price');
+    const changeEl = row.querySelector('.market-change');
+    const avgNum   = parseFloat(priceEl?.dataset.avg) || 0;
+    const price    = Math.round(info.price);
+    const changePct = avgNum > 0 ? ((price - avgNum) / avgNum * 100) : 0;
+    const changeStr = (changePct >= 0 ? '+' : '') + changePct.toFixed(2) + '%';
+
+    if (priceEl)  priceEl.textContent  = price.toLocaleString();
+    if (changeEl) {
+      changeEl.textContent  = changeStr;
+      changeEl.className    = 'market-change ' + (changePct >= 0 ? 'up' : 'down');
+    }
+  });
+}
+
+function startMarketAutoRefresh() {
+  if (marketAutoTimer) clearInterval(marketAutoTimer);
+  marketAutoTimer = setInterval(fetchMarketPrices, MARKET_INTERVAL_MS);
 }
 
 // ===== 圓餅圖 =====
@@ -2507,6 +2945,7 @@ setTimeout(() => {
   showPage('app', '總覽');
   loadProducts();
   setTimeout(() => loadHistory(false), 1500);
+  startMarketAutoRefresh();
 }, 2000);
 
 // ===== Service Worker 註冊 =====
