@@ -2760,8 +2760,8 @@ function updateOverview() {
         <div class="market-avg">${avg}</div>`;
       marketBody.appendChild(row);
     });
-    // 建好列後立即抓價格
-    fetchMarketPrices();
+    // 建好列後立即抓價格（延遲確保 DOM 更新完）
+    setTimeout(fetchMarketPrices, 200);
   }
 
   // rbAssets 同步給再平衡頁（以分類為單位）
@@ -2811,7 +2811,7 @@ function getSymbolType(name, tag) {
   // 依種類標籤推測
   if (tag === '加密貨幣') return 'crypto';
   if (tag === 'ETF/股票')  return 'stock';
-  if (tag === '貴金屬')    return 'gold';
+  if (tag === '貴金屬')    return 'metal_two';
   if (tag === '法幣')      return 'fx';
   return 'stock';
 }
@@ -2833,7 +2833,12 @@ async function fetchMarketPrices() {
     const tag  = tagEl ? tagEl.textContent.trim() : '';
     symbols.push({ symbol: name, type: getSymbolType(name, tag) });
   });
-  if (symbols.length === 0) return;
+  if (symbols.length === 0) {
+    console.log('fetchMarketPrices: no products yet, skip');
+    return;
+  }
+
+  console.log('fetchMarketPrices: fetching', symbols.map(s=>s.symbol));
 
   try {
     const encoded = encodeURIComponent(JSON.stringify(symbols));
@@ -2843,14 +2848,15 @@ async function fetchMarketPrices() {
     if (!data.prices) return;
 
     marketPriceCache = data.prices;
+    // 確保行情列表已建立（若 updateOverview 尚未跑過先跑一次）
+    if (!document.querySelector('#market-card-body .market-row')) updateOverview();
     applyMarketPrices(data.prices);
 
-    // 更新最後更新時間
-    const now = new Date();
+    // 更新最後更新時間（台灣時間）
+    const tw  = new Date(new Date().getTime() + (8*60 - new Date().getTimezoneOffset())*60000);
     const pad = n => String(n).padStart(2,'0');
-    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const lastUpd = document.getElementById('market-last-update');
-    if (lastUpd) lastUpd.textContent = '更新於 ' + timeStr;
+    if (lastUpd) lastUpd.textContent = '更新於 ' + pad(tw.getUTCHours()) + ':' + pad(tw.getUTCMinutes());
   } catch(e) {
     console.warn('market price fetch failed', e);
   }
@@ -2943,7 +2949,9 @@ setTimeout(() => {
   document.getElementById('splash').style.display = 'none';
   document.querySelector('.bottom-nav').style.display = 'flex';
   showPage('app', '總覽');
-  loadProducts();
+  loadProducts().then(() => {
+    setTimeout(fetchMarketPrices, 500);
+  });
   setTimeout(() => loadHistory(false), 1500);
   startMarketAutoRefresh();
 }, 2000);
