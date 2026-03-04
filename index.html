@@ -1905,31 +1905,50 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
   const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
   const datetime  = getTWDatetime();
 
-  // 更新交易頁卡片的持有數量＋現有價值
+  // 更新交易頁卡片的持有數量＋成本＋均價＋現有價值
   const holdingQty = parseFloat(document.getElementById('td-qty').textContent) || 0;
-  const newQty = tdCurrentType === 'buy' ? holdingQty + qty : holdingQty - qty;
+  const newQty     = tdCurrentType === 'buy' ? holdingQty + qty : holdingQty - qty;
   const newQtyRounded = Math.round(newQty * 10000) / 10000;
-  const newValue = Math.round(newQtyRounded * price); // 新現有價值 = 新數量 × 成交價
 
   document.querySelectorAll('#trade-list .trade-card').forEach(card => {
     const cardName = card.querySelector('.trade-name')?.childNodes[0]?.textContent.trim();
     if (cardName !== name) return;
-    card.setAttribute('data-qty', newQtyRounded);
-    const volEl   = card.querySelector('.trade-vol');
-    const totalEl = card.querySelector('.trade-total');
-    if (volEl)   volEl.textContent   = '持有數量：' + newQtyRounded;
-    if (totalEl) totalEl.textContent = newValue.toLocaleString();
+
+    const oldCost = parseFloat(card.getAttribute('data-cost')) || 0;
+    let newCost;
+    if (tdCurrentType === 'buy') {
+      newCost = oldCost + Math.round(price * qty); // 買入：累加成本
+    } else {
+      // 賣出：按比例扣除成本
+      newCost = holdingQty > 0 ? Math.round(oldCost * (newQtyRounded / holdingQty)) : 0;
+    }
+
+    card.setAttribute('data-qty',  newQtyRounded);
+    card.setAttribute('data-cost', newCost);
+
+    const volEl    = card.querySelector('.trade-vol');
+    const avgEl    = card.querySelector('.trade-avg');
+    const totalEl  = card.querySelector('.trade-total');
+    if (volEl) volEl.textContent = '持有數量：' + newQtyRounded;
+
+    // 均價 = 新成本 ÷ 新數量
+    if (avgEl && newQtyRounded > 0) {
+      const avg = newCost / newQtyRounded;
+      avgEl.textContent = avg >= 1 ? Math.round(avg).toLocaleString() : avg.toFixed(4);
+    }
+
+    // 現有價值 = 新數量 × 最新市場價格（有報價用報價，否則用成交價）
+    const marketPrice = parseFloat(card.getAttribute('data-market-price')) || price;
+    if (totalEl) totalEl.textContent = Math.round(newQtyRounded * marketPrice).toLocaleString();
+
+    // 同步更新 Sheet：現有價值欄存新成本（均價基準）
+    gsWrite('updateProduct', { name, qty: newQtyRounded, value: newCost });
   });
 
   // 同步更新詳情頁顯示的持有數量
   document.getElementById('td-qty').textContent = newQtyRounded;
 
-  // 重算持有均價
-  recalcAllAvg();
-  updateOverview();
-
-  // 同步更新 Sheet 商品工作表持有數量＋現有價值
-  gsWrite('updateProduct', { name, qty: newQtyRounded, value: newValue });
+  updateOverviewAmounts();
 
   // 寫入 Google Sheet 歷史紀錄，並在背景重新讀取
   gsWrite('addHistory', { datetime, name, tradeType, qty, price, total });
