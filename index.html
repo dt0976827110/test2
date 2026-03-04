@@ -2660,10 +2660,53 @@ function getTradeCategories() {
     const tag    = tagEl.textContent.trim();
     const catKey = CAT_MAP[tag];
     if (!catKey) return;
-    const val = parseInt(totalEl.textContent.replace(/,/g, '')) || 0;
+
+    // 優先用「持有數量 × 最新市場價格」，否則用現有價值
+    const marketPrice = parseFloat(card.getAttribute('data-market-price'));
+    const qty         = parseFloat(card.getAttribute('data-qty')) || 0;
+    const val = (!isNaN(marketPrice) && marketPrice > 0 && qty > 0)
+      ? Math.round(marketPrice * qty)
+      : (parseInt(totalEl.textContent.replace(/,/g, '')) || 0);
+
     cats[catKey] += val;
   });
   return cats;
+}
+
+// 只更新金額（報價更新後呼叫，不重建 DOM）
+function updateOverviewAmounts() {
+  const cats  = getTradeCategories();
+  const total = Object.values(cats).reduce((s, v) => s + v, 0) || 1;
+
+  Object.entries(cats).forEach(([key, val]) => {
+    const pctVal = Math.round(val / total * 1000) / 10;
+    const amtEl  = document.getElementById('cat-amt-' + key);
+    const pctEl  = document.getElementById('cat-pct-' + key);
+    if (amtEl) amtEl.textContent = 'NT$ ' + val.toLocaleString();
+    if (pctEl) pctEl.textContent = pctVal.toFixed(1) + '%';
+
+    const legEl = document.querySelector(`#assetLegend .legend-row[data-key="${key}"] .pct`);
+    if (legEl) {
+      legEl.textContent = pctVal.toFixed(1) + '%';
+      legEl.style.color = pctVal > 35 ? '#e8706f' : pctVal < 15 ? '#77a478' : '';
+    }
+  });
+
+  document.getElementById('total-nt').textContent = total.toLocaleString();
+
+  // 更新圓餅圖
+  const catArr = Object.keys(CAT_INFO);
+  if (window.assetDonutChart) {
+    window.assetDonutChart.data.datasets[0].data = catArr.map(k => cats[k]);
+    window.assetDonutChart._totalCurrent = total;
+    window.assetDonutChart.update();
+  }
+
+  // 同步再平衡頁
+  window.rbAssets = Object.entries(cats).map(([key, val]) => ({
+    key, displayName: CAT_INFO[key].label, color: CAT_INFO[key].color,
+    current: val, start: val
+  }));
 }
 
 // 更新總覽頁所有分類數據（mini-card、legend、donut、市場行情）
@@ -2832,12 +2875,19 @@ function applyMarketPrices(prices) {
     const changePct = avgNum > 0 ? ((price - avgNum) / avgNum * 100) : 0;
     const changeStr = (changePct >= 0 ? '+' : '') + changePct.toFixed(2) + '%';
 
-    if (priceEl)  priceEl.textContent  = price.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (priceEl)  priceEl.textContent = price.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (changeEl) {
-      changeEl.textContent  = changeStr;
-      changeEl.className    = 'market-change ' + (changePct >= 0 ? 'up' : 'down');
+      changeEl.textContent = changeStr;
+      changeEl.className   = 'market-change ' + (changePct >= 0 ? 'up' : 'down');
     }
+
+    // 把最新價格寫回交易卡片，供 getTradeCategories 使用
+    const tradeCard = document.querySelector(`#trade-list .trade-card[data-name="${symbol}"]`);
+    if (tradeCard) tradeCard.setAttribute('data-market-price', price);
   });
+
+  // 報價更新後重新計算分類金額
+  updateOverviewAmounts();
 }
 
 function startMarketAutoRefresh() {
