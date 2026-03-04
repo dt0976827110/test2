@@ -99,9 +99,32 @@ body.dark .page-topbar { color: #eee; background: #121212; }
 body.dark #history-refresh-icon path { fill: #eee; }
 
 /* 有 topbar 的頁面內容往下推，避免被蓋住 */
-#rebalance, #history, #export, #settings {
+#rebalance, #history, #export, #settings,
+#add-product-page, #trade-detail-page {
   padding-top: calc(max(env(safe-area-inset-top), 16px) + 52px) !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
 }
+
+/* 總覽頁 padding-top 補上狀態列高度 */
+#app {
+  padding-top: max(env(safe-area-inset-top), 44px);
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+/* topbar 返回按鈕 */
+.topbar-back-btn {
+  position: absolute; left: 16px; bottom: 12px;
+  background: none; border: none; cursor: pointer;
+  color: #1E2A38; padding: 4px;
+  display: flex; align-items: center;
+}
+body.dark .topbar-back-btn { color: #eee; }
+
+/* 有 topbar 的子頁面隱藏浮動返回鈕 */
+#add-product-page ~ #back-button,
+#trade-detail-page .back-button { display: none !important; }
 
 /* --- 底部導航列 --- */
 .bottom-nav {
@@ -1309,7 +1332,14 @@ function doGet(e) {
 
 <!-- 新增商品 -->
 <div id="add-product-page" class="page">
-  <p class="page-title" style="margin-bottom:20px;">新增商品</p>
+  <div class="page-topbar">
+    <button class="topbar-back-btn" onclick="document.getElementById('back-button').click()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <span>新增商品</span>
+  </div>
 
   <div class="ap-form">
 
@@ -1366,6 +1396,14 @@ function doGet(e) {
 
 <!-- 交易詳情頁面 -->
 <div id="trade-detail-page" class="page">
+  <div class="page-topbar">
+    <button class="topbar-back-btn" onclick="document.getElementById('back-button').click()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <span id="td-topbar-title">買入 / 賣出</span>
+  </div>
   <div class="td-header">
     <div class="td-icon" id="td-icon">₿</div>
     <div class="td-name" id="td-name">BTC</div>
@@ -1533,7 +1571,8 @@ function showPage(pageId, title, isBack) {
   }
 
   const topLevel = ['app','rebalance','history','export','settings'];
-  backButton.style.display = topLevel.includes(pageId) ? 'none' : 'flex';
+  const hasTopbar = ['addproduct','tradedetail'];
+  backButton.style.display = (topLevel.includes(pageId) || hasTopbar.includes(pageId)) ? 'none' : 'flex';
 }
 
 // ===== 導覽列點擊 =====
@@ -1936,6 +1975,7 @@ document.getElementById('trade-list').addEventListener('click', e => {
   document.getElementById('td-tab-sell').classList.remove('active');
   document.getElementById('td-confirm-btn').textContent = '確認買入';
   document.getElementById('td-confirm-btn').style.background = '#e8706f';
+  document.getElementById('td-topbar-title').textContent = '買入';
 
   showPage('tradedetail', name);
 });
@@ -1949,6 +1989,7 @@ document.querySelectorAll('.td-tab').forEach(btn => {
     const isBuy = tdCurrentType === 'buy';
     document.getElementById('td-confirm-btn').textContent = isBuy ? '確認買入' : '確認賣出';
     document.getElementById('td-confirm-btn').style.background = isBuy ? '#e8706f' : 'rgba(119,164,120,0.85)';
+    document.getElementById('td-topbar-title').textContent = isBuy ? '買入' : '賣出';
   });
 });
 
