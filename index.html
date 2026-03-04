@@ -1136,33 +1136,50 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
       </div>
       <pre class="gs-code" id="gs-code-block">const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
 
+function jsonRes(p, obj) {
+  const json = JSON.stringify(obj);
+  if (p.callback) {
+    return ContentService
+      .createTextOutput(p.callback + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService
+    .createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 // ===== 市場報價 =====
 function getPrices(symbols) {
   const results = {};
+  let usdtwd = 32;
+  try {
+    const fxData = JSON.parse(UrlFetchApp.fetch('https://api.exchangerate-api.com/v4/latest/USD', { muteHttpExceptions: true }).getContentText());
+    usdtwd = fxData.rates?.TWD || 32;
+  } catch(e) {}
+
   symbols.forEach(item => {
     try {
       const { symbol, type } = item;
       if (type === 'crypto') {
-        const idMap = { 'BTC':'bitcoin','ETH':'ethereum','BNB':'binancecoin','SOL':'solana','XRP':'ripple','ADA':'cardano','DOGE':'dogecoin','AVAX':'avalanche-2','DOT':'polkadot','MATIC':'matic-network','LTC':'litecoin','LINK':'chainlink','UNI':'uniswap','ATOM':'cosmos','ETC':'ethereum-classic','XLM':'stellar','NEAR':'near','APT':'aptos','OP':'optimism','ARB':'arbitrum','FTM':'fantom','SAND':'the-sandbox','MANA':'decentraland','AXS':'axie-infinity','THETA':'theta-token','FIL':'filecoin','HBAR':'hedera-hashgraph','VET':'vechain','ALGO':'algorand','ICP':'internet-computer','USDT':'tether','USDC':'usd-coin','DAI':'dai' };
-        const id = idMap[symbol.toUpperCase()] || symbol.toLowerCase();
-        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + id + '&vs_currencies=twd';
-        const data = JSON.parse(UrlFetchApp.fetch(url, {
-          headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-          muteHttpExceptions: true
-        }).getContentText());
-        results[symbol] = { price: data[id] ? data[id].twd : null };
+        if (symbol.toUpperCase() === 'USDT') {
+          results[symbol] = { price: Math.round(usdtwd * 100) / 100 };
+        } else {
+          const pair = symbol.toUpperCase() + '-USDT';
+          const url  = 'https://www.okx.com/api/v5/market/ticker?instId=' + pair;
+          const res  = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+          const data = JSON.parse(res.getContentText());
+          const priceUsdt = parseFloat(data.data?.[0]?.last);
+          results[symbol] = { price: priceUsdt ? Math.round(priceUsdt * usdtwd) : null };
+        }
       } else if (type === 'metal_two') {
-        // 台灣櫃買中心黃金現貨：AU9901台銀金、AU9902一銀金
         const url = 'https://query1.finance.yahoo.com/v8/finance/chart/C:' + symbol + '.TWO?interval=1d&range=1d';
-        const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+        const data = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText());
         results[symbol] = { price: data.chart?.result?.[0]?.meta?.regularMarketPrice || null };
       } else if (type === 'stock') {
-        // 台股/ETF 加 .TW
         const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '.TW?interval=1d&range=1d';
-        const data = JSON.parse(UrlFetchApp.fetch(url).getContentText());
+        const data = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText());
         results[symbol] = { price: data.chart?.result?.[0]?.meta?.regularMarketPrice || null };
       } else if (type === 'fx') {
-        // 台幣固定為 1
         results[symbol] = { price: 1 };
       }
     } catch(err) {
@@ -1181,9 +1198,7 @@ function doGet(e) {
     if (p.action === 'getPrices') {
       const symbols = JSON.parse(decodeURIComponent(p.symbols || '[]'));
       const prices  = getPrices(symbols);
-      return ContentService
-        .createTextOutput(JSON.stringify({ success: true, prices }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonRes(p, { success: true, prices });
     }
 
     if (p.action === 'addProduct') {
@@ -1233,23 +1248,17 @@ function doGet(e) {
       const sheet = ss.getSheetByName('歷史紀錄');
       const data  = sheet.getDataRange().getValues();
       const rows  = data.slice(1);
-      return ContentService
-        .createTextOutput(JSON.stringify({ success: true, rows }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonRes(p, { success: true, rows });
     }
 
     if (p.action === 'getProducts') {
       const sheet = ss.getSheetByName('商品');
       const data  = sheet.getDataRange().getValues();
       const rows  = data.slice(1).map(r => [String(r[0]).replace(/^#/, ''), r[1], r[2], r[3], r[4]]);
-      return ContentService
-        .createTextOutput(JSON.stringify({ success: true, rows }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonRes(p, { success: true, rows });
     }
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ success: true }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonRes(p, { success: true });
 
   } catch(err) {
     return ContentService
@@ -2018,6 +2027,19 @@ function executeTrade() {
   updateOverview();
   scheduleFetchPrices(300);
 
+  // 同步更新 localStorage 快取
+  try {
+    const rows = [];
+    document.querySelectorAll('#trade-list .trade-card').forEach(card => {
+      const n   = card.querySelector('.trade-name')?.childNodes[0]?.textContent.trim();
+      const t   = card.querySelector('.trade-tag')?.textContent.trim();
+      const q   = card.getAttribute('data-qty');
+      const c   = card.getAttribute('data-cost');
+      if (n && t) rows.push([n, t, q, c, '']);
+    });
+    localStorage.setItem('acs_products_cache', JSON.stringify(rows));
+  } catch(e) {}
+
   gsWrite('addHistory', { datetime, name, tradeType, qty, price, total });
   setTimeout(() => loadHistory(false), 3000);
 
@@ -2461,13 +2483,16 @@ async function loadProducts() {
   } catch(e) {}
   // 再從 Sheet 拉最新
   try {
-    const res  = await fetch(gsScriptUrl + '?action=getProducts');
+    const res  = await fetch(gsScriptUrl + '?action=getProducts', { mode: 'cors', cache: 'no-store' });
     const data = await res.json();
     if (data.rows) {
       try { localStorage.setItem('acs_products_cache', JSON.stringify(data.rows)); } catch(e) {}
       restoreProductsFromRows(data.rows);
     }
-  } catch(e) {}
+  } catch(e) {
+    // CORS 失敗時用 JSONP
+    gsJsonp('getProducts', 'handleProductsJsonp');
+  }
 }
 
 function restoreProductsFromRows(rows) {
@@ -2573,7 +2598,7 @@ async function loadHistory(showLoading = true) {
 
   try {
     const url = gsScriptUrl + '?action=getHistory';
-    const res = await fetch(url);
+    const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
     const data = await res.json();
     loading.style.display = 'none';
     if (data.rows) {
@@ -2584,7 +2609,7 @@ async function loadHistory(showLoading = true) {
     }
   } catch(e) {
     loading.style.display = 'none';
-    // 快取已顯示，不顯示錯誤
+    gsJsonp('getHistory', 'handleHistoryJsonp');
   } finally {
     if (icon) icon.style.animation = '';
   }
@@ -2963,7 +2988,6 @@ const MARKET_INTERVAL_MS = 15 * 1000; // 15 秒
 async function fetchMarketPrices() {
   if (!gsScriptUrl) return;
 
-  // 收集目前所有商品
   const symbols = [];
   document.querySelectorAll('#trade-list .trade-card').forEach(card => {
     const nameEl = card.querySelector('.trade-name');
@@ -2973,27 +2997,62 @@ async function fetchMarketPrices() {
     const tag  = tagEl ? tagEl.textContent.trim() : '';
     symbols.push({ symbol: name, type: getSymbolType(name, tag) });
   });
-  if (symbols.length === 0) {
-    console.log('fetchMarketPrices: no products yet, skip');
-    return;
-  }
-
-  console.log('fetchMarketPrices: fetching', symbols.map(s=>s.symbol));
+  if (symbols.length === 0) return;
 
   try {
-    const encoded = encodeURIComponent(JSON.stringify(symbols));
+    const encoded  = encodeURIComponent(JSON.stringify(symbols));
     const url = gsScriptUrl + '?action=getPrices&symbols=' + encoded;
-    const res  = await fetch(url);
+    const res  = await fetch(url, { mode: 'cors', cache: 'no-store' });
     const data = await res.json();
     if (!data.prices) return;
-
     marketPriceCache = data.prices;
-    // 確保行情列表已建立（若 updateOverview 尚未跑過先跑一次）
     if (!document.querySelector('#market-card-body .market-row')) updateOverview();
     applyMarketPrices(data.prices);
   } catch(e) {
-    console.warn('market price fetch failed', e);
+    // fetch 失敗時改用 JSONP
+    gsJsonp('getPrices&symbols=' + encodeURIComponent(JSON.stringify(symbols)), 'handleMarketPrices');
   }
+}
+
+function handleProductsJsonp(data) {
+  if (!data || !data.rows) return;
+  try { localStorage.setItem('acs_products_cache', JSON.stringify(data.rows)); } catch(e) {}
+  restoreProductsFromRows(data.rows);
+  scheduleFetchPrices(500);
+}
+
+function handleHistoryJsonp(data) {
+  if (!data || !data.rows) return;
+  try { localStorage.setItem('acs_history_cache', JSON.stringify(data.rows)); } catch(e) {}
+  renderHistoryRows(data.rows);
+  document.getElementById('history-loading').style.display = 'none';
+}
+
+function handleMarketPrices(data) {
+  if (!data || !data.prices) return;
+  marketPriceCache = data.prices;
+  if (!document.querySelector('#market-card-body .market-row')) updateOverview();
+  applyMarketPrices(data.prices);
+}
+
+function gsJsonp(params, callbackName) {
+  if (!gsScriptUrl) return;
+  const old = document.getElementById('_jsonp_' + callbackName);
+  if (old) old.remove();
+  window[callbackName] = function(data) {
+    window[callbackName] = null;
+    const el = document.getElementById('_jsonp_' + callbackName);
+    if (el) el.remove();
+    // 直接呼叫對應 handler
+    if (callbackName === 'handleMarketPrices') handleMarketPrices(data);
+    else if (callbackName === 'handleProducts')  handleProductsJsonp(data);
+    else if (callbackName === 'handleHistory')   handleHistoryJsonp(data);
+  };
+  const s = document.createElement('script');
+  s.id  = '_jsonp_' + callbackName;
+  s.src = gsScriptUrl + '?action=' + params + '&callback=' + callbackName;
+  document.head.appendChild(s);
+  setTimeout(() => { try { s.remove(); } catch(e){} }, 8000);
 }
 
 function applyMarketPrices(prices) {
@@ -3120,7 +3179,31 @@ setTimeout(() => {
   startMarketAutoRefresh();
 }, 2000);
 
-// ===== Service Worker 註冊 =====
+// ===== iOS PWA 回到前景時重新抓取資料 =====
+let _lastActiveTime = Date.now();
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const elapsed = Date.now() - _lastActiveTime;
+    // 超過 30 秒沒動就重新抓
+    if (elapsed > 30000) {
+      loadProducts().then(() => scheduleFetchPrices(300));
+      loadHistory(false);
+    }
+  } else {
+    _lastActiveTime = Date.now();
+  }
+});
+
+// iOS PWA 從快取恢復時觸發
+window.addEventListener('pageshow', e => {
+  if (e.persisted) {
+    loadProducts().then(() => scheduleFetchPrices(300));
+    loadHistory(false);
+  }
+});
+
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     // 每次開啟都檢查有沒有新版
