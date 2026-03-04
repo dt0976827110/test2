@@ -63,19 +63,45 @@ body.dark #splash h1 { color: #eee; }
 /* --- 各頁面 --- */
 #app, #rebalance, #history, #export, #settings, #version-detail, #about-page, #contact-page, #devmode-page, #add-product-page, #delete-product-page, #trade-detail-page, #gsheet-page {
   width: 100%; max-width: 520px;
-  margin: 0 auto; min-height: 100vh;
+  margin: 0 auto;
+  height: 100vh;
   background: transparent;
   display: none;
   flex-direction: column;
   align-items: stretch; justify-content: flex-start;
-  padding: env(safe-area-inset-top, 44px) 16px 110px;
-  padding-top: max(env(safe-area-inset-top), 44px);
+  padding: 0 0 110px;
   box-sizing: border-box;
   overflow-y: auto; position: relative;
 }
 
 .brand-title { font-size: 14px; color: #888; margin-bottom: 5px; text-align: center; width: 100%; }
 .page-title { font-size: 18px; font-weight: bold; text-align: center; width: 100%; margin: 15px 0; }
+.page-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-top: max(env(safe-area-inset-top), 16px);
+  padding-bottom: 14px;
+  padding-left: 16px;
+  padding-right: 16px;
+  height: calc(max(env(safe-area-inset-top), 16px) + 52px);
+  font-size: 18px; font-weight: 800; color: #1E2A38;
+  letter-spacing: 0.3px;
+  box-sizing: border-box;
+}
+.page-topbar .topbar-right {
+  position: absolute; right: 16px; bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+body.light .page-topbar { background: #ffffff; }
+body.dark .page-topbar { color: #eee; background: #121212; }
+body.dark #history-refresh-icon path { fill: #eee; }
+
+/* 有 topbar 的頁面內容往下推，避免被蓋住 */
+#rebalance, #history, #export, #settings {
+  padding-top: calc(max(env(safe-area-inset-top), 16px) + 52px) !important;
+}
 
 /* --- 底部導航列 --- */
 .bottom-nav {
@@ -857,6 +883,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
   </div>
 </div>
 <div id="rebalance" class="page">
+  <div class="page-topbar">再平衡安全</div>
 
   <!-- 狀態標頭 -->
   <div class="rb-header">
@@ -927,17 +954,15 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
 
 <!-- 歷史紀錄 -->
 <div id="history" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <p class="page-title" style="margin:0;">歷史紀錄</p>
-    <button id="history-refresh-btn" style="
-      background:#f2f2f2;border:none;cursor:pointer;
-      width:36px;height:36px;border-radius:10px;
-      display:flex;align-items:center;justify-content:center;
-      flex-shrink:0;transition:opacity 0.2s;">
-      <svg id="history-refresh-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#1E2A38"/>
-      </svg>
-    </button>
+  <div class="page-topbar">
+    <span>歷史紀錄</span>
+    <div class="topbar-right">
+      <button id="history-refresh-btn" style="background:transparent;border:none;cursor:pointer;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <svg id="history-refresh-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="#1E2A38"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- 載入狀態 -->
@@ -970,9 +995,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
 
 <!-- 交易 -->
 <div id="export" class="page">
-
-  <!-- 搜尋列 -->
-  <div class="trade-search-wrap">
+  <div class="page-topbar" style="justify-content:flex-end;gap:8px;">
     <div class="trade-search-box">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <circle cx="11" cy="11" r="7" stroke="#888" stroke-width="2"/>
@@ -1025,6 +1048,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
 
 <!-- 設定 -->
 <div id="settings" class="page">
+  <div class="page-topbar">設定</div>
   <p class="section-title">顯示設定</p>
   <div class="list-container">
     <div class="list-row" id="theme-setting">
