@@ -1168,8 +1168,8 @@ function doGet(e) {
       const sheet = ss.getSheetByName('商品');
       const data  = sheet.getDataRange().getValues();
       for (let i = 1; i < data.length; i++) {
-        const cellName = String(data[i][0]).replace(/^#/, '');
-        if (cellName === String(p.name)) {
+        const cellName = String(data[i][0]);
+        if (cellName === String(p.name) || cellName === '#' + String(p.name)) {
           sheet.getRange(i + 1, 3).setValue(p.qty);
           sheet.getRange(i + 1, 4).setValue(p.value);
           break;
@@ -1181,8 +1181,8 @@ function doGet(e) {
       const sheet = ss.getSheetByName('商品');
       const data  = sheet.getDataRange().getValues();
       for (let i = 1; i < data.length; i++) {
-        const cellName = String(data[i][0]).replace(/^#/, '');
-        if (cellName === String(p.name)) {
+        const cellName = String(data[i][0]);
+        if (cellName === String(p.name) || cellName === '#' + String(p.name)) {
           sheet.deleteRow(i + 1);
           break;
         }
