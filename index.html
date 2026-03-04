@@ -2138,7 +2138,8 @@ function showTradeToast(tradeType, name, qty, total) {
   document.getElementById('trade-toast-body').innerHTML =
     `${name} ×${qty} &nbsp;<span style="opacity:0.65;font-weight:400;">NT$ ${total.toLocaleString()}</span>`;
 
-  toast.style.top = '0px';
+  const topbarH = 'calc(max(env(safe-area-inset-top), 16px) + 52px)';
+  toast.style.top = topbarH;
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => { toast.style.top = '-80px'; }, 3000);
 }
