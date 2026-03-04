@@ -148,6 +148,12 @@ body.dark .list-row .value { color: #aaa; }
 body.dark .popup-content { background: #1e1e1e; }
 body.dark .popup-item { color: #eee; border-bottom: 1px solid #333; }
 body.dark .popup-cancel { color: #4da3ff; }
+body.dark #trade-confirm-cancel { background: rgba(255,255,255,0.15); }
+body.dark #trade-confirm-inner { background: #1e1e1e !important; }
+body.dark #trade-confirm-title { color: #eee; }
+body.dark #trade-confirm-subtitle { color: #888; }
+body.dark #trade-confirm-body { color: #fff !important; border-top-color: #2a2a2a; }
+body.dark #trade-confirm-cancel { background: #2a2a2a; border-color: #444; color: #ccc; }
 
 /* 設定頁 */
 .section-title { font-size: 12px; color: #999; margin: 20px 0 8px; padding-left: 15px; }
@@ -990,6 +996,19 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
 
   <!-- 資產卡片列表 -->
   <div class="trade-list" id="trade-list"></div>
+</div>
+
+<!-- 交易確認浮窗 -->
+<div id="trade-confirm-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+  <div id="trade-confirm-inner" style="background:#fff;border-radius:20px;padding:32px 28px;width:300px;max-width:90vw;box-shadow:0 16px 48px rgba(0,0,0,0.22);">
+    <div id="trade-confirm-title" style="font-size:18px;font-weight:800;margin-bottom:4px;color:#1E2A38;"></div>
+    <div id="trade-confirm-subtitle" style="font-size:13px;color:#aaa;margin-bottom:20px;"></div>
+    <div id="trade-confirm-body" style="font-size:14px;color:#333;line-height:2.2;margin-bottom:28px;border-top:1px solid #f0f0f0;padding-top:16px;"></div>
+    <div style="display:flex;gap:12px;">
+      <button id="trade-confirm-cancel" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid #e0e0e0;background:#f7f7f7;color:#555;font-size:15px;font-weight:600;cursor:pointer;">取消</button>
+      <button id="trade-confirm-ok" style="flex:1;padding:13px;border-radius:12px;border:none;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">確認</button>
+    </div>
+  </div>
 </div>
 
 <!-- 設定 -->
@@ -1887,13 +1906,11 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
 
   if (!price || !qty) { alert('請輸入價格和數量'); return; }
 
-  // 買入：數量不能小於等於 0
   if (tdCurrentType === 'buy' && qty <= 0) {
     alert('買入數量必須大於 0');
     return;
   }
 
-  // 賣出：數量不能大於持有數量
   if (tdCurrentType === 'sell') {
     const holdingQty = parseFloat(document.getElementById('td-qty').textContent) || 0;
     if (qty <= 0) { alert('賣出數量必須大於 0'); return; }
@@ -1902,6 +1919,27 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
       return;
     }
   }
+
+  const total     = Math.round(price * qty);
+  const name      = document.getElementById('td-name').textContent;
+  const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
+
+  // 顯示確認浮窗
+  const modal = document.getElementById('trade-confirm-modal');
+  const inner = document.getElementById('trade-confirm-inner');
+  const isBuyAction = tradeType === '買入';
+  document.getElementById('trade-confirm-title').textContent = `確認${tradeType}`;
+  document.getElementById('trade-confirm-title').style.color = isBuyAction ? '#e8706f' : '#77a478';
+  document.getElementById('trade-confirm-subtitle').textContent = isBuyAction ? '請確認以下買入資訊' : '請確認以下賣出資訊';
+  document.getElementById('trade-confirm-body').innerHTML =
+    `商品：${name}<br>數量：${qty}<br>價格：NT$ ${price.toLocaleString()}<br>換算價值：NT$ ${total.toLocaleString()}`;
+  document.getElementById('trade-confirm-ok').style.background = isBuyAction ? '#e8706f' : '#77a478';
+  modal.style.display = 'flex';
+});
+
+function executeTrade() {
+  const price = parseFloat(document.getElementById('td-price').value) || 0;
+  const qty   = parseFloat(document.getElementById('td-qty-input').value) || 0;
   const total     = Math.round(price * qty);
   const name      = document.getElementById('td-name').textContent;
   const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
@@ -1917,12 +1955,12 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
     if (cardName !== name) return;
 
     const oldCost = parseFloat(card.getAttribute('data-cost')) || 0;
+    const oldAvg  = holdingQty > 0 ? oldCost / holdingQty : 0;
     let newCost;
     if (tdCurrentType === 'buy') {
-      newCost = oldCost + Math.round(price * qty); // 買入：累加成本
+      newCost = oldCost + Math.round(price * qty);
     } else {
-      // 賣出：按比例扣除成本
-      newCost = holdingQty > 0 ? Math.round(oldCost * (newQtyRounded / holdingQty)) : 0;
+      newCost = Math.round(oldAvg * newQtyRounded);
     }
 
     card.setAttribute('data-qty',  newQtyRounded);
@@ -1933,36 +1971,41 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
     const totalEl  = card.querySelector('.trade-total');
     if (volEl) volEl.textContent = '持有數量：' + newQtyRounded;
 
-    // 均價 = 新成本 ÷ 新數量
-    if (avgEl && newQtyRounded > 0) {
-      const avg = newCost / newQtyRounded;
-      avgEl.textContent = avg >= 1 ? Math.round(avg).toLocaleString() : avg.toFixed(4);
+    if (avgEl) {
+      if (newQtyRounded <= 0) {
+        avgEl.textContent = '--';
+      } else {
+        const avg = newCost / newQtyRounded;
+        avgEl.textContent = avg >= 1 ? Math.round(avg).toLocaleString() : avg.toFixed(4);
+      }
     }
 
-    // 現有價值 = 新數量 × 最新市場價格（有報價用報價，否則用成交價）
     const marketPrice = parseFloat(card.getAttribute('data-market-price')) || price;
-    if (totalEl) totalEl.textContent = Math.round(newQtyRounded * marketPrice).toLocaleString();
+    if (totalEl) totalEl.textContent = newQtyRounded <= 0 ? '--' : Math.round(newQtyRounded * marketPrice).toLocaleString();
 
-    // 同步更新 Sheet：現有價值欄存新成本（均價基準）
     gsWrite('updateProduct', { name, qty: newQtyRounded, value: newCost });
   });
 
-  // 同步更新詳情頁顯示的持有數量
   document.getElementById('td-qty').textContent = newQtyRounded;
 
   updateOverview();
   scheduleFetchPrices(300);
 
-  // 寫入 Google Sheet 歷史紀錄，並在背景重新讀取
   gsWrite('addHistory', { datetime, name, tradeType, qty, price, total });
-  setTimeout(() => loadHistory(false), 3000); // 3 秒後背景更新
-
-  alert(`${tradeType}成功！\n${name} ${qty} 份\n換算價值 NT$ ${total.toLocaleString()}`);
+  setTimeout(() => loadHistory(false), 3000);
 
   // 清空欄位
   document.getElementById('td-price').value     = '';
   document.getElementById('td-qty-input').value = '';
   document.getElementById('td-result-value').textContent = 'NT$ 0';
+}
+
+document.getElementById('trade-confirm-cancel').addEventListener('click', () => {
+  document.getElementById('trade-confirm-modal').style.display = 'none';
+});
+document.getElementById('trade-confirm-ok').addEventListener('click', () => {
+  document.getElementById('trade-confirm-modal').style.display = 'none';
+  executeTrade();
 });
 function calcTdResult() {
   const price = parseFloat(document.getElementById('td-price').value) || 0;
