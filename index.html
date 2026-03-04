@@ -1950,7 +1950,8 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
   // 同步更新詳情頁顯示的持有數量
   document.getElementById('td-qty').textContent = newQtyRounded;
 
-  updateOverviewAmounts();
+  updateOverview();
+  scheduleFetchPrices(300);
 
   // 寫入 Google Sheet 歷史紀錄，並在背景重新讀取
   gsWrite('addHistory', { datetime, name, tradeType, qty, price, total });
