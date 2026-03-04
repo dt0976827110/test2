@@ -1163,7 +1163,7 @@ function doGet(e) {
       if (sheet.getLastRow() === 0) {
         sheet.appendRow(['商品名稱','種類','持有數量','現有價值','新增時間']);
       }
-      sheet.appendRow([p.name, p.type, p.qty, p.value,
+      sheet.appendRow([String(p.name), p.type, p.qty, p.value,
         new Date().toLocaleString('zh-TW')]);
     }
 
