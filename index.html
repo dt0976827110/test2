@@ -838,10 +838,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
 
   <!-- 行情區塊 -->
   <div class="market-section">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div class="market-section-title" style="margin-bottom:0;">市場行情</div>
-      <span id="market-last-update" style="font-size:11px;color:#bbb;">--</span>
-    </div>
+    <div class="market-section-title">市場行情</div>
     <div class="market-card" id="market-card-body">
       <div class="market-header-row">
         <span class="mh-icon-placeholder"></span>
@@ -2375,11 +2372,10 @@ function restoreProductsFromRows(rows) {
 
 // ===== 歷史紀錄頁面 =====
 function getTWDatetime() {
-  // 強制台灣時間 UTC+8
   const now = new Date();
-  const tw  = new Date(now.getTime() + (8 * 60 - now.getTimezoneOffset()) * 60000);
   const pad = n => String(n).padStart(2, '0');
-  return `${tw.getFullYear()}/${pad(tw.getMonth()+1)}/${pad(tw.getDate())} ${pad(tw.getHours())}:${pad(tw.getMinutes())}:${pad(tw.getSeconds())}`;
+  const d = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 function formatTWTime(raw) {
@@ -2818,12 +2814,6 @@ async function fetchMarketPrices() {
     // 確保行情列表已建立（若 updateOverview 尚未跑過先跑一次）
     if (!document.querySelector('#market-card-body .market-row')) updateOverview();
     applyMarketPrices(data.prices);
-
-    // 更新最後更新時間（台灣時間）
-    const tw  = new Date(new Date().getTime() + (8*60 - new Date().getTimezoneOffset())*60000);
-    const pad = n => String(n).padStart(2,'0');
-    const lastUpd = document.getElementById('market-last-update');
-    if (lastUpd) lastUpd.textContent = '更新於 ' + pad(tw.getUTCHours()) + ':' + pad(tw.getUTCMinutes());
   } catch(e) {
     console.warn('market price fetch failed', e);
   }
