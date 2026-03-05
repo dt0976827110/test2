@@ -386,6 +386,17 @@ body.dark .hist-name { color: #eee; }
 .hist-cell-value { font-size: 13px; font-weight: 700; color: #1E2A38; }
 body.dark .hist-cell-value { color: #ddd; }
 .hist-date { font-size: 11px; color: #bbb; margin-top: 8px; }
+.hist-filter-btn {
+  padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e0e0e0;
+  background: transparent; font-size: 13px; font-weight: 600; color: #888;
+  cursor: pointer; transition: all 0.2s;
+}
+.hist-filter-btn.active {
+  background: #1E2A38; color: #fff; border-color: #1E2A38;
+}
+body.dark .hist-filter-btn { border-color: #333; color: #aaa; }
+body.dark .hist-filter-btn.active { background: #eee; color: #1E2A38; border-color: #eee; }
+body.dark #hist-date-from, body.dark #hist-date-to { background: #2a2a2a; border-color: #444; color: #eee; }
 .hist-total-value { color: #e8706f; }
 .hist-type.sell ~ .hist-total-value { color: #77a478; }
 
@@ -986,6 +997,21 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
         </svg>
       </button>
     </div>
+  </div>
+
+  <!-- 時間篩選 -->
+  <div id="history-filter" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <button class="hist-filter-btn active" data-days="7">7天</button>
+    <button class="hist-filter-btn" data-days="30">30天</button>
+    <button class="hist-filter-btn" data-days="90">90天</button>
+    <button class="hist-filter-btn" data-days="0">全部</button>
+    <button class="hist-filter-btn" data-days="custom" id="hist-custom-btn">自訂</button>
+  </div>
+  <!-- 自訂日期區間 -->
+  <div id="hist-custom-range" style="display:none;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+    <input type="date" id="hist-date-from" style="flex:1;padding:8px 10px;border-radius:10px;border:1.5px solid #ddd;font-size:13px;background:#f7f7f7;color:#333;min-width:120px;">
+    <span style="color:#aaa;font-size:13px;">至</span>
+    <input type="date" id="hist-date-to" style="flex:1;padding:8px 10px;border-radius:10px;border:1.5px solid #ddd;font-size:13px;background:#f7f7f7;color:#333;min-width:120px;">
   </div>
 
   <!-- 載入狀態 -->
@@ -1593,6 +1619,33 @@ navItems.forEach(item => {
 // 重新整理按鈕
 document.getElementById('history-refresh-btn').addEventListener('click', () => loadHistory());
   });
+});
+
+// ===== 歷史紀錄篩選 =====
+document.querySelectorAll('.hist-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.hist-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const days = btn.dataset.days;
+    const customRange = document.getElementById('hist-custom-range');
+    if (days === 'custom') {
+      customRange.style.display = 'flex';
+      _histFilterDays = 'custom';
+    } else {
+      customRange.style.display = 'none';
+      _histFilterDays = parseInt(days);
+    }
+    applyHistoryFilter();
+  });
+});
+
+document.getElementById('hist-date-from').addEventListener('change', e => {
+  _histDateFrom = e.target.value;
+  applyHistoryFilter();
+});
+document.getElementById('hist-date-to').addEventListener('change', e => {
+  _histDateTo = e.target.value;
+  applyHistoryFilter();
 });
 
 // ===== 返回按鈕 =====
@@ -2602,13 +2655,43 @@ function formatTWTime(raw) {
   } catch(e) { return str; }
 }
 
+let _historyAllRows = [];
+let _histFilterDays = 7;
+let _histDateFrom = null;
+let _histDateTo = null;
+
 function renderHistoryRows(rows) {
+  _historyAllRows = rows || [];
+  applyHistoryFilter();
+}
+
+function applyHistoryFilter() {
   const list  = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
   list.innerHTML = '';
-  if (!rows || rows.length === 0) { empty.style.display = 'block'; return; }
+
+  const now = new Date();
+  let filtered = [..._historyAllRows];
+
+  if (_histFilterDays === 'custom' && _histDateFrom && _histDateTo) {
+    const from = new Date(_histDateFrom + 'T00:00:00');
+    const to   = new Date(_histDateTo   + 'T23:59:59');
+    filtered = filtered.filter(row => {
+      const d = parseHistDate(row[0]);
+      return d && d >= from && d <= to;
+    });
+  } else if (_histFilterDays > 0) {
+    const cutoff = new Date(now - _histFilterDays * 86400000);
+    filtered = filtered.filter(row => {
+      const d = parseHistDate(row[0]);
+      return d && d >= cutoff;
+    });
+  }
+
+  if (filtered.length === 0) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
-  [...rows].reverse().forEach(row => {
+
+  [...filtered].reverse().forEach(row => {
     const [datetime, name, tradeType, qty, price, total] = row;
     const isBuy = tradeType === '買入';
     const card = document.createElement('div');
@@ -2635,6 +2718,16 @@ function renderHistoryRows(rows) {
       <div class="hist-date">${formatTWTime(datetime)}</div>`;
     list.appendChild(card);
   });
+}
+
+function parseHistDate(str) {
+  if (!str) return null;
+  // 支援 "2026/3/5 上午2:46:47" 和 ISO 格式
+  const s = String(str)
+    .replace('上午', 'AM ').replace('下午', 'PM ')
+    .replace(/(\d+)\/(\d+)\/(\d+)/, '$1-$2-$3');
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
 }
 
 async function loadHistory(showLoading = true) {
