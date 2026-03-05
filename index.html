@@ -954,7 +954,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
         <span class="mh-icon-placeholder"></span>
         <span class="mh-name">商品</span>
         <span class="mh-price">最新價格</span>
-        <span class="mh-change">漲跌</span>
+        <span class="mh-change">P/L%</span>
         <span class="mh-avg">持有均價</span>
       </div>
     </div>
@@ -2344,12 +2344,12 @@ function executeTrade() {
         avgEl.textContent = '--';
       } else {
         const avg = newCost / newQtyRounded;
-        avgEl.textContent = avg.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        avgEl.textContent = smartNum(avg);
       }
     }
 
     const marketPrice = parseFloat(card.getAttribute('data-market-price')) || price;
-    if (totalEl) totalEl.textContent = newQtyRounded <= 0 ? '--' : (newQtyRounded * marketPrice).toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (totalEl) totalEl.textContent = newQtyRounded <= 0 ? '--' : smartNum(newQtyRounded * marketPrice);
 
     gsWrite('updateProduct', { name, qty: newQtyRounded, value: newCost });
   });
@@ -2769,6 +2769,17 @@ function gsWrite(action, data) {
 const CAT_COLORS   = { '加密貨幣':'#f5a623','ETF/股票':'#7396c6','貴金屬':'#dfb199','現金':'#9eb995' };
 const CAT_INITIALS = { '加密貨幣': n => n.substring(0,2).toUpperCase(), 'ETF/股票': n => n.substring(0,2).toUpperCase(), '貴金屬': () => 'Au', '現金': () => '$' };
 
+// 智慧數字格式化：有小數就顯示一位，沒有就整數
+function smartNum(val) {
+  if (isNaN(val) || val === null) return '--';
+  const num = parseFloat(val);
+  const hasDecimal = num % 1 !== 0;
+  return num.toLocaleString('zh-TW', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: hasDecimal ? 1 : 0
+  });
+}
+
 function buildTradeCard(name, type, qty, value) {
   const color   = CAT_COLORS[type] || '#aaa';
   const icon    = (CAT_INITIALS[type] ? CAT_INITIALS[type](name) : name.substring(0,2).toUpperCase());
@@ -3136,7 +3147,7 @@ function recalcAllAvg() {
     const avgEl = card.querySelector('.trade-avg');
     if (!avgEl || qty === 0) return;
     const avg = cost / qty;
-    avgEl.textContent = avg.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    avgEl.textContent = smartNum(avg);
   });
 }
 
@@ -3293,9 +3304,9 @@ function updateOverview() {
           const usdtPrice = parseFloat(priceEl?.dataset.usdt);
           if (!twdPrice) return;
           if (!isUsdt && usdtPrice) {
-            priceEl.textContent = usdtPrice.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT';
+            priceEl.textContent = smartNum(usdtPrice) + ' USDT';
           } else {
-            priceEl.textContent = twdPrice.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            priceEl.textContent = smartNum(twdPrice);
           }
         });
       }
@@ -3509,22 +3520,21 @@ function applyMarketPrices(prices) {
     // 顯示：依目前切換狀態決定
     const showUsdt = row.dataset.showUsdt === '1' && row.dataset.isCrypto === '1';
     if (priceEl) priceEl.textContent = showUsdt && priceUsdt
-      ? priceUsdt.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT'
-      : priceTwd.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      ? smartNum(priceUsdt) + ' USDT'
+      : smartNum(priceTwd);
 
     if (changeEl) {
       changeEl.textContent = changeStr;
       changeEl.className   = 'market-change ' + (changePct >= 0 ? 'up' : 'down');
     }
 
-    // 把最新價格寫回交易卡片，供 getTradeCategories 使用
     const tradeCard = document.querySelector(`#trade-list .trade-card[data-name="${symbol}"]`);
     if (tradeCard) {
       tradeCard.setAttribute('data-market-price', priceTwd);
       const qty     = parseFloat(tradeCard.getAttribute('data-qty')) || 0;
       const totalEl = tradeCard.querySelector('.trade-total');
       if (totalEl && qty > 0) {
-        totalEl.textContent = (qty * priceTwd).toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        totalEl.textContent = smartNum(qty * priceTwd);
       }
     }
   });
