@@ -590,7 +590,7 @@ body.dark .ap-dropdown-item:active, body.dark .ap-dropdown-item.selected { backg
 }
 body.dark .ap-input { background: #1e1e1e; color: #eee; border: 1px solid #2a2a2a; }
 .ap-input:focus { box-shadow: 0 0 0 2px rgba(119,164,120,0.4); }
-.ap-input::placeholder { color: #bbb; }
+.ap-input::placeholder { color: #555; }
 
 .ap-select-wrap { position: relative; }
 .ap-select {
@@ -1654,6 +1654,20 @@ function doGet(e) {
   <button class="ap-submit-btn" id="td-confirm-btn">確認買入</button>
 </div>
 
+<!-- 刪除確認浮窗 -->
+<div id="delete-confirm-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#fff; border-radius:20px; padding:28px 24px; width:100%; max-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="font-size:18px; font-weight:800; color:#1E2A38; margin-bottom:12px;">確定刪除？</div>
+    <div style="font-size:14px; color:#666; line-height:1.6; margin-bottom:24px;">
+      刪除「<span id="delete-confirm-name" style="font-weight:700;color:#e8706f;"></span>」後，該資產的持有數量與成本將全數清零，此操作無法復原。
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button id="delete-confirm-cancel" style="flex:1; padding:13px; border-radius:12px; border:none; background:#f0f0f0; color:#555; font-size:15px; font-weight:700; cursor:pointer;">取消</button>
+      <button id="delete-confirm-ok" style="flex:1; padding:13px; border-radius:12px; border:none; background:#e8706f; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">確定刪除</button>
+    </div>
+  </div>
+</div>
+
 <!-- 主題 Popup -->
 <div class="popup" id="theme-popup">
   <div class="popup-content">
@@ -1943,22 +1957,40 @@ document.getElementById('ap-delete-btn').addEventListener('click', () => {
       <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
     delBtn.addEventListener('click', () => {
-      // 從交易列表刪除對應卡片
       const name = card.getAttribute('data-name');
-      document.querySelectorAll('#trade-list .trade-card').forEach(c => {
-        if (c.getAttribute('data-name') === name) c.remove();
-      });
-      clone.remove();
-      gsWrite('deleteProduct', { name });
-      // 更新快取
-      try {
-        const cached = localStorage.getItem('acs_products_cache');
-        if (cached) {
-          const rows = JSON.parse(cached).filter(r => r[0] !== name);
-          localStorage.setItem('acs_products_cache', JSON.stringify(rows));
-        }
-      } catch(e) {}
-      updateOverview();
+      // 顯示確認浮窗
+      const modal = document.getElementById('delete-confirm-modal');
+      const modalBox = modal.querySelector('div');
+      const isDark = document.body.classList.contains('dark');
+      modalBox.style.background = isDark ? '#1e1e1e' : '#fff';
+      modalBox.querySelector('div').style.color = isDark ? '#eee' : '#1E2A38';
+      document.getElementById('delete-confirm-cancel').style.background = isDark ? '#2a2a2a' : '#f0f0f0';
+      document.getElementById('delete-confirm-cancel').style.color = isDark ? '#eee' : '#555';
+      document.getElementById('delete-confirm-name').textContent = name;
+      modal.style.display = 'flex';
+
+      // 確認刪除
+      document.getElementById('delete-confirm-ok').onclick = () => {
+        modal.style.display = 'none';
+        document.querySelectorAll('#trade-list .trade-card').forEach(c => {
+          if (c.getAttribute('data-name') === name) c.remove();
+        });
+        clone.remove();
+        gsWrite('deleteProduct', { name });
+        try {
+          const cached = localStorage.getItem('acs_products_cache');
+          if (cached) {
+            const rows = JSON.parse(cached).filter(r => r[0] !== name);
+            localStorage.setItem('acs_products_cache', JSON.stringify(rows));
+          }
+        } catch(e) {}
+        updateOverview();
+      };
+
+      // 取消
+      document.getElementById('delete-confirm-cancel').onclick = () => {
+        modal.style.display = 'none';
+      };
     });
     clone.appendChild(delBtn);
     deleteList.appendChild(clone);
