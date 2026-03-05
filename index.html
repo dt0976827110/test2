@@ -1318,6 +1318,36 @@ function getPrices(symbols) {
           const priceUsdt = parseFloat(data.data?.[0]?.last);
           results[symbol] = { price: priceUsdt ? Math.round(priceUsdt * usdtwd) : null };
         }
+      } else if (type === 'gold_tw') {
+        // 台灣銀行黃金存摺牌價（NT$/公克）
+        try {
+          const res  = UrlFetchApp.fetch('https://rate.bot.com.tw/gold/ajax/NTD', {
+            headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+            muteHttpExceptions: true
+          });
+          const json = JSON.parse(res.getContentText());
+          // 格式：[{ "CurrencyName":"黃金(NTD)", "SellPrice":"3250.00", ... }]
+          const row  = json.find && json.find(r => String(r.SellPrice || r.sellPrice || r.sell || ''));
+          const sell = row ? parseFloat(row.SellPrice || row.sellPrice || row.sell) : null;
+          if (sell) {
+            results[symbol] = { price: sell };
+          } else {
+            // fallback：爬 HTML 取賣出價
+            const html  = UrlFetchApp.fetch('https://rate.bot.com.tw/gold', {
+              headers: { 'User-Agent': 'Mozilla/5.0' }, muteHttpExceptions: true
+            }).getContentText();
+            const match = html.match(/NTD[\s\S]*?<td[^>]*>([\d,]+\.?\d*)<\/td>/);
+            results[symbol] = { price: match ? parseFloat(match[1].replace(/,/g,'')) : null };
+          }
+        } catch(err) {
+          results[symbol] = { price: null, error: err.message };
+        }
+      } else if (type === 'metal_usd') {
+        // 國際黃金 GC=F（USD/盎司）轉台幣
+        const url = 'https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=1d';
+        const data = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText());
+        const priceUsd = data.chart?.result?.[0]?.meta?.regularMarketPrice || null;
+        results[symbol] = { price: priceUsd ? Math.round(priceUsd * usdtwd) : null };
       } else if (type === 'metal_two') {
         const url = 'https://query1.finance.yahoo.com/v8/finance/chart/C:' + symbol + '.TWO?interval=1d&range=1d';
         const data = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText());
@@ -1380,6 +1410,7 @@ function doGet(e) {
           break;
         }
       }
+      return jsonRes(p, { success: true, action: 'deleted', name: p.name });
     }
 
     if (p.action === 'addHistory') {
@@ -1997,9 +2028,10 @@ const CATEGORY_PRODUCTS = {
     {v:'__custom__',l:'✏️ 輸入其他代號'},
   ],
   '貴金屬': [
-    {v:'AU9901',l:'AU9901 - 台銀金'},
-    {v:'AU9902',l:'AU9902 - 一銀金'},
-    {v:'00738U',l:'00738U - 元大銀期貨'},
+    {v:'GOLD_TW', l:'黃金存摺 - 台銀牌價(NT$/克)'},
+    {v:'AU9901',  l:'AU9901 - 台銀金'},
+    {v:'AU9902',  l:'AU9902 - 一銀金'},
+    {v:'00738U',  l:'00738U - 元大銀期貨'},
   ],
   '現金': [
     {v:'TWD',l:'TWD - 新台幣'},
@@ -2752,13 +2784,12 @@ function gsWrite(action, data) {
   if (!gsScriptUrl) return;
   const params = new URLSearchParams({ action, ...data });
   const url = gsScriptUrl + '?' + params.toString();
-  // 先用 fetch，失敗再用 JSONP
-  fetch(url, { mode: 'cors', cache: 'no-store' }).catch(() => {
-    const script = document.createElement('script');
-    script.src = url;
-    document.head.appendChild(script);
-    setTimeout(() => { try { document.head.removeChild(script); } catch(e){} }, 5000);
-  });
+  console.log('[gsWrite]', action, data, url);
+  // JSONP script tag（最可靠，不受 CORS 限制）
+  const script = document.createElement('script');
+  script.src = url;
+  document.head.appendChild(script);
+  setTimeout(() => { try { document.head.removeChild(script); } catch(e){} }, 6000);
 }
 
 // ===== 商品從 Sheet 讀取還原 =====
@@ -3336,6 +3367,10 @@ const SYMBOL_TYPE_MAP = {
   '5854':'stock','6415':'stock','6505':'stock','8046':'stock',
   // 貴金屬（TWO 交易所）
   'AU9901':'metal_two','AU9902':'metal_two',
+  // 黃金存摺（台銀牌價 NT$/克）
+  'GOLD_TW':'gold_tw',
+  // 國際黃金（USD 計價，轉台幣）
+  'GOLD':'metal_usd','XAU':'metal_usd',
   // 白銀期貨 ETF（台股）
   '00738U':'stock',
   // 現金
