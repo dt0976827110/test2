@@ -986,32 +986,32 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
     <div class="rb-grid" id="rb-grid">
       <div class="rb-mini">
         <div class="rb-ring-wrap">
-          <canvas id="rb-ring-BTC" width="64" height="64"></canvas>
-          <div class="rb-ring-label" id="rb-rlabel-BTC">25%</div>
+          <canvas id="rb-ring-CRYPTO" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-CRYPTO">0%</div>
         </div>
         <div class="rb-mini-range">15 ~ 35%</div>
-        <div class="rb-mini-name">BTC</div>
+        <div class="rb-mini-name">加密貨幣</div>
       </div>
       <div class="rb-mini">
         <div class="rb-ring-wrap">
-          <canvas id="rb-ring-0050" width="64" height="64"></canvas>
-          <div class="rb-ring-label" id="rb-rlabel-0050">25%</div>
+          <canvas id="rb-ring-ETF" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-ETF">0%</div>
         </div>
         <div class="rb-mini-range">15 ~ 35%</div>
-        <div class="rb-mini-name">0050</div>
+        <div class="rb-mini-name">ETF/股票</div>
       </div>
       <div class="rb-mini">
         <div class="rb-ring-wrap">
-          <canvas id="rb-ring-GOLD" width="64" height="64"></canvas>
-          <div class="rb-ring-label" id="rb-rlabel-GOLD">25%</div>
+          <canvas id="rb-ring-METAL" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-METAL">0%</div>
         </div>
         <div class="rb-mini-range">15 ~ 35%</div>
-        <div class="rb-mini-name">黃金</div>
+        <div class="rb-mini-name">貴金屬</div>
       </div>
       <div class="rb-mini">
         <div class="rb-ring-wrap">
-          <canvas id="rb-ring-CASH" width="64" height="64"></canvas>
-          <div class="rb-ring-label" id="rb-rlabel-CASH">25%</div>
+          <canvas id="rb-ring-FIAT" width="64" height="64"></canvas>
+          <div class="rb-ring-label" id="rb-rlabel-FIAT">0%</div>
         </div>
         <div class="rb-mini-range">15 ~ 35%</div>
         <div class="rb-mini-name">現金</div>
@@ -1683,7 +1683,7 @@ navItems.forEach(item => {
     const target = item.getAttribute('data-target');
     const label = item.querySelector('span').textContent;
     if (target && pages[target]) showPage(target, label);
-    if (target === 'rebalance') renderRebalance();
+    if (target === 'rebalance') { updateOverview(); renderRebalance(); }
     if (target === 'history') loadHistory();
 
 // 重新整理按鈕
@@ -2752,10 +2752,13 @@ function gsWrite(action, data) {
   if (!gsScriptUrl) return;
   const params = new URLSearchParams({ action, ...data });
   const url = gsScriptUrl + '?' + params.toString();
-  const script = document.createElement('script');
-  script.src = url;
-  document.head.appendChild(script);
-  setTimeout(() => { try { document.head.removeChild(script); } catch(e){} }, 5000);
+  // 先用 fetch，失敗再用 JSONP
+  fetch(url, { mode: 'cors', cache: 'no-store' }).catch(() => {
+    const script = document.createElement('script');
+    script.src = url;
+    document.head.appendChild(script);
+    setTimeout(() => { try { document.head.removeChild(script); } catch(e){} }, 5000);
+  });
 }
 
 // ===== 商品從 Sheet 讀取還原 =====
@@ -3151,19 +3154,25 @@ const CAT_INFO = {
 function getTradeCategories() {
   const cats = { CRYPTO: 0, ETF: 0, METAL: 0, FIAT: 0 };
   document.querySelectorAll('#trade-list .trade-card').forEach(card => {
-    const tagEl   = card.querySelector('.trade-tag');
-    const totalEl = card.querySelector('.trade-total');
-    if (!tagEl || !totalEl) return;
+    const tagEl = card.querySelector('.trade-tag');
+    if (!tagEl) return;
     const tag    = tagEl.textContent.trim();
     const catKey = CAT_MAP[tag];
     if (!catKey) return;
 
-    // 優先用「持有數量 × 最新市場價格」，否則用現有價值
     const marketPrice = parseFloat(card.getAttribute('data-market-price'));
     const qty         = parseFloat(card.getAttribute('data-qty')) || 0;
-    const val = (!isNaN(marketPrice) && marketPrice > 0 && qty > 0)
-      ? Math.round(marketPrice * qty)
-      : (parseInt(totalEl.textContent.replace(/,/g, '')) || 0);
+    const cost        = parseFloat(card.getAttribute('data-cost')) || 0;
+
+    let val = 0;
+    if (!isNaN(marketPrice) && marketPrice > 0 && qty > 0) {
+      val = Math.round(marketPrice * qty);
+    } else if (qty > 0 && cost > 0) {
+      val = cost; // 沒有市場價格時用成本估算
+    } else {
+      const totalEl = card.querySelector('.trade-total');
+      val = totalEl ? (parseInt(totalEl.textContent.replace(/[^0-9]/g, '')) || 0) : 0;
+    }
 
     cats[catKey] += val;
   });
