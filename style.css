@@ -74,20 +74,13 @@ body.dark .page-topbar { color: #eee; background: #121212; }
 body.dark #history-refresh-icon path { fill: #eee; }
 
 /* 有 topbar 的頁面內容往下推，避免被蓋住 */
-#rebalance, #history, #export, #settings,
+#app, #rebalance, #history, #export, #settings,
 #add-product-page, #trade-detail-page,
 #delete-product-page, #gsheet-page,
 #about-page, #contact-page, #version-detail {
   padding-top: calc(max(env(safe-area-inset-top), 16px) + 52px) !important;
   padding-left: 20px !important;
   padding-right: 20px !important;
-}
-
-/* 總覽頁 padding-top 補上狀態列高度 */
-#app {
-  padding-top: max(env(safe-area-inset-top), 44px);
-  padding-left: 20px;
-  padding-right: 20px;
 }
 
 /* topbar 返回按鈕 */
