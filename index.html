@@ -304,6 +304,8 @@ body.dark .mini-body { background: #1e1e1e; }
 .mini-amt { font-size: 18px; font-weight: 700; color: #1E2A38; }
 body.dark .mini-amt { color: #eee; }
 .mini-sub { margin-top: 6px; display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 700; color: #6b7280; }
+.mini-sub span.up   { color: #e8706f; }
+.mini-sub span.down { color: #77a478; }
 .mini-change.up { color: #e8706f; }
 .mini-change.down { color: #77a478; }
 
@@ -2749,6 +2751,8 @@ function buildTradeCard(name, type, qty, value) {
   const color   = CAT_COLORS[type] || '#aaa';
   const icon    = (CAT_INITIALS[type] ? CAT_INITIALS[type](name) : name.substring(0,2).toUpperCase());
   const costNum = parseInt(String(value).replace(/,/g,'')) || 0;
+  const DISPLAY_NAME = { 'GOLD_TW': 'GOLD' };
+  const displayName = DISPLAY_NAME[name] || name;
   const card = document.createElement('div');
   card.className = 'trade-card';
   card.setAttribute('data-name', name);
@@ -2758,7 +2762,7 @@ function buildTradeCard(name, type, qty, value) {
     <div class="trade-card-left">
       <div class="trade-icon" style="background:${color};">${icon}</div>
       <div class="trade-info">
-        <div class="trade-name">${name} <span class="trade-tag">${type}</span></div>
+        <div class="trade-name">${displayName} <span class="trade-tag">${type}</span></div>
         <div class="trade-vol">持有數量：${qty}</div>
       </div>
     </div>
@@ -3082,12 +3086,57 @@ function updateOverviewAmounts() {
   const cats  = getTradeCategories();
   const total = Object.values(cats).reduce((s, v) => s + v, 0) || 1;
 
+  // 計算各分類成本與市值
+  const catCost   = { CRYPTO: 0, ETF: 0, METAL: 0, FIAT: 0 };
+  const catMarket = { CRYPTO: 0, ETF: 0, METAL: 0, FIAT: 0 };
+  document.querySelectorAll('#trade-list .trade-card').forEach(card => {
+    const tag  = card.querySelector('.trade-tag')?.textContent.trim();
+    const key  = CAT_MAP[tag];
+    if (!key) return;
+    const qty         = parseFloat(card.getAttribute('data-qty')) || 0;
+    const cost        = parseFloat(card.getAttribute('data-cost')) || 0;
+    const marketPrice = parseFloat(card.getAttribute('data-market-price'));
+    catCost[key] += cost;
+    if (!isNaN(marketPrice) && marketPrice > 0 && qty > 0) {
+      catMarket[key] += Math.round(marketPrice * qty);
+    } else {
+      catMarket[key] += cost;
+    }
+  });
+
   Object.entries(cats).forEach(([key, val]) => {
-    const pctVal = Math.round(val / total * 1000) / 10;
-    const amtEl  = document.getElementById('cat-amt-' + key);
-    const pctEl  = document.getElementById('cat-pct-' + key);
+    const pctVal  = Math.round(val / total * 1000) / 10;
+    const amtEl   = document.getElementById('cat-amt-' + key);
+    const pctEl   = document.getElementById('cat-pct-' + key);
+    const chgEl   = document.getElementById('cat-chg-' + key);
+
     if (amtEl) amtEl.textContent = 'NT$ ' + val.toLocaleString();
-    if (pctEl) pctEl.textContent = pctVal.toFixed(1) + '%';
+
+    // 左下角：未實現損益（現金不顯示）
+    const pnl  = catMarket[key] - catCost[key];
+    const sign = pnl >= 0 ? '+' : '';
+    const cls  = pnl >= 0 ? 'up' : 'down';
+    if (pctEl) {
+      if (catCost[key] === 0 || key === 'FIAT') {
+        pctEl.textContent = '--';
+        pctEl.className = '';
+      } else {
+        pctEl.textContent = sign + pnl.toLocaleString();
+        pctEl.className = cls;
+      }
+    }
+
+    // 右下角：P/L%（現金不顯示）
+    if (chgEl) {
+      if (catCost[key] === 0 || key === 'FIAT') {
+        chgEl.textContent = '--';
+        chgEl.className = 'mini-change';
+      } else {
+        const plPct = (pnl / catCost[key] * 100).toFixed(1);
+        chgEl.textContent = (pnl >= 0 ? '+' : '') + plPct + '%';
+        chgEl.className = 'mini-change ' + cls;
+      }
+    }
 
     const legEl = document.querySelector(`#assetLegend .legend-row[data-key="${key}"] .pct`);
     if (legEl) {
@@ -3120,21 +3169,6 @@ function updateOverviewAmounts() {
 function updateOverview() {
   const cats = getTradeCategories();
   const total = Object.values(cats).reduce((s, v) => s + v, 0) || 1;
-
-  // mini-card + legend
-  Object.entries(cats).forEach(([key, val]) => {
-    const pctVal = Math.round(val / total * 1000) / 10;
-    const amtEl  = document.getElementById('cat-amt-' + key);
-    const pctEl  = document.getElementById('cat-pct-' + key);
-    if (amtEl) amtEl.textContent = 'NT$ ' + val.toLocaleString();
-    if (pctEl) pctEl.textContent = pctVal.toFixed(1) + '%';
-
-    const legEl = document.querySelector(`#assetLegend .legend-row[data-key="${key}"] .pct`);
-    if (legEl) {
-      legEl.textContent = pctVal.toFixed(1) + '%';
-      legEl.style.color = pctVal > 35 ? '#e8706f' : pctVal < 15 ? '#77a478' : '';
-    }
-  });
 
   // 總額
   document.getElementById('total-nt').textContent = total.toLocaleString();
@@ -3207,6 +3241,9 @@ function updateOverview() {
   // 若再平衡頁正在顯示，即時刷新
   const rbPage = document.getElementById('rebalance');
   if (rbPage && rbPage.style.display !== 'none') renderRebalance();
+
+  // 更新分類損益（mini-card 左下角未實現損益、右下角P/L%）
+  updateOverviewAmounts();
 }
 
 // ===== 未實現損益計算 =====
