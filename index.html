@@ -125,16 +125,14 @@ body.dark #history-refresh-icon path { fill: #eee; }
 }
 body.dark .topbar-back-btn { color: #eee; }
 
-/* 有 topbar 的子頁面隱藏浮動返回鈕 */
-#add-product-page ~ #back-button,
-#trade-detail-page .back-button { display: none !important; }
+/* 有 topbar 的子頁面隱藏浮動返回鈕 - 由 JS showPage 控制 */
 
 /* --- 底部導航列 --- */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0;
   width: 100%;
-  height: calc(80px + env(safe-area-inset-bottom, 0px));
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  height: calc(70px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: #fff; border-top: 1px solid #ddd;
   display: none;
   justify-content: space-around; align-items: center;
@@ -1463,7 +1461,7 @@ function doGet(e) {
   </div>
 
   <button class="ap-submit-btn" id="gs-bind-btn" style="margin-top:16px;">驗證並綁定</button>
-  <button class="ap-delete-btn" id="gs-unbind-btn" style="display:none;">解除綁定</button>
+  <button class="ap-delete-btn" id="gs-unbind-btn" style="display:none;margin-top:12px;">解除綁定</button>
 </div>
 
 <!-- 聯絡我們 -->
@@ -1659,7 +1657,7 @@ function showPage(pageId, title, isBack) {
   }
 
   const topLevel = ['app','rebalance','history','export','settings'];
-  const hasTopbar = ['addproduct','tradedetail'];
+  const hasTopbar = ['addproduct','tradedetail','deleteproduct','gsheet','about','contact','version'];
   backButton.style.display = (topLevel.includes(pageId) || hasTopbar.includes(pageId)) ? 'none' : 'flex';
 }
 
