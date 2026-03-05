@@ -262,6 +262,8 @@ body.dark .update-btn { background: #2c2c2c; color: #fff; }
 .overview-balance-head .updated { color: #8a8f98; font-size: 11px; white-space: nowrap; }
 .overview-balance .amount { font-weight: 900; font-size: 22px; color: #1E2A38; }
 .overview-balance .delta { margin-top: 6px; color: #7b8088; font-size: 18px; font-weight: 700; }
+.overview-balance .delta .up   { color: #e8706f; }
+.overview-balance .delta .down { color: #77a478; }
 body.dark .overview-balance { background: #1e1e1e; box-shadow: none; border: 1px solid #2a2a2a; }
 body.dark .overview-balance-head .label { color: #e6e6e6; }
 body.dark .overview-balance-head .updated { color: #9aa0a6; }
@@ -888,7 +890,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
       <div class="updated" id="overview-updated">動態更新：--</div>
     </div>
     <div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
-    <div class="delta">未實現損益 <span class="up">--</span> (<span class="up">--%</span>)</div>
+    <div class="delta">未實現損益 <span>--</span></div>
   </div>
 
   <div class="overview-maincard">
@@ -3324,23 +3326,23 @@ function calcUnrealizedPnl() {
     const cost        = parseFloat(card.getAttribute('data-cost'))         || 0;
     const marketPrice = parseFloat(card.getAttribute('data-market-price'));
     const tag         = card.querySelector('.trade-tag')?.textContent.trim();
+    const name        = card.getAttribute('data-name');
 
-    // 現金不算損益
     if (tag === '現金') {
       totalCost   += cost;
-      totalMarket += cost; // 現金市值 = 成本
+      totalMarket += cost;
+      console.log(`[PnL] ${name} 現金 cost=${cost}`);
       return;
     }
 
     totalCost += cost;
-
-    if (!isNaN(marketPrice) && marketPrice > 0 && qty > 0) {
-      totalMarket += Math.round(marketPrice * qty);
-      hasPrice = true;
-    } else {
-      totalMarket += cost; // 無報價時視為損益 0
-    }
+    const marketVal = (!isNaN(marketPrice) && marketPrice > 0 && qty > 0) ? Math.round(marketPrice * qty) : cost;
+    if (!isNaN(marketPrice) && marketPrice > 0 && qty > 0) hasPrice = true;
+    totalMarket += marketVal;
+    console.log(`[PnL] ${name} qty=${qty} cost=${cost} marketPrice=${marketPrice} marketVal=${marketVal}`);
   });
+
+  console.log(`[PnL] totalCost=${totalCost} totalMarket=${totalMarket} pnl=${totalMarket - totalCost}`);
 
   const deltaEl = document.querySelector('.overview-balance .delta');
   if (!deltaEl) return;
@@ -3350,11 +3352,13 @@ function calcUnrealizedPnl() {
     return;
   }
 
-  const pnl    = totalMarket - totalCost;
-  const pnlPct = (pnl / totalCost * 100).toFixed(2);
-  const sign   = pnl >= 0 ? '+' : '';
-  const cls    = pnl >= 0 ? 'up' : 'down';
-  deltaEl.innerHTML = `未實現損益 <span class="${cls}">${sign}${pnl.toLocaleString()}</span> (<span class="${cls}">${sign}${pnlPct}%</span>)`;
+  const pnl  = totalMarket - totalCost;
+  const sign = pnl >= 0 ? '+' : '';
+  const cls  = pnl >= 0 ? 'up' : 'down';
+  deltaEl.innerHTML = `未實現損益 <span class="${cls}">${sign}${pnl.toLocaleString()}</span>`;
+
+  // 同步更新圓餅圖中間投報率
+  if (window.assetDonutChart) window.assetDonutChart.update();
 }
 let _priceDebounceTimer = null;
 function scheduleFetchPrices(delay = 800) {
@@ -3568,10 +3572,25 @@ function startMarketAutoRefresh() {
         const meta = chart.getDatasetMeta(0);
         if (!meta?.data?.[0]) return;
         const { x, y } = meta.data[0];
-        const tStart   = chart._totalStart   || initTotalStart;
-        const tCurrent = chart._totalCurrent || initTotalCurrent;
-        const roi = tStart > 0 ? ((tCurrent - tStart) / tStart * 100) : 0;
-        const roiText = Math.abs(roi).toFixed(1) + '%';
+
+        // 用跟 calcUnrealizedPnl 一樣的邏輯計算投報率
+        let totalCost = 0, totalMarket = 0, hasPrice = false;
+        document.querySelectorAll('#trade-list .trade-card').forEach(card => {
+          const qty         = parseFloat(card.getAttribute('data-qty')) || 0;
+          const cost        = parseFloat(card.getAttribute('data-cost')) || 0;
+          const marketPrice = parseFloat(card.getAttribute('data-market-price'));
+          const tag         = card.querySelector('.trade-tag')?.textContent.trim();
+          totalCost += cost;
+          if (tag === '現金' || isNaN(marketPrice) || marketPrice <= 0 || qty <= 0) {
+            totalMarket += cost;
+          } else {
+            totalMarket += Math.round(marketPrice * qty);
+            hasPrice = true;
+          }
+        });
+
+        const roi = (hasPrice && totalCost > 0) ? ((totalMarket - totalCost) / totalCost * 100) : 0;
+        const roiText = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
         const isDark = document.body.classList.contains('dark');
         ctx.save();
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
