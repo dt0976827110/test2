@@ -888,7 +888,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
       <div class="updated" id="overview-updated">動態更新：--</div>
     </div>
     <div class="amount">NT$ <span id="total-nt">1,146,550</span></div>
-    <div class="delta">今日變動 <span class="up">+6,500</span> (<span class="up">0.57%</span>)</div>
+    <div class="delta">未實現損益 <span class="up">--</span> (<span class="up">--%</span>)</div>
   </div>
 
   <div class="overview-maincard">
@@ -1319,28 +1319,16 @@ function getPrices(symbols) {
           results[symbol] = { price: priceUsdt ? Math.round(priceUsdt * usdtwd) : null };
         }
       } else if (type === 'gold_tw') {
-        // 台灣銀行黃金存摺牌價（NT$/公克）
-        try {
-          const res  = UrlFetchApp.fetch('https://rate.bot.com.tw/gold/ajax/NTD', {
-            headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-            muteHttpExceptions: true
-          });
-          const json = JSON.parse(res.getContentText());
-          // 格式：[{ "CurrencyName":"黃金(NTD)", "SellPrice":"3250.00", ... }]
-          const row  = json.find && json.find(r => String(r.SellPrice || r.sellPrice || r.sell || ''));
-          const sell = row ? parseFloat(row.SellPrice || row.sellPrice || row.sell) : null;
-          if (sell) {
-            results[symbol] = { price: sell };
-          } else {
-            // fallback：爬 HTML 取賣出價
-            const html  = UrlFetchApp.fetch('https://rate.bot.com.tw/gold', {
-              headers: { 'User-Agent': 'Mozilla/5.0' }, muteHttpExceptions: true
-            }).getContentText();
-            const match = html.match(/NTD[\s\S]*?<td[^>]*>([\d,]+\.?\d*)<\/td>/);
-            results[symbol] = { price: match ? parseFloat(match[1].replace(/,/g,'')) : null };
-          }
-        } catch(err) {
-          results[symbol] = { price: null, error: err.message };
+        // 黃金存摺牌價估算：GC=F (USD/盎司) 換算成 NT$/公克
+        // 台銀牌價 ≈ 國際金價 × 匯率 ÷ 31.1035（盎司→克）
+        const url  = 'https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=1d';
+        const data = JSON.parse(UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText());
+        const priceUsdPerOz = data.chart?.result?.[0]?.meta?.regularMarketPrice || null;
+        if (priceUsdPerOz) {
+          const ntdPerGram = Math.round(priceUsdPerOz * usdtwd / 31.1035);
+          results[symbol] = { price: ntdPerGram };
+        } else {
+          results[symbol] = { price: null };
         }
       } else if (type === 'metal_usd') {
         // 國際黃金 GC=F（USD/盎司）轉台幣
@@ -2549,131 +2537,114 @@ function renderRebalance() {
 
     let html = `<div class="rb-suggest-header">建議動作</div>`;
 
-    // ── 規則 1：有資產低於15% ──
-    underList.forEach(under => {
-      const needed = Math.round(targetVal - under.current); // 需買入金額
-
-      if (cash && cash.current >= needed) {
-        // 現金足夠 → 直接用現金購入
+    if (cash && cash.pct > SAFE_MAX) {
+      // 現金過多 → 分配給各不足資產
+      let remainingCash = cash.current;
+      const needBuy = pcts.filter(a => a.key !== 'CASH' && a.current < targetVal).sort((a,b) => a.pct - b.pct);
+      needBuy.forEach(a => {
+        const needed  = Math.round(targetVal - a.current);
+        const useAmt  = Math.min(needed, remainingCash);
+        if (useAmt <= 0) return;
+        remainingCash -= useAmt;
         html += `
           <div class="rb-suggest-card buy">
             <div class="rb-suggest-icon">⚠</div>
             <div class="rb-suggest-body">
-              <div class="rb-suggest-title">建議現金購入 ${under.displayName}</div>
-              <div class="rb-suggest-desc">
-                ${under.displayName} 占比過低（${under.pct.toFixed(1)}%）：建議使用現金 NT$ ${needed.toLocaleString()} 購入 ${under.displayName}<br>
-                調整後 ${under.displayName} 將回到 25.0%
-              </div>
+              <div class="rb-suggest-title">建議將現金換置成 ${a.displayName}</div>
+              <div class="rb-suggest-desc">建議將現金的 NT$ ${useAmt.toLocaleString()} 換置成 ${a.displayName}</div>
             </div>
             <div class="rb-suggest-arrow">›</div>
           </div>`;
-      } else {
-        // 現金不足 → 先用現金，差額賣最高佔比資產補足
-        const cashAmt   = cash ? cash.current : 0;
-        const remaining = needed - cashAmt;
-        const topOver   = overList[0] || pcts.filter(a => a.key !== 'CASH').sort((a,b) => b.current - a.current)[0];
+      });
 
-        if (cashAmt > 0) {
+    } else if (cash && cash.pct < SAFE_MIN) {
+      // 現金過少 → 賣資產換現金
+      const needed   = Math.round(targetVal - cash.current);
+      const sellFrom = sortedForSell[0];
+      if (sellFrom) {
+        html += `
+          <div class="rb-suggest-card sell">
+            <div class="rb-suggest-icon">⚠</div>
+            <div class="rb-suggest-body">
+              <div class="rb-suggest-title">建議將 ${sellFrom.displayName} 換置成現金</div>
+              <div class="rb-suggest-desc">建議將 ${sellFrom.displayName} 的 NT$ ${needed.toLocaleString()} 換置成現金</div>
+            </div>
+            <div class="rb-suggest-arrow">›</div>
+          </div>`;
+      }
+
+    } else if (underList.length > 0) {
+      // 有資產不足 → 優先用現金，不夠再賣其他
+      underList.forEach(under => {
+        const needed  = Math.round(targetVal - under.current);
+        const cashAmt = cash ? cash.current : 0;
+
+        if (cashAmt >= needed) {
           html += `
             <div class="rb-suggest-card buy">
               <div class="rb-suggest-icon">⚠</div>
               <div class="rb-suggest-body">
-                <div class="rb-suggest-title">建議現金購入 ${under.displayName}</div>
-                <div class="rb-suggest-desc">
-                  ${under.displayName} 占比過低（${under.pct.toFixed(1)}%）：先使用現有現金 NT$ ${cashAmt.toLocaleString()} 購入 ${under.displayName}<br>
-                  仍差 NT$ ${remaining.toLocaleString()}，需再賣出 ${topOver.displayName} 補足
-                </div>
+                <div class="rb-suggest-title">建議將現金換置成 ${under.displayName}</div>
+                <div class="rb-suggest-desc">建議將現金的 NT$ ${needed.toLocaleString()} 換置成 ${under.displayName}</div>
               </div>
               <div class="rb-suggest-arrow">›</div>
             </div>`;
-        }
-        if (topOver) {
-          html += `
-            <div class="rb-suggest-card sell">
-              <div class="rb-suggest-icon">⚠</div>
-              <div class="rb-suggest-body">
-                <div class="rb-suggest-title">建議賣出 ${topOver.displayName} 購入 ${under.displayName}</div>
-                <div class="rb-suggest-desc">
-                  現金不足，${topOver.displayName} 占比最高（${topOver.pct.toFixed(1)}%）：建議賣出 NT$ ${remaining.toLocaleString()}<br>
-                  用以購入 ${under.displayName}，調整後各資產將回到 25.0%
-                </div>
-              </div>
-              <div class="rb-suggest-arrow">›</div>
-            </div>`;
-        }
-      }
-    });
+        } else {
+          const topOver = pcts.filter(a => a.key !== 'CASH' && a.key !== under.key).sort((a,b) => b.current - a.current)[0];
+          const sellAmt = topOver ? Math.round(needed - cashAmt) : 0;
 
-    // ── 規則 2：有資產高於35%，但無資產低於15% ──
-    if (underList.length === 0) {
+          if (cashAmt > 0) {
+            html += `
+              <div class="rb-suggest-card buy">
+                <div class="rb-suggest-icon">⚠</div>
+                <div class="rb-suggest-body">
+                  <div class="rb-suggest-title">建議將現金換置成 ${under.displayName}</div>
+                  <div class="rb-suggest-desc">建議將現金的 NT$ ${cashAmt.toLocaleString()} 換置成 ${under.displayName}</div>
+                </div>
+                <div class="rb-suggest-arrow">›</div>
+              </div>`;
+          }
+          if (topOver && sellAmt > 0) {
+            html += `
+              <div class="rb-suggest-card sell">
+                <div class="rb-suggest-icon">⚠</div>
+                <div class="rb-suggest-body">
+                  <div class="rb-suggest-title">建議將 ${topOver.displayName} 換置成 ${under.displayName}</div>
+                  <div class="rb-suggest-desc">建議將 ${topOver.displayName} 的 NT$ ${sellAmt.toLocaleString()} 換置成 ${under.displayName}</div>
+                </div>
+                <div class="rb-suggest-arrow">›</div>
+              </div>`;
+          }
+        }
+      });
+
+    } else if (overList.length > 0) {
+      // 有資產過多 → 換回現金
       overList.forEach(over => {
         const sellAmt = Math.round(over.current - targetVal);
         html += `
           <div class="rb-suggest-card sell">
             <div class="rb-suggest-icon">⚠</div>
             <div class="rb-suggest-body">
-              <div class="rb-suggest-title">建議賣出 ${over.displayName} 換回現金</div>
-              <div class="rb-suggest-desc">
-                ${over.displayName} 占比過高（${over.pct.toFixed(1)}%）：建議賣出 NT$ ${sellAmt.toLocaleString()} 換回現金<br>
-                調整後 ${over.displayName} 將回到 25.0%
-              </div>
+              <div class="rb-suggest-title">建議將 ${over.displayName} 換置成現金</div>
+              <div class="rb-suggest-desc">建議將 ${over.displayName} 的 NT$ ${sellAmt.toLocaleString()} 換置成現金</div>
             </div>
             <div class="rb-suggest-arrow">›</div>
           </div>`;
       });
-    }
-
-    // ── 規則 3：現金高於35% → 將多餘現金分配給低於25%的資產，盡可能讓所有資產回到25% ──
-    if (cash && cash.pct > SAFE_MAX) {
-      let remainingCash = cash.current; // 可用現金總量
-      // 找出所有低於 25% 的非現金資產，依佔比由低到高排序
-      const needBuy = pcts
-        .filter(a => a.key !== 'CASH' && a.current < targetVal)
-        .sort((a, b) => a.pct - b.pct);
-
-      needBuy.forEach(a => {
-        const needed = Math.round(targetVal - a.current); // 該資產要達到25%需要多少
-        const useAmt = Math.min(needed, remainingCash);   // 實際可用金額
-        if (useAmt <= 0) return;
-        remainingCash -= useAmt;
-        const afterPct = ((a.current + useAmt) / total * 100).toFixed(1);
-        html += `
-          <div class="rb-suggest-card buy">
-            <div class="rb-suggest-icon">⚠</div>
-            <div class="rb-suggest-body">
-              <div class="rb-suggest-title">建議現金購入 ${a.displayName}</div>
-              <div class="rb-suggest-desc">
-                現金占比過高（${cash.pct.toFixed(1)}%）：建議使用現金 NT$ ${useAmt.toLocaleString()} 購入 ${a.displayName}<br>
-                調整後 ${a.displayName} 將回到 ${afterPct}%
-              </div>
-            </div>
-            <div class="rb-suggest-arrow">›</div>
-          </div>`;
-      });
-    }
-
-    // ── 規則 4：現金低於15% → 賣出最高佔比資產補至25%（同佔比按 BTC > 0050 > 黃金）──
-    if (cash && cash.pct < SAFE_MIN) {
-      const needed   = Math.round(targetVal - cash.current);
-      const sellFrom = sortedForSell[0]; // 佔比最高且依優先順序排序
-      if (sellFrom) {
-        html += `
-          <div class="rb-suggest-card sell">
-            <div class="rb-suggest-icon">⚠</div>
-            <div class="rb-suggest-body">
-              <div class="rb-suggest-title">建議賣出 ${sellFrom.displayName} 補充現金</div>
-              <div class="rb-suggest-desc">
-                現金占比過低（${cash.pct.toFixed(1)}%）：建議賣出 ${sellFrom.displayName} NT$ ${needed.toLocaleString()} 換回現金<br>
-                調整後現金將回到 25.0%
-              </div>
-            </div>
-            <div class="rb-suggest-arrow">›</div>
-          </div>`;
-      }
     }
 
     suggestBox.style.display = 'flex';
     suggestBox.innerHTML = html;
+
+    // 點擊建議卡片 → 跳到交易頁
+    suggestBox.querySelectorAll('.rb-suggest-card').forEach(card => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        showPage('export', '交易');
+        navItems.forEach(i => i.classList.toggle('active', i.getAttribute('data-target') === 'export'));
+      });
+    });
   }
 }
 
@@ -3246,6 +3217,7 @@ function updateOverviewAmounts() {
   }));
   const rbPage = document.getElementById('rebalance');
   if (rbPage && rbPage.style.display !== 'none') renderRebalance();
+  calcUnrealizedPnl();
 }
 
 // 更新總覽頁所有分類數據（mini-card、legend、donut、市場行情）
@@ -3341,7 +3313,49 @@ function updateOverview() {
   if (rbPage && rbPage.style.display !== 'none') renderRebalance();
 }
 
-// ===== 市場行情報價 =====
+// ===== 未實現損益計算 =====
+function calcUnrealizedPnl() {
+  let totalCost   = 0;
+  let totalMarket = 0;
+  let hasPrice    = false;
+
+  document.querySelectorAll('#trade-list .trade-card').forEach(card => {
+    const qty         = parseFloat(card.getAttribute('data-qty'))          || 0;
+    const cost        = parseFloat(card.getAttribute('data-cost'))         || 0;
+    const marketPrice = parseFloat(card.getAttribute('data-market-price'));
+    const tag         = card.querySelector('.trade-tag')?.textContent.trim();
+
+    // 現金不算損益
+    if (tag === '現金') {
+      totalCost   += cost;
+      totalMarket += cost; // 現金市值 = 成本
+      return;
+    }
+
+    totalCost += cost;
+
+    if (!isNaN(marketPrice) && marketPrice > 0 && qty > 0) {
+      totalMarket += Math.round(marketPrice * qty);
+      hasPrice = true;
+    } else {
+      totalMarket += cost; // 無報價時視為損益 0
+    }
+  });
+
+  const deltaEl = document.querySelector('.overview-balance .delta');
+  if (!deltaEl) return;
+
+  if (!hasPrice || totalCost === 0) {
+    deltaEl.innerHTML = `未實現損益 <span>--</span>`;
+    return;
+  }
+
+  const pnl    = totalMarket - totalCost;
+  const pnlPct = (pnl / totalCost * 100).toFixed(2);
+  const sign   = pnl >= 0 ? '+' : '';
+  const cls    = pnl >= 0 ? 'up' : 'down';
+  deltaEl.innerHTML = `未實現損益 <span class="${cls}">${sign}${pnl.toLocaleString()}</span> (<span class="${cls}">${sign}${pnlPct}%</span>)`;
+}
 let _priceDebounceTimer = null;
 function scheduleFetchPrices(delay = 800) {
   clearTimeout(_priceDebounceTimer);
