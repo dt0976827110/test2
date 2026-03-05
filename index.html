@@ -10,7 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="ACS"/>
 <meta name="mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#0b0b0b"/>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)"/>
 
 <!-- Icons -->
 <link href="logo(3).png" rel="apple-touch-icon"/>
@@ -396,7 +397,48 @@ body.dark .hist-cell-value { color: #ddd; }
 }
 body.dark .hist-filter-btn { border-color: #333; color: #aaa; }
 body.dark .hist-filter-btn.active { background: #eee; color: #1E2A38; border-color: #eee; }
-body.dark #hist-date-from, body.dark #hist-date-to { background: #2a2a2a; border-color: #444; color: #eee; }
+.hist-date-input-wrap {
+  flex: 1; display: flex; align-items: center; gap: 6px;
+  background: #f7f7f7; border-radius: 12px; padding: 10px 14px;
+  border: 1.5px solid #e8e8e8; cursor: pointer;
+}
+.hist-date-label {
+  font-size: 12px; font-weight: 600; color: #aaa; white-space: nowrap;
+}
+.hist-date-display {
+  flex: 1; font-size: 14px; font-weight: 600; color: #1E2A38;
+}
+.hist-date-display.placeholder { color: #ccc; font-weight: 400; }
+body.dark .hist-date-input-wrap { background: #2a2a2a; border-color: #3a3a3a; }
+body.dark .hist-date-display { color: #eee; }
+body.dark #hist-month-grid button { color: #fff; }
+
+/* 月曆浮窗 */
+.hist-cal-inner { background: #fff; }
+body.dark .hist-cal-inner { background: #1E2A38; }
+
+.hist-cal-nav-btn {
+  background: #f0f0f0; border: none; width: 36px; height: 36px;
+  border-radius: 50%; font-size: 18px; cursor: pointer;
+  color: #1E2A38; display: flex; align-items: center; justify-content: center;
+}
+body.dark .hist-cal-nav-btn { background: rgba(255,255,255,0.1); color: #fff; }
+
+.hist-cal-title-btn {
+  font-size: 16px; font-weight: 800; color: #1E2A38;
+  cursor: pointer; padding: 6px 16px; border-radius: 20px;
+  background: #f0f0f0;
+}
+body.dark .hist-cal-title-btn { color: #fff; background: rgba(255,255,255,0.1); }
+
+.hist-cal-cancel-btn {
+  width: 100%; margin-top: 20px; padding: 14px; border-radius: 14px;
+  border: none; background: #f0f0f0; font-size: 15px; font-weight: 600;
+  color: #888; cursor: pointer;
+}
+body.dark .hist-cal-cancel-btn { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+.hist-cal-wday { font-size: 12px; color: #aaa; padding: 4px 0; }
+body.dark .hist-cal-wday { color: rgba(255,255,255,0.35); }
 .hist-total-value { color: #e8706f; }
 .hist-type.sell ~ .hist-total-value { color: #77a478; }
 
@@ -1000,7 +1042,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
   </div>
 
   <!-- 時間篩選 -->
-  <div id="history-filter" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+  <div id="history-filter" style="display:flex;gap:8px;margin-bottom:14px;justify-content:center;align-items:center;">
     <button class="hist-filter-btn active" data-days="7">7天</button>
     <button class="hist-filter-btn" data-days="30">30天</button>
     <button class="hist-filter-btn" data-days="90">90天</button>
@@ -1008,10 +1050,38 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
     <button class="hist-filter-btn" data-days="custom" id="hist-custom-btn">自訂</button>
   </div>
   <!-- 自訂日期區間 -->
-  <div id="hist-custom-range" style="display:none;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
-    <input type="date" id="hist-date-from" style="flex:1;padding:8px 10px;border-radius:10px;border:1.5px solid #ddd;font-size:13px;background:#f7f7f7;color:#333;min-width:120px;">
-    <span style="color:#aaa;font-size:13px;">至</span>
-    <input type="date" id="hist-date-to" style="flex:1;padding:8px 10px;border-radius:10px;border:1.5px solid #ddd;font-size:13px;background:#f7f7f7;color:#333;min-width:120px;">
+  <div id="hist-custom-range" style="display:none;gap:8px;margin-bottom:14px;align-items:center;">
+    <div class="hist-date-input-wrap" id="hist-from-wrap" onclick="openDatePicker('from')">
+      <span class="hist-date-display placeholder" id="hist-from-display">選擇日期</span>
+    </div>
+    <span style="color:#aaa;font-size:13px;flex-shrink:0;">至</span>
+    <div class="hist-date-input-wrap" id="hist-to-wrap" onclick="openDatePicker('to')">
+      <span class="hist-date-display placeholder" id="hist-to-display">選擇日期</span>
+    </div>
+  </div>
+
+  <!-- 自訂月曆浮窗 -->
+  <div id="hist-cal-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);" onclick="if(event.target===this)closeDatePicker()">
+    <div id="hist-cal-inner" style="position:absolute;left:0;right:0;bottom:0;border-radius:24px 24px 0 0;padding:24px 20px 36px;" class="hist-cal-inner">
+      <!-- 標題列 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <button onclick="calNav(-1)" class="hist-cal-nav-btn">‹</button>
+        <span id="hist-cal-title" class="hist-cal-title-btn" onclick="toggleMonthPicker()"></span>
+        <button onclick="calNav(1)" class="hist-cal-nav-btn">›</button>
+      </div>
+      <!-- 月份選擇器 -->
+      <div id="hist-month-picker" style="display:none;margin-bottom:8px;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;" id="hist-month-grid"></div>
+      </div>
+      <!-- 星期標題 -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:8px;" id="hist-cal-weekrow">
+        <span class="hist-cal-wday">日</span><span class="hist-cal-wday">一</span><span class="hist-cal-wday">二</span>
+        <span class="hist-cal-wday">三</span><span class="hist-cal-wday">四</span><span class="hist-cal-wday">五</span>
+        <span class="hist-cal-wday">六</span>
+      </div>
+      <div id="hist-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;"></div>
+      <button onclick="closeDatePicker()" class="hist-cal-cancel-btn">取消</button>
+    </div>
   </div>
 
   <!-- 載入狀態 -->
@@ -1639,14 +1709,139 @@ document.querySelectorAll('.hist-filter-btn').forEach(btn => {
   });
 });
 
-document.getElementById('hist-date-from').addEventListener('change', e => {
-  _histDateFrom = e.target.value;
-  applyHistoryFilter();
+document.getElementById('hist-date-from') && document.getElementById('hist-date-from').addEventListener('change', e => {
+  _histDateFrom = e.target.value; applyHistoryFilter();
 });
-document.getElementById('hist-date-to').addEventListener('change', e => {
-  _histDateTo = e.target.value;
-  applyHistoryFilter();
+document.getElementById('hist-date-to') && document.getElementById('hist-date-to').addEventListener('change', e => {
+  _histDateTo = e.target.value; applyHistoryFilter();
 });
+
+// ===== 自訂月曆 =====
+let _calTarget = null; // 'from' | 'to'
+let _calYear = new Date().getFullYear();
+let _calMonth = new Date().getMonth();
+
+function openDatePicker(target) {
+  _calTarget = target;
+  const now = new Date();
+  _calYear  = now.getFullYear();
+  _calMonth = now.getMonth();
+  renderCal();
+  document.getElementById('hist-cal-modal').style.display = 'block';
+}
+function closeDatePicker() {
+  document.getElementById('hist-cal-modal').style.display = 'none';
+}
+function calNav(dir) {
+  _calMonth += dir;
+  if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+  if (_calMonth < 0)  { _calMonth = 11; _calYear--; }
+  renderCal();
+}
+function toggleMonthPicker() {
+  const mp = document.getElementById('hist-month-picker');
+  const days = document.getElementById('hist-cal-days');
+  const weekRow = days.previousElementSibling;
+  const isOpen = mp.style.display !== 'none';
+  if (isOpen) {
+    mp.style.display = 'none';
+    days.style.display = 'grid';
+    if (weekRow) weekRow.style.display = 'grid';
+  } else {
+    renderMonthPicker();
+    mp.style.display = 'block';
+    days.style.display = 'none';
+    if (weekRow) weekRow.style.display = 'none';
+  }
+}
+
+function renderMonthPicker() {
+  const grid = document.getElementById('hist-month-grid');
+  grid.innerHTML = '';
+  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  months.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = m;
+    const isActive = i === _calMonth;
+    const isDark = document.body.classList.contains('dark');
+    btn.style.cssText = `
+      padding: 12px 4px; border-radius: 12px; border: none; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+      background: ${isActive ? '#e8706f' : isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0'};
+      color: ${isActive ? '#fff' : isDark ? 'rgba(255,255,255,0.75)' : '#1E2A38'};
+      transition: all 0.15s;
+    `;
+    btn.onclick = () => {
+      _calMonth = i;
+      document.getElementById('hist-month-picker').style.display = 'none';
+      const days = document.getElementById('hist-cal-days');
+      const weekRow = days.previousElementSibling;
+      days.style.display = 'grid';
+      if (weekRow) weekRow.style.display = 'grid';
+      renderCal();
+    };
+    grid.appendChild(btn);
+  });
+
+  // 年份切換
+  const yearRow = document.createElement('div');
+  yearRow.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px;';
+  yearRow.innerHTML = `
+    <button onclick="_calYear--;renderMonthPicker()" style="background:rgba(255,255,255,0.1);border:none;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;">‹</button>
+    <span style="font-size:15px;font-weight:800;color:#fff;">${_calYear}年</span>
+    <button onclick="_calYear++;renderMonthPicker()" style="background:rgba(255,255,255,0.1);border:none;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;">›</button>
+  `;
+  grid.appendChild(yearRow);
+}
+
+function renderCal() {
+  document.getElementById('hist-cal-title').innerHTML = `${_calYear}年${_calMonth+1}月 <span style="font-size:11px;opacity:0.5;">▾</span>`;
+  const container = document.getElementById('hist-cal-days');
+  container.innerHTML = '';
+  const first = new Date(_calYear, _calMonth, 1).getDay();
+  const days  = new Date(_calYear, _calMonth + 1, 0).getDate();
+  const today = new Date();
+  const selFrom = _histDateFrom ? new Date(_histDateFrom + 'T00:00:00') : null;
+  const selTo   = _histDateTo   ? new Date(_histDateTo   + 'T00:00:00') : null;
+
+  for (let i = 0; i < first; i++) {
+    container.appendChild(Object.assign(document.createElement('span'), {}));
+  }
+  for (let d = 1; d <= days; d++) {
+    const btn = document.createElement('button');
+    const thisDate = new Date(_calYear, _calMonth, d);
+    const isToday = thisDate.toDateString() === today.toDateString();
+    const isSelected = (selFrom && thisDate.toDateString() === selFrom.toDateString()) ||
+                       (selTo   && thisDate.toDateString() === selTo.toDateString());
+    btn.textContent = d;
+    const isDark = document.body.classList.contains('dark');
+    btn.style.cssText = `
+      border:none; border-radius:50%; width:38px; height:38px;
+      font-size:14px; font-weight:${isToday ? '700' : '500'};
+      cursor:pointer; transition:all 0.15s; margin:0 auto; display:block;
+      background:${isSelected ? '#e8706f' : 'transparent'};
+      color:${isSelected ? '#fff' : isToday ? '#e8706f' : isDark ? 'rgba(255,255,255,0.85)' : '#1E2A38'};
+      outline:${isToday && !isSelected ? '1.5px solid #e8706f' : 'none'};
+    `;
+    btn.onclick = () => {
+      const val = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if (_calTarget === 'from') {
+        _histDateFrom = val;
+        const el = document.getElementById('hist-from-display');
+        el.textContent = `${_calYear}/${_calMonth+1}/${d}`;
+        el.classList.remove('placeholder');
+      } else {
+        _histDateTo = val;
+        const el = document.getElementById('hist-to-display');
+        el.textContent = `${_calYear}/${_calMonth+1}/${d}`;
+        el.classList.remove('placeholder');
+      }
+      closeDatePicker();
+      applyHistoryFilter();
+    };
+    container.appendChild(btn);
+  }
+}
 
 // ===== 返回按鈕 =====
 backButton.addEventListener('click', () => {
@@ -2232,6 +2427,7 @@ function drawRbRing(canvasId, pct, color, isSafe) {
 
 function renderRebalance() {
   const assets = window.rbAssets;
+  if (!assets || assets.length === 0) return;
   const total  = assets.reduce((s, a) => s + a.current, 0) || 1;
   const SAFE_MIN = 15, SAFE_MAX = 35;
 
@@ -3008,6 +3204,8 @@ function updateOverviewAmounts() {
     key, displayName: CAT_INFO[key].label, color: CAT_INFO[key].color,
     current: val, start: val
   }));
+  const rbPage = document.getElementById('rebalance');
+  if (rbPage && rbPage.style.display !== 'none') renderRebalance();
 }
 
 // 更新總覽頁所有分類數據（mini-card、legend、donut、市場行情）
@@ -3095,8 +3293,12 @@ function updateOverview() {
   // rbAssets 同步給再平衡頁（以分類為單位）
   window.rbAssets = Object.entries(cats).map(([key, val]) => ({
     key, displayName: CAT_INFO[key].label, color: CAT_INFO[key].color,
-    current: val, start: val // 無起始值時以現值為基準
+    current: val, start: val
   }));
+
+  // 若再平衡頁正在顯示，即時刷新
+  const rbPage = document.getElementById('rebalance');
+  if (rbPage && rbPage.style.display !== 'none') renderRebalance();
 }
 
 // ===== 市場行情報價 =====
