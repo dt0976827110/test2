@@ -3118,7 +3118,10 @@ function setTheme(mode) {
 }
 // 讀取上次主題
 const savedTheme = (() => { try { return localStorage.getItem('acs_theme'); } catch(e) { return null; } })();
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => setTheme(savedTheme || 'system'));
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  const current = (() => { try { return localStorage.getItem('acs_theme'); } catch(e) { return null; } })();
+  if (!current || current === 'system') setTheme('system');
+});
 setTheme(savedTheme || 'system');
 // 同步主題選單顯示
 if (savedTheme) {
