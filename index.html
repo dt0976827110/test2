@@ -652,6 +652,21 @@ body.dark .trade-add-btn { background: #2a2a2a; color: #eee; }
 
 .trade-list { display: flex; flex-direction: column; gap: 10px; }
 
+/* 分類篩選 */
+.trade-cat-tabs {
+  display: flex; gap: 8px; margin-bottom: 14px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.trade-cat-tabs::-webkit-scrollbar { display: none; }
+.trade-cat-btn {
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: none;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  background: #f0f0f0; color: #888; transition: all 0.2s;
+}
+body.dark .trade-cat-btn { background: #2a2a2a; color: #888; }
+.trade-cat-btn.active { background: #e8706f; color: #fff; }
+body.dark .trade-cat-btn.active { background: #e8706f; color: #fff; }
+
 .trade-card {
   display: flex; align-items: center; flex-wrap: wrap;
   background: #fff; border-radius: 16px;
@@ -680,8 +695,8 @@ body.dark .trade-expand-item { background: #2a2a2a; }
 .trade-expand-label { font-size: 10px; color: #aaa; font-weight: 500; margin-bottom: 4px; }
 .trade-expand-value { font-size: 14px; font-weight: 800; color: #1E2A38; }
 body.dark .trade-expand-value { color: #eee; }
-.trade-expand-value.up   { color: #e8706f; }
-.trade-expand-value.down { color: #77a478; }
+.trade-expand-value.up   { color: #e8706f !important; }
+.trade-expand-value.down { color: #77a478 !important; }
 
 .trade-adjust-btn {
   width: 100%; padding: 12px; border-radius: 12px; border: none;
@@ -716,8 +731,8 @@ body.dark .trade-tag { background: #2a2a2a; color: #aaa; }
 .trade-col + .trade-col { border-left: 1px solid #f0f0f0; padding-left: 10px; }
 body.dark .trade-col + .trade-col { border-left-color: #2a2a2a; }
 .trade-avg        { font-size: 13px; font-weight: 700; color: #1E2A38; }
-.trade-avg.up     { color: #e8706f; }
-.trade-avg.down   { color: #77a478; }
+.trade-avg.up     { color: #e8706f !important; }
+.trade-avg.down   { color: #77a478 !important; }
 body.dark .trade-avg { color: #eee; }
 .trade-total { font-size: 13px; font-weight: 700; color: #1E2A38; }
 body.dark .trade-total { color: #eee; }
@@ -1163,6 +1178,15 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
         <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
       </svg>
     </button>
+  </div>
+
+  <!-- 分類篩選 -->
+  <div class="trade-cat-tabs">
+    <button class="trade-cat-btn active" data-cat="ALL">全部</button>
+    <button class="trade-cat-btn" data-cat="加密貨幣">加密貨幣</button>
+    <button class="trade-cat-btn" data-cat="ETF/股票">ETF/股票</button>
+    <button class="trade-cat-btn" data-cat="貴金屬">貴金屬</button>
+    <button class="trade-cat-btn" data-cat="現金">現金</button>
   </div>
 
   <!-- 欄位標題 -->
@@ -1877,11 +1901,27 @@ backButton.addEventListener('click', () => {
 });
 
 // ===== 交易頁面搜尋 =====
-document.getElementById('trade-search').addEventListener('input', function() {
-  const q = this.value.trim().toLowerCase();
-  document.querySelectorAll('.trade-card').forEach(card => {
+let _tradeCatFilter = 'ALL';
+
+function filterTradeCards() {
+  const q = document.getElementById('trade-search').value.trim().toLowerCase();
+  document.querySelectorAll('#trade-list .trade-card').forEach(card => {
     const name = card.getAttribute('data-name').toLowerCase();
-    card.style.display = (!q || name.includes(q)) ? '' : 'none';
+    const tag  = card.querySelector('.trade-tag')?.textContent.trim() || '';
+    const matchSearch = !q || name.includes(q);
+    const matchCat    = _tradeCatFilter === 'ALL' || tag === _tradeCatFilter;
+    card.style.display = (matchSearch && matchCat) ? '' : 'none';
+  });
+}
+
+document.getElementById('trade-search').addEventListener('input', filterTradeCards);
+
+document.querySelectorAll('.trade-cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.trade-cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _tradeCatFilter = btn.dataset.cat;
+    filterTradeCards();
   });
 });
 
@@ -2364,7 +2404,7 @@ function executeTrade() {
     const costEl   = card.querySelector('.trade-expand-cost');
     const expAvgEl = card.querySelector('.trade-expand-avg');
     const pnlEl    = card.querySelector('.trade-expand-pnl');
-    if (costEl) costEl.textContent = 'NT$ ' + newCost.toLocaleString();
+    if (costEl) costEl.textContent = newCost.toLocaleString();
     if (expAvgEl) expAvgEl.textContent = (newQtyRounded > 0 && newCost > 0) ? smartNum(newCost / newQtyRounded) : '--';
     if (pnlEl && newCost > 0 && newQtyRounded > 0) {
       const mp2 = parseFloat(card.getAttribute('data-market-price')) || price;
@@ -2836,14 +2876,14 @@ function buildTradeCard(name, type, qty, value) {
       </div>
     </div>
     <div class="trade-card-right">
-      <div class="trade-col"><div class="trade-avg">--</div><div class="trade-label">P/L%</div></div>
+      <div class="trade-col"><div class="trade-avg">--</div></div>
       <div class="trade-col"><div class="trade-total">--</div><div class="trade-label">現有價值</div></div>
     </div>
     <div class="trade-card-expand">
       <div class="trade-expand-rows">
         <div class="trade-expand-item">
           <div class="trade-expand-label">資產總成本</div>
-          <div class="trade-expand-value trade-expand-cost">NT$ ${costNum.toLocaleString()}</div>
+          <div class="trade-expand-value trade-expand-cost">${costNum.toLocaleString()}</div>
         </div>
         <div class="trade-expand-item">
           <div class="trade-expand-label">持有均價</div>
@@ -3137,6 +3177,22 @@ const CAT_INFO = {
   METAL:  { label: '貴金屬',   color: '#dfb199' },
   FIAT:   { label: '現金',     color: '#9eb995' },
 };
+
+// ===== 總覽分類卡片點擊 → 跳轉交易頁對應分類 =====
+document.querySelectorAll('.overview-grid .mini-card').forEach(card => {
+  card.style.cursor = 'pointer';
+  card.addEventListener('click', () => {
+    const catKey   = card.dataset.cat;
+    const catLabel = CAT_INFO[catKey]?.label || 'ALL';
+    showPage('export', '交易');
+    navItems.forEach(i => i.classList.toggle('active', i.getAttribute('data-target') === 'export'));
+    _tradeCatFilter = catLabel;
+    document.querySelectorAll('.trade-cat-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.cat === catLabel);
+    });
+    filterTradeCards();
+  });
+});
 
 // 從交易頁卡片讀取各分類總值
 function getTradeCategories() {
