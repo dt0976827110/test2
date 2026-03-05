@@ -582,6 +582,32 @@ body.dark .ap-dropdown-item:active, body.dark .ap-dropdown-item.selected { backg
 .ap-form { display: flex; flex-direction: column; gap: 14px; width: 100%; margin-bottom: 24px; }
 .ap-field { display: flex; flex-direction: column; gap: 6px; }
 .ap-label { font-size: 12px; font-weight: 700; color: #888; padding-left: 2px; }
+.ap-label-wrap { display: flex; align-items: center; gap: 6px; }
+.ap-help-btn {
+  width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #aaa;
+  background: none; color: #aaa; font-size: 10px; font-weight: 800;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  padding: 0; line-height: 1; flex-shrink: 0;
+}
+body.dark .ap-help-btn { border-color: #666; color: #666; }
+.ap-help-popup {
+  display: none; position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 24px;
+}
+.ap-help-popup.show { display: flex; }
+.ap-help-box {
+  background: #fff; border-radius: 16px; padding: 22px 20px; width: 100%; max-width: 300px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2); font-size: 14px; color: #444; line-height: 1.7;
+}
+body.dark .ap-help-box { background: #1e1e1e; color: #ccc; }
+.ap-help-box strong { color: #1E2A38; font-weight: 800; display: block; margin-bottom: 8px; font-size: 15px; }
+body.dark .ap-help-box strong { color: #eee; }
+.ap-help-close {
+  display: block; margin-top: 16px; width: 100%; padding: 11px;
+  border-radius: 12px; border: none; background: #f0f0f0; color: #555;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+body.dark .ap-help-close { background: #2a2a2a; color: #eee; }
 .ap-input {
   width: 100%; padding: 13px 14px; border-radius: 12px; border: none; outline: none;
   font-size: 15px; color: #1E2A38;
@@ -1576,12 +1602,18 @@ function doGet(e) {
     </div>
 
     <div class="ap-field">
-      <label class="ap-label">原持有量</label>
+      <div class="ap-label-wrap">
+        <label class="ap-label">原持有量</label>
+        <button class="ap-help-btn" onclick="document.getElementById('help-qty-popup').classList.add('show')">?</button>
+      </div>
       <input class="ap-input" id="ap-qty" type="number" placeholder="例：0.5、100、3.2"/>
     </div>
 
     <div class="ap-field">
-      <label class="ap-label">購入成本 (NT$)</label>
+      <div class="ap-label-wrap">
+        <label class="ap-label">購入成本 (NT$)</label>
+        <button class="ap-help-btn" onclick="document.getElementById('help-value-popup').classList.add('show')">?</button>
+      </div>
       <input class="ap-input" id="ap-value" type="number" placeholder="例：125000"/>
     </div>
 
@@ -1636,11 +1668,17 @@ function doGet(e) {
 
   <div class="td-form">
     <div class="ap-field">
-      <label class="ap-label">價格（NT$）</label>
+      <div class="ap-label-wrap">
+        <label class="ap-label">價格（NT$）</label>
+        <button class="ap-help-btn" onclick="document.getElementById('help-td-price-popup').classList.add('show')">?</button>
+      </div>
       <input class="ap-input" id="td-price" type="number" placeholder="輸入成交價格"/>
     </div>
     <div class="ap-field">
-      <label class="ap-label">數量</label>
+      <div class="ap-label-wrap">
+        <label class="ap-label">數量</label>
+        <button class="ap-help-btn" onclick="document.getElementById('help-td-qty-popup').classList.add('show')">?</button>
+      </div>
       <input class="ap-input" id="td-qty-input" type="number" placeholder="輸入交易數量"/>
     </div>
 
@@ -1664,6 +1702,93 @@ function doGet(e) {
     <div style="display:flex; gap:10px;">
       <button id="delete-confirm-cancel" style="flex:1; padding:13px; border-radius:12px; border:none; background:#f0f0f0; color:#555; font-size:15px; font-weight:700; cursor:pointer;">取消</button>
       <button id="delete-confirm-ok" style="flex:1; padding:13px; border-radius:12px; border:none; background:#e8706f; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 說明浮窗：原持有量 -->
+<div id="help-qty-popup" class="ap-help-popup">
+  <div class="ap-help-box">
+    <strong>原持有量</strong>
+    填入你目前已持有的數量。<br>
+    單位依商品種類而定：<br>
+    ・加密貨幣：幣數（如 0.5 BTC）<br>
+    ・ETF/股票：股數（如 100 股）<br>
+    ・黃金：公克（如 3.75 克）<br>
+    ・現金：台幣金額（如 50000）<br>
+    若是全新商品，可填 0。
+    <button class="ap-help-close" onclick="document.getElementById('help-qty-popup').classList.remove('show')">了解</button>
+  </div>
+</div>
+
+<!-- 說明浮窗：購入成本 -->
+<div id="help-value-popup" class="ap-help-popup">
+  <div class="ap-help-box">
+    <strong>購入成本 (NT$)</strong>
+    填入你購買此資產所花費的<b>總金額</b>（台幣）。<br><br>
+    例如：<br>
+    ・買了 0.5 BTC，花了 NT$ 800,000，就填 800000<br>
+    ・買了 100 股 ETF，花了 NT$ 20,000，就填 20000<br><br>
+    系統會用此金額計算持有均價與損益。
+    <button class="ap-help-close" onclick="document.getElementById('help-value-popup').classList.remove('show')">了解</button>
+  </div>
+</div>
+
+<!-- 說明浮窗：交易價格 -->
+<div id="help-td-price-popup" class="ap-help-popup">
+  <div class="ap-help-box">
+    <strong>價格（NT$）</strong>
+    填入此次交易的<b>單價</b>（每單位的台幣價格）。<br><br>
+    例如：<br>
+    ・BTC 現在 NT$ 1,600,000 一顆，就填 1600000<br>
+    ・股票每股 NT$ 200，就填 200<br><br>
+    系統會自動換算總交易金額。
+    <button class="ap-help-close" onclick="document.getElementById('help-td-price-popup').classList.remove('show')">了解</button>
+  </div>
+</div>
+
+<!-- 說明浮窗：交易數量 -->
+<div id="help-td-qty-popup" class="ap-help-popup">
+  <div class="ap-help-box">
+    <strong>數量</strong>
+    填入此次交易的<b>數量</b>。<br>
+    單位與商品種類相同：<br>
+    ・加密貨幣：幣數（如 0.1）<br>
+    ・ETF/股票：股數（如 50）<br>
+    ・黃金：公克（如 1.25）<br>
+    ・現金：台幣金額（如 10000）
+    <button class="ap-help-close" onclick="document.getElementById('help-td-qty-popup').classList.remove('show')">了解</button>
+  </div>
+</div>
+
+<!-- 解除綁定確認浮窗 -->
+<div id="unbind-confirm-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#fff; border-radius:20px; padding:28px 24px; width:100%; max-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div id="unbind-confirm-title" style="font-size:18px; font-weight:800; color:#1E2A38; margin-bottom:12px;">確定解除綁定？</div>
+    <div style="font-size:14px; color:#666; line-height:1.6; margin-bottom:24px;">
+      解除後將無法讀取或寫入 Google Sheet，重新開啟 App 後本機資料將無法還原。
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button id="unbind-confirm-cancel" style="flex:1; padding:13px; border-radius:12px; border:none; background:#f0f0f0; color:#555; font-size:15px; font-weight:700; cursor:pointer;">取消</button>
+      <button id="unbind-confirm-ok" style="flex:1; padding:13px; border-radius:12px; border:none; background:#e8706f; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">確定解除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 驗證並綁定確認浮窗 -->
+<div id="bind-confirm-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; padding:24px;">
+  <div style="background:#fff; border-radius:20px; padding:28px 24px; width:100%; max-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div id="bind-confirm-title" style="font-size:18px; font-weight:800; color:#1E2A38; margin-bottom:12px;">確認綁定 Google Sheet？</div>
+    <div style="font-size:14px; color:#666; line-height:1.6; margin-bottom:24px;">
+      綁定後將自動同步以下操作到你的 Google Sheet：<br>
+      <span style="display:block; margin-top:8px;">・新增商品</span>
+      <span style="display:block;">・買入 / 賣出交易紀錄</span>
+      <span style="display:block; margin-bottom:8px;">・刪除商品</span>
+      請確認已正確部署 Apps Script 並複製了正確的網址。
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button id="bind-confirm-cancel" style="flex:1; padding:13px; border-radius:12px; border:none; background:#f0f0f0; color:#555; font-size:15px; font-weight:700; cursor:pointer;">取消</button>
+      <button id="bind-confirm-ok" style="flex:1; padding:13px; border-radius:12px; border:none; background:#4caf7d; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">確定綁定</button>
     </div>
   </div>
 </div>
@@ -2835,17 +2960,43 @@ document.getElementById('gs-bind-btn').addEventListener('click', () => {
     alert('請輸入正確的 Apps Script 網址\n（開頭應為 https://script.google.com）');
     return;
   }
-  gsScriptUrl = url;
-  try { localStorage.setItem('acs_gs_url', url); } catch(e) {}
-  updateGsUI();
-  alert('綁定成功！\n之後新增商品及交易紀錄將自動同步到你的 Google Sheet。');
+  const modal = document.getElementById('bind-confirm-modal');
+  const isDark = document.body.classList.contains('dark');
+  const box = modal.querySelector('div');
+  box.style.background = isDark ? '#1e1e1e' : '#fff';
+  document.getElementById('bind-confirm-title').style.color = isDark ? '#eee' : '#1E2A38';
+  document.getElementById('bind-confirm-cancel').style.background = isDark ? '#2a2a2a' : '#f0f0f0';
+  document.getElementById('bind-confirm-cancel').style.color = isDark ? '#eee' : '#555';
+  modal.style.display = 'flex';
+  document.getElementById('bind-confirm-ok').onclick = () => {
+    modal.style.display = 'none';
+    gsScriptUrl = url;
+    try { localStorage.setItem('acs_gs_url', url); } catch(e) {}
+    updateGsUI();
+  };
+  document.getElementById('bind-confirm-cancel').onclick = () => {
+    modal.style.display = 'none';
+  };
 });
 
 document.getElementById('gs-unbind-btn').addEventListener('click', () => {
-  gsScriptUrl = '';
-  try { localStorage.removeItem('acs_gs_url'); } catch(e) {}
-  updateGsUI();
-  alert('已解除綁定');
+  const modal = document.getElementById('unbind-confirm-modal');
+  const isDark = document.body.classList.contains('dark');
+  const box = modal.querySelector('div');
+  box.style.background = isDark ? '#1e1e1e' : '#fff';
+  document.getElementById('unbind-confirm-title').style.color = isDark ? '#eee' : '#1E2A38';
+  document.getElementById('unbind-confirm-cancel').style.background = isDark ? '#2a2a2a' : '#f0f0f0';
+  document.getElementById('unbind-confirm-cancel').style.color = isDark ? '#eee' : '#555';
+  modal.style.display = 'flex';
+  document.getElementById('unbind-confirm-ok').onclick = () => {
+    modal.style.display = 'none';
+    gsScriptUrl = '';
+    try { localStorage.removeItem('acs_gs_url'); } catch(e) {}
+    updateGsUI();
+  };
+  document.getElementById('unbind-confirm-cancel').onclick = () => {
+    modal.style.display = 'none';
+  };
 });
 
 // 寫入 Google Sheet
