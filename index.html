@@ -653,12 +653,42 @@ body.dark .trade-add-btn { background: #2a2a2a; color: #eee; }
 .trade-list { display: flex; flex-direction: column; gap: 10px; }
 
 .trade-card {
-  display: flex; align-items: center;
+  display: flex; align-items: center; flex-wrap: wrap;
   background: #fff; border-radius: 16px;
   padding: 14px 14px; gap: 10px;
   box-shadow: 0 4px 16px rgba(0,0,0,.05);
+  cursor: pointer; transition: box-shadow 0.2s;
 }
 body.dark .trade-card { background: #1e1e1e; border: 1px solid #2a2a2a; box-shadow: none; }
+
+/* 展開區 */
+.trade-card-expand {
+  display: none; width: 100%;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 6px; padding-top: 12px;
+}
+body.dark .trade-card-expand { border-top-color: #2a2a2a; }
+.trade-card.expanded .trade-card-expand { display: block; }
+
+.trade-expand-rows {
+  display: flex; gap: 10px; margin-bottom: 12px;
+}
+.trade-expand-item {
+  flex: 1; background: #f8f9fa; border-radius: 10px; padding: 10px 12px;
+}
+body.dark .trade-expand-item { background: #2a2a2a; }
+.trade-expand-label { font-size: 10px; color: #aaa; font-weight: 500; margin-bottom: 4px; }
+.trade-expand-value { font-size: 14px; font-weight: 800; color: #1E2A38; }
+body.dark .trade-expand-value { color: #eee; }
+.trade-expand-value.up   { color: #e8706f; }
+.trade-expand-value.down { color: #77a478; }
+
+.trade-adjust-btn {
+  width: 100%; padding: 12px; border-radius: 12px; border: none;
+  background: #e8706f; color: #fff; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.trade-adjust-btn:active { opacity: 0.75; }
 
 .trade-card-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 .trade-icon {
@@ -685,7 +715,9 @@ body.dark .trade-tag { background: #2a2a2a; color: #aaa; }
 .trade-col { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 76px; }
 .trade-col + .trade-col { border-left: 1px solid #f0f0f0; padding-left: 10px; }
 body.dark .trade-col + .trade-col { border-left-color: #2a2a2a; }
-.trade-avg   { font-size: 13px; font-weight: 700; color: #1E2A38; }
+.trade-avg        { font-size: 13px; font-weight: 700; color: #1E2A38; }
+.trade-avg.up     { color: #e8706f; }
+.trade-avg.down   { color: #77a478; }
 body.dark .trade-avg { color: #eee; }
 .trade-total { font-size: 13px; font-weight: 700; color: #1E2A38; }
 body.dark .trade-total { color: #eee; }
@@ -957,7 +989,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
         <span class="mh-name">商品</span>
         <span class="mh-price">最新價格</span>
         <span class="mh-change">P/L%</span>
-        <span class="mh-avg">持有均價</span>
+        <span class="mh-avg">P/L%</span>
       </div>
     </div>
   </div>
@@ -1136,7 +1168,7 @@ body.dark .dev-input:focus { border-color: #4da3ff; background: #1e1e1e; }
   <!-- 欄位標題 -->
   <div class="trade-list-header">
     <span class="tlh-name">商品 / 持有數量</span>
-    <span class="tlh-avg">持有均價</span>
+    <span class="tlh-avg">P/L%</span>
     <span class="tlh-total">現有價值</span>
   </div>
 
@@ -2178,47 +2210,56 @@ document.getElementById('ap-submit-btn').addEventListener('click', () => {
 // ===== 交易詳情頁面 =====
 let tdCurrentType = 'buy';
 
-// 點擊交易頁卡片 → 進入交易詳情
+// 點擊交易頁卡片 → 展開/折疊
 document.getElementById('trade-list').addEventListener('click', e => {
+  const adjustBtn = e.target.closest('.trade-adjust-btn');
   const card = e.target.closest('.trade-card');
   if (!card) return;
-  const nameEl  = card.querySelector('.trade-name');
-  const iconEl  = card.querySelector('.trade-icon');
-  const tagEl   = card.querySelector('.trade-tag');
-  const avgEl   = card.querySelector('.trade-avg');
-  const volEl   = card.querySelector('.trade-vol');
 
-  const name    = nameEl ? nameEl.childNodes[0].textContent.trim() : '';
-  const icon    = iconEl ? iconEl.textContent.trim() : '';
-  const iconBg  = iconEl ? iconEl.style.background : '#aaa';
-  const tag     = tagEl  ? tagEl.textContent.trim() : '';
-  const avg     = avgEl  ? avgEl.textContent.trim() : '--';
-  const qty     = card.dataset.qty || '--';
+  // 點擊「調整資產」→ 進入交易詳情
+  if (adjustBtn) {
+    const nameEl  = card.querySelector('.trade-name');
+    const iconEl  = card.querySelector('.trade-icon');
+    const tagEl   = card.querySelector('.trade-tag');
+    const avgEl   = card.querySelector('.trade-avg');
 
-  document.getElementById('td-icon').textContent   = icon;
-  document.getElementById('td-icon').style.background = iconBg;
-  document.getElementById('td-name').textContent   = name;
-  document.getElementById('td-tag').textContent    = tag;
-  document.getElementById('td-avg').textContent    = avg;
-  document.getElementById('td-qty').textContent    = qty;
+    const name    = nameEl ? nameEl.childNodes[0].textContent.trim() : '';
+    const icon    = iconEl ? iconEl.textContent.trim() : '';
+    const iconBg  = iconEl ? iconEl.style.background : '#aaa';
+    const tag     = tagEl  ? tagEl.textContent.trim() : '';
+    const avg     = avgEl  ? avgEl.textContent.trim() : '--';
+    const qty     = card.dataset.qty || '--';
 
-  // 現有價值
-  const totalEl = card.querySelector('.trade-total');
-  const currentVal = totalEl ? totalEl.textContent.trim() : '--';
-  document.getElementById('td-current-value').textContent = currentVal !== '--' ? 'NT$ ' + currentVal : '--';
-  document.getElementById('td-price').value        = '';
-  document.getElementById('td-qty-input').value    = '';
-  document.getElementById('td-result-value').textContent = 'NT$ 0';
+    document.getElementById('td-icon').textContent      = icon;
+    document.getElementById('td-icon').style.background = iconBg;
+    document.getElementById('td-name').textContent      = name;
+    document.getElementById('td-tag').textContent       = tag;
+    document.getElementById('td-avg').textContent       = avg;
+    document.getElementById('td-qty').textContent       = qty;
 
-  // 重設為買入狀態
-  tdCurrentType = 'buy';
-  document.getElementById('td-tab-buy').classList.add('active');
-  document.getElementById('td-tab-sell').classList.remove('active');
-  document.getElementById('td-confirm-btn').textContent = '確認買入';
-  document.getElementById('td-confirm-btn').style.background = '#e8706f';
-  document.getElementById('td-topbar-title').textContent = '買入';
+    const totalEl    = card.querySelector('.trade-total');
+    const currentVal = totalEl ? totalEl.textContent.trim() : '--';
+    document.getElementById('td-current-value').textContent = currentVal !== '--' ? 'NT$ ' + currentVal : '--';
+    document.getElementById('td-price').value        = '';
+    document.getElementById('td-qty-input').value    = '';
+    document.getElementById('td-result-value').textContent = 'NT$ 0';
 
-  showPage('tradedetail', name);
+    tdCurrentType = 'buy';
+    document.getElementById('td-tab-buy').classList.add('active');
+    document.getElementById('td-tab-sell').classList.remove('active');
+    document.getElementById('td-confirm-btn').textContent = '確認買入';
+    document.getElementById('td-confirm-btn').style.background = '#e8706f';
+    document.getElementById('td-topbar-title').textContent = '買入';
+
+    showPage('tradedetail', name);
+    return;
+  }
+
+  // 點擊卡片本體 → 展開/折疊
+  const isExpanded = card.classList.contains('expanded');
+  // 先折疊所有已展開的卡片
+  document.querySelectorAll('#trade-list .trade-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!isExpanded) card.classList.add('expanded');
 });
 
 // 買入/賣出切換
@@ -2308,15 +2349,31 @@ function executeTrade() {
 
     if (avgEl) {
       if (newQtyRounded <= 0) {
-        avgEl.textContent = '--';
+        avgEl.textContent = '--'; avgEl.className = 'trade-avg';
       } else {
-        const avg = newCost / newQtyRounded;
-        avgEl.textContent = smartNum(avg);
+        const tag = card.querySelector('.trade-tag')?.textContent.trim();
+        const mp  = parseFloat(card.getAttribute('data-market-price')) || price;
+        updateAvgEl(avgEl, newCost, newQtyRounded, mp, tag);
       }
     }
 
     const marketPrice = parseFloat(card.getAttribute('data-market-price')) || price;
     if (totalEl) totalEl.textContent = newQtyRounded <= 0 ? '--' : smartNum(newQtyRounded * marketPrice);
+
+    // 更新展開區
+    const costEl   = card.querySelector('.trade-expand-cost');
+    const expAvgEl = card.querySelector('.trade-expand-avg');
+    const pnlEl    = card.querySelector('.trade-expand-pnl');
+    if (costEl) costEl.textContent = 'NT$ ' + newCost.toLocaleString();
+    if (expAvgEl) expAvgEl.textContent = (newQtyRounded > 0 && newCost > 0) ? smartNum(newCost / newQtyRounded) : '--';
+    if (pnlEl && newCost > 0 && newQtyRounded > 0) {
+      const mp2 = parseFloat(card.getAttribute('data-market-price')) || price;
+      const pnl = Math.round(newQtyRounded * mp2) - newCost;
+      const sign = pnl >= 0 ? '+' : '';
+      const cls  = pnl >= 0 ? 'up' : 'down';
+      pnlEl.textContent = sign + pnl.toLocaleString();
+      pnlEl.className   = 'trade-expand-value trade-expand-pnl ' + cls;
+    }
 
     gsWrite('updateProduct', { name, qty: newQtyRounded, value: newCost });
   });
@@ -2737,6 +2794,20 @@ const CAT_COLORS   = { '加密貨幣':'#f5a623','ETF/股票':'#7396c6','貴金�
 const CAT_INITIALS = { '加密貨幣': n => n.substring(0,2).toUpperCase(), 'ETF/股票': n => n.substring(0,2).toUpperCase(), '貴金屬': () => 'Au', '現金': () => '$' };
 
 // 智慧數字格式化：有小數就顯示一位，沒有就整數
+// 計算並顯示 P/L% 到 trade-avg 元素
+function updateAvgEl(avgEl, cost, qty, marketPrice, tag) {
+  if (!avgEl) return;
+  if (qty <= 0 || cost <= 0 || tag === '現金') { avgEl.textContent = '--'; avgEl.className = 'trade-avg'; return; }
+  const market = (!isNaN(marketPrice) && marketPrice > 0) ? marketPrice * qty : null;
+  if (!market) { avgEl.textContent = '--'; avgEl.className = 'trade-avg'; return; }
+  const pnl    = market - cost;
+  const plPct  = (pnl / cost * 100).toFixed(1);
+  const sign   = pnl >= 0 ? '+' : '';
+  const cls    = pnl >= 0 ? 'up' : 'down';
+  avgEl.textContent = sign + plPct + '%';
+  avgEl.className   = 'trade-avg ' + cls;
+}
+
 function smartNum(val) {
   if (isNaN(val) || val === null) return '--';
   const num = parseFloat(val);
@@ -2751,8 +2822,6 @@ function buildTradeCard(name, type, qty, value) {
   const color   = CAT_COLORS[type] || '#aaa';
   const icon    = (CAT_INITIALS[type] ? CAT_INITIALS[type](name) : name.substring(0,2).toUpperCase());
   const costNum = parseInt(String(value).replace(/,/g,'')) || 0;
-  const DISPLAY_NAME = { 'GOLD_TW': 'GOLD' };
-  const displayName = DISPLAY_NAME[name] || name;
   const card = document.createElement('div');
   card.className = 'trade-card';
   card.setAttribute('data-name', name);
@@ -2762,13 +2831,30 @@ function buildTradeCard(name, type, qty, value) {
     <div class="trade-card-left">
       <div class="trade-icon" style="background:${color};">${icon}</div>
       <div class="trade-info">
-        <div class="trade-name">${displayName} <span class="trade-tag">${type}</span></div>
+        <div class="trade-name">${name} <span class="trade-tag">${type}</span></div>
         <div class="trade-vol">持有數量：${qty}</div>
       </div>
     </div>
     <div class="trade-card-right">
-      <div class="trade-col"><div class="trade-avg">--</div></div>
-      <div class="trade-col"><div class="trade-total">--</div></div>
+      <div class="trade-col"><div class="trade-avg">--</div><div class="trade-label">P/L%</div></div>
+      <div class="trade-col"><div class="trade-total">--</div><div class="trade-label">現有價值</div></div>
+    </div>
+    <div class="trade-card-expand">
+      <div class="trade-expand-rows">
+        <div class="trade-expand-item">
+          <div class="trade-expand-label">資產總成本</div>
+          <div class="trade-expand-value trade-expand-cost">NT$ ${costNum.toLocaleString()}</div>
+        </div>
+        <div class="trade-expand-item">
+          <div class="trade-expand-label">持有均價</div>
+          <div class="trade-expand-value trade-expand-avg">${qty > 0 && costNum > 0 ? smartNum(costNum / qty) : '--'}</div>
+        </div>
+        <div class="trade-expand-item">
+          <div class="trade-expand-label">未實現損益</div>
+          <div class="trade-expand-value trade-expand-pnl">--</div>
+        </div>
+      </div>
+      <button class="trade-adjust-btn">調整資產</button>
     </div>`;
   return card;
 }
@@ -3029,12 +3115,12 @@ setInterval(updateTime, 60000);
 // 重新計算所有卡片的持有均價（現有價值 ÷ 持有數量）
 function recalcAllAvg() {
   document.querySelectorAll('#trade-list .trade-card').forEach(card => {
-    const qty   = parseFloat(card.dataset.qty) || 0;
-    const cost  = parseFloat(card.dataset.cost) || 0;
-    const avgEl = card.querySelector('.trade-avg');
-    if (!avgEl || qty === 0) return;
-    const avg = cost / qty;
-    avgEl.textContent = smartNum(avg);
+    const qty     = parseFloat(card.dataset.qty) || 0;
+    const cost    = parseFloat(card.dataset.cost) || 0;
+    const avgEl   = card.querySelector('.trade-avg');
+    const tag     = card.querySelector('.trade-tag')?.textContent.trim();
+    const mp      = parseFloat(card.getAttribute('data-market-price'));
+    updateAvgEl(avgEl, cost, qty, mp, tag);
   });
 }
 
@@ -3188,15 +3274,15 @@ function updateOverview() {
     document.querySelectorAll('#trade-list .trade-card').forEach(card => {
       const nameEl  = card.querySelector('.trade-name');
       const tagEl   = card.querySelector('.trade-tag');
-      const avgEl   = card.querySelector('.trade-avg');
       const iconEl  = card.querySelector('.trade-icon');
       if (!nameEl) return;
       const name    = nameEl.childNodes[0].textContent.trim();
       const tag     = tagEl ? tagEl.textContent.trim() : '';
-      const avg     = avgEl ? avgEl.textContent.trim() : '--';
       const bg      = iconEl ? iconEl.style.background : '#aaa';
       const iconTxt = iconEl ? iconEl.textContent.trim() : name.substring(0,2);
-      const avgNum  = parseInt((avg || '0').replace(/,/g, '')) || 0;
+      const cost    = parseFloat(card.getAttribute('data-cost')) || 0;
+      const qty     = parseFloat(card.getAttribute('data-qty')) || 0;
+      const avgNum  = qty > 0 ? cost / qty : 0;
 
       const row = document.createElement('div');
       row.className = 'market-row';
@@ -3209,7 +3295,7 @@ function updateOverview() {
         <div class="market-name">${name}</div>
         <div class="market-price" data-avg="${avgNum}">--</div>
         <div class="market-change">--</div>
-        <div class="market-avg">${avg}</div>`;
+        <div class="market-avg">${avgNum > 0 ? smartNum(avgNum) : '--'}</div>`;
 
       if (isCrypto) {
         row.style.cursor = 'pointer';
@@ -3452,9 +3538,21 @@ function applyMarketPrices(prices) {
     if (tradeCard) {
       tradeCard.setAttribute('data-market-price', priceTwd);
       const qty     = parseFloat(tradeCard.getAttribute('data-qty')) || 0;
+      const cost    = parseFloat(tradeCard.getAttribute('data-cost')) || 0;
+      const tag     = tradeCard.querySelector('.trade-tag')?.textContent.trim();
       const totalEl = tradeCard.querySelector('.trade-total');
-      if (totalEl && qty > 0) {
-        totalEl.textContent = smartNum(qty * priceTwd);
+      const avgEl   = tradeCard.querySelector('.trade-avg');
+      if (totalEl && qty > 0) totalEl.textContent = smartNum(qty * priceTwd);
+      updateAvgEl(avgEl, cost, qty, priceTwd, tag);
+
+      // 更新展開區未實現損益
+      const pnlEl = tradeCard.querySelector('.trade-expand-pnl');
+      if (pnlEl && cost > 0 && qty > 0 && tag !== '現金') {
+        const pnl  = Math.round(qty * priceTwd) - cost;
+        const sign = pnl >= 0 ? '+' : '';
+        const cls  = pnl >= 0 ? 'up' : 'down';
+        pnlEl.textContent = sign + pnl.toLocaleString();
+        pnlEl.className   = 'trade-expand-value trade-expand-pnl ' + cls;
       }
     }
   });
