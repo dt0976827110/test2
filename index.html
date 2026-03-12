@@ -758,12 +758,11 @@ function doGet(e) {
   </div>
 
   <div class="td-form">
-    <div class="ap-field">
+    <div class="ap-field" id="td-price-field">
       <div class="ap-label-wrap">
-        <label class="ap-label">價格（NT$）</label>
-        <button class="ap-help-btn" onclick="document.getElementById('help-td-price-popup').classList.add('show')">?</button>
+        <label class="ap-label">總價（NT$）</label>
       </div>
-      <input class="ap-input" id="td-price" type="number" placeholder="輸入成交價格"/>
+      <input class="ap-input" id="td-price" type="number" placeholder="輸入總價"/>
     </div>
     <div class="ap-field">
       <div class="ap-label-wrap">
@@ -777,6 +776,11 @@ function doGet(e) {
     <div class="td-result">
       <span class="td-result-label">換算價值</span>
       <span class="td-result-value" id="td-result-value">NT$ 0</span>
+    </div>
+    <!-- 換算均價 -->
+    <div class="td-result" id="td-avg-result">
+      <span class="td-result-label">換算均價</span>
+      <span class="td-result-value" id="td-result-avg">--</span>
     </div>
   </div>
 

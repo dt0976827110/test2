@@ -600,14 +600,16 @@ document.getElementById('trade-list').addEventListener('click', e => {
     const icon    = iconEl ? iconEl.textContent.trim() : '';
     const iconBg  = iconEl ? iconEl.style.background : '#aaa';
     const tag     = tagEl  ? tagEl.textContent.trim() : '';
-    const avg     = avgEl  ? avgEl.textContent.trim() : '--';
     const qty     = card.dataset.qty || '--';
+    const cost    = parseFloat(card.getAttribute('data-cost')) || 0;
+    const qtyNum  = parseFloat(card.dataset.qty) || 0;
+    const avgPrice = (qtyNum > 0 && cost > 0) ? smartNum(cost / qtyNum) : '--';
 
     document.getElementById('td-icon').textContent      = icon;
     document.getElementById('td-icon').style.background = iconBg;
     document.getElementById('td-name').textContent      = name;
     document.getElementById('td-tag').textContent       = tag;
-    document.getElementById('td-avg').textContent       = avg;
+    document.getElementById('td-avg').textContent       = avgPrice !== '--' ? 'NT$ ' + avgPrice : '--';
     document.getElementById('td-qty').textContent       = qty;
 
     const totalEl    = card.querySelector('.trade-total');
@@ -616,6 +618,15 @@ document.getElementById('trade-list').addEventListener('click', e => {
     document.getElementById('td-price').value        = '';
     document.getElementById('td-qty-input').value    = '';
     document.getElementById('td-result-value').textContent = 'NT$ 0';
+    const avgResEl = document.getElementById('td-result-avg');
+    if (avgResEl) avgResEl.textContent = '--';
+
+    // TWD: hide total price field, show only qty
+    const isTWD = tag === '現金';
+    const priceField = document.getElementById('td-price-field');
+    const avgResultRow = document.getElementById('td-avg-result');
+    if (priceField) priceField.style.display = isTWD ? 'none' : '';
+    if (avgResultRow) avgResultRow.style.display = isTWD ? 'none' : '';
 
     tdCurrentType = 'buy';
     document.getElementById('td-tab-buy').classList.add('active');
@@ -650,10 +661,20 @@ document.querySelectorAll('.td-tab').forEach(btn => {
 
 // 確認交易按鈕
 document.getElementById('td-confirm-btn').addEventListener('click', () => {
-  const price = parseFloat(document.getElementById('td-price').value) || 0;
+  const tag   = document.getElementById('td-tag') ? document.getElementById('td-tag').textContent.trim() : '';
+  const isTWD = tag === '現金';
   const qty   = parseFloat(document.getElementById('td-qty-input').value) || 0;
+  let total, unitPrice;
+  if (isTWD) {
+    total     = qty;
+    unitPrice = 1;
+  } else {
+    total     = parseFloat(document.getElementById('td-price').value) || 0;
+    unitPrice = qty > 0 ? total / qty : 0;
+  }
 
-  if (!price || !qty) { alert('請輸入價格和數量'); return; }
+  if (!qty) { alert('請輸入數量'); return; }
+  if (!isTWD && !total) { alert('請輸入總價'); return; }
 
   if (tdCurrentType === 'buy' && qty <= 0) {
     alert('買入數量必須大於 0');
@@ -669,27 +690,34 @@ document.getElementById('td-confirm-btn').addEventListener('click', () => {
     }
   }
 
-  const total     = Math.round(price * qty);
   const name      = document.getElementById('td-name').textContent;
   const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
 
   // 顯示確認浮窗
   const modal = document.getElementById('trade-confirm-modal');
-  const inner = document.getElementById('trade-confirm-inner');
   const isBuyAction = tradeType === '買入';
   document.getElementById('trade-confirm-title').textContent = `確認${tradeType}`;
   document.getElementById('trade-confirm-title').style.color = isBuyAction ? '#e8706f' : '#77a478';
   document.getElementById('trade-confirm-subtitle').textContent = isBuyAction ? '請確認以下買入資訊' : '請確認以下賣出資訊';
   document.getElementById('trade-confirm-body').innerHTML =
-    `商品：${name}<br>數量：${qty}<br>價格：NT$ ${price.toLocaleString()}<br>換算價值：NT$ ${total.toLocaleString()}`;
+    `商品：${name}<br>數量：${qty}<br>均價：NT$ ${smartNum(unitPrice)}<br>總價：NT$ ${Math.round(total).toLocaleString()}`;
   document.getElementById('trade-confirm-ok').style.background = isBuyAction ? '#e8706f' : '#77a478';
   modal.style.display = 'flex';
 });
 
 function executeTrade() {
-  const price = parseFloat(document.getElementById('td-price').value) || 0;
+  const tag   = document.getElementById('td-tag') ? document.getElementById('td-tag').textContent.trim() : '';
+  const isTWD = tag === '現金';
   const qty   = parseFloat(document.getElementById('td-qty-input').value) || 0;
-  const total     = Math.round(price * qty);
+  let total, price;
+  if (isTWD) {
+    total = qty;
+    price = 1;
+  } else {
+    total = parseFloat(document.getElementById('td-price').value) || 0;
+    price = qty > 0 ? total / qty : 0;
+  }
+  total = Math.round(total);
   const name      = document.getElementById('td-name').textContent;
   const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
   const datetime  = getTWDatetime();
@@ -707,7 +735,7 @@ function executeTrade() {
     const oldAvg  = holdingQty > 0 ? oldCost / holdingQty : 0;
     let newCost;
     if (tdCurrentType === 'buy') {
-      newCost = oldCost + Math.round(price * qty);
+      newCost = oldCost + total;
     } else {
       newCost = Math.round(oldAvg * newQtyRounded);
     }
@@ -783,6 +811,8 @@ function executeTrade() {
   document.getElementById('td-price').value     = '';
   document.getElementById('td-qty-input').value = '';
   document.getElementById('td-result-value').textContent = 'NT$ 0';
+  const avgResEl2 = document.getElementById('td-result-avg');
+  if (avgResEl2) avgResEl2.textContent = '--';
 }
 
 document.getElementById('trade-confirm-cancel').addEventListener('click', () => {
@@ -792,8 +822,10 @@ document.getElementById('trade-confirm-ok').addEventListener('click', () => {
   document.getElementById('trade-confirm-modal').style.display = 'none';
   const name      = document.getElementById('td-name').textContent;
   const qty       = parseFloat(document.getElementById('td-qty-input').value) || 0;
-  const price     = parseFloat(document.getElementById('td-price').value) || 0;
-  const total     = Math.round(price * qty);
+  const tagConfirm = document.getElementById('td-tag') ? document.getElementById('td-tag').textContent.trim() : '';
+  const isTWDConfirm = tagConfirm === '現金';
+  const price = isTWDConfirm ? 1 : (qty > 0 ? (parseFloat(document.getElementById('td-price').value) || 0) / qty : 0);
+  const total = isTWDConfirm ? Math.round(qty) : Math.round(parseFloat(document.getElementById('td-price').value) || 0);
   const tradeType = tdCurrentType === 'buy' ? '買入' : '賣出';
   executeTrade();
   showPage('export', '交易');
@@ -815,10 +847,20 @@ function showTradeToast(tradeType, name, qty, total) {
   toast._timer = setTimeout(() => { toast.style.top = '-160px'; }, 3000);
 }
 function calcTdResult() {
-  const price = parseFloat(document.getElementById('td-price').value) || 0;
+  const tag   = document.getElementById('td-tag') ? document.getElementById('td-tag').textContent.trim() : '';
+  const isTWD = tag === '現金';
   const qty   = parseFloat(document.getElementById('td-qty-input').value) || 0;
-  const val   = Math.round(price * qty);
-  document.getElementById('td-result-value').textContent = 'NT$ ' + val.toLocaleString();
+  let total, avgPrice;
+  if (isTWD) {
+    total    = qty;
+    avgPrice = qty > 0 ? 1 : 0;
+  } else {
+    total    = parseFloat(document.getElementById('td-price').value) || 0;
+    avgPrice = (total > 0 && qty > 0) ? total / qty : 0;
+  }
+  document.getElementById('td-result-value').textContent = 'NT$ ' + Math.round(total).toLocaleString();
+  const avgEl = document.getElementById('td-result-avg');
+  if (avgEl) avgEl.textContent = avgPrice > 0 ? 'NT$ ' + smartNum(avgPrice) : '--';
 }
 document.getElementById('td-price').addEventListener('input', calcTdResult);
 document.getElementById('td-qty-input').addEventListener('input', calcTdResult);
@@ -1236,7 +1278,7 @@ function buildTradeCard(name, type, qty, value) {
     </div>
     <div class="trade-card-right">
       <div class="trade-col"><div class="trade-avg">--</div></div>
-      <div class="trade-col"><div class="trade-total">--</div><div class="trade-label">現有價值</div></div>
+      <div class="trade-col"><div class="trade-total">--</div></div>
     </div>
     <div class="trade-card-expand">
       <div class="trade-expand-rows">
