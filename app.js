@@ -2181,8 +2181,9 @@ if ('serviceWorker' in navigator) {
     const status = document.getElementById('calSyncStatus');
     if (status) status.textContent = '同步中...';
     const res = await gasCall({ action: 'getCalendar' });
-    if (res?.success && res.data) {
-      calData = { ...calData, ...res.data };
+    if (res?.success) {
+      // 雲端完全覆蓋本機
+      calData = res.data || {};
       try { localStorage.setItem(CAL_KEY, JSON.stringify(calData)); } catch {}
       if (status) status.textContent = '✓ 已同步';
       setTimeout(() => { if (status) status.textContent = ''; }, 2000);
@@ -2369,11 +2370,10 @@ if ('serviceWorker' in navigator) {
     const status = document.getElementById('notesSyncStatus');
     if (status) status.textContent = '同步中...';
     const res = await gasCall({ action: 'getNotes' });
-    if (res?.success && Array.isArray(res.notes) && res.notes.length > 0) {
-      const cloudMap = {};
-      res.notes.forEach(n => { if (n?.id) cloudMap[n.id] = n; });
-      acsNotes.forEach(n => { if (!cloudMap[n.id]) cloudMap[n.id] = n; });
-      acsNotes = Object.values(cloudMap).sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+    if (res?.success) {
+      // 雲端完全覆蓋本機
+      acsNotes = Array.isArray(res.notes) ? res.notes.filter(n => n?.id) : [];
+      acsNotes.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
       try { localStorage.setItem(NOTES_KEY, JSON.stringify(acsNotes)); } catch {}
       if (status) status.textContent = '✓ 已同步';
       setTimeout(() => { if (status) status.textContent = ''; }, 2000);
@@ -2384,7 +2384,8 @@ if ('serviceWorker' in navigator) {
   }
 
   async function pushNoteToSheet(note, deleted = false) {
-    const noteJson = deleted ? '__EMPTY__' : encodeURIComponent(JSON.stringify(note));
+    // gasCall 內部會 encodeURIComponent，直接傳原始值
+    const noteJson = deleted ? '__EMPTY__' : JSON.stringify(note);
     await gasCall({ action: 'setNote', noteId: note.id, noteJson });
   }
 
