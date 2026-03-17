@@ -2148,3 +2148,185 @@ if ('serviceWorker' in navigator) {
     });
   }).catch(() => {});
 }
+
+// ══════════════════════════════════════════════
+//  ACS 行事曆模組
+// ══════════════════════════════════════════════
+(function() {
+  let calData   = {};   // { 'YYYY-MM-DD': '行程內容' }
+  let calYear   = new Date().getFullYear();
+  let calMonth  = new Date().getMonth();  // 0-based
+  const CAL_KEY = 'acs_calendar_data';
+
+  // ── 工具 ──────────────────────────────────────
+  function todayStr() {
+    const n = new Date(), p = x => String(x).padStart(2,'0');
+    return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`;
+  }
+  function getGasUrl() {
+    try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
+  }
+  async function gasCall(params) {
+    const url = getGasUrl(); if (!url) return null;
+    try {
+      const qs = Object.entries(params)
+        .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
+      const res = await fetch(`${url}?${qs}`, { mode:'cors', cache:'no-store' });
+      return await res.json();
+    } catch { return null; }
+  }
+
+  // ── 從 Sheet 同步 ─────────────────────────────
+  async function syncFromSheet() {
+    const status = document.getElementById('calSyncStatus');
+    if (status) status.textContent = '同步中...';
+    const res = await gasCall({ action: 'getCalendar' });
+    if (res?.success && res.data) {
+      calData = { ...calData, ...res.data };
+      try { localStorage.setItem(CAL_KEY, JSON.stringify(calData)); } catch {}
+      if (status) status.textContent = '✓ 已同步';
+      setTimeout(() => { if (status) status.textContent = ''; }, 2000);
+      renderCalGrid();
+    } else {
+      if (status) status.textContent = getGasUrl() ? '⚠ 同步失敗' : '';
+    }
+  }
+
+  // ── 推送到 Sheet ──────────────────────────────
+  async function pushToSheet(dateKey, content) {
+    const safeContent = content === '' ? '__EMPTY__' : content;
+    await gasCall({ action: 'setCalendar', dateKey, content: safeContent });
+  }
+
+  // ── 渲染日期格子 ──────────────────────────────
+  function renderCalGrid() {
+    const grid = document.getElementById('calGrid');
+    const label = document.getElementById('calMonthLabel');
+    if (!grid) return;
+    const names = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    if (label) label.textContent = `${calYear} / ${names[calMonth]}`;
+    grid.innerHTML = '';
+    const today     = todayStr();
+    const firstDay  = new Date(calYear, calMonth, 1).getDay();
+    const lastDate  = new Date(calYear, calMonth+1, 0).getDate();
+    const prevLast  = new Date(calYear, calMonth, 0).getDate();
+
+    // 上月尾
+    for (let i = 0; i < firstDay; i++) {
+      const day    = prevLast - firstDay + 1 + i;
+      const pMonth = calMonth === 0 ? 12 : calMonth;
+      const pYear  = calMonth === 0 ? calYear - 1 : calYear;
+      const key    = `${pYear}-${String(pMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      grid.appendChild(makeCell(day, key, true));
+    }
+    // 本月
+    for (let day = 1; day <= lastDate; day++) {
+      const key = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      grid.appendChild(makeCell(day, key, false));
+    }
+    // 下月頭
+    const total = firstDay + lastDate;
+    const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let i = 1; i <= rem; i++) {
+      const nMonth = calMonth === 11 ? 1 : calMonth + 2;
+      const nYear  = calMonth === 11 ? calYear + 1 : calYear;
+      const key    = `${nYear}-${String(nMonth).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+      grid.appendChild(makeCell(i, key, true));
+    }
+  }
+
+  function makeCell(day, key, otherMonth) {
+    const tasks   = (calData[key]||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    const today   = todayStr();
+    const cell    = document.createElement('div');
+    let cls = 'cal-cell';
+    if (otherMonth) cls += ' other-month';
+    if (key === today) cls += ' today';
+    if (tasks.length) cls += ' has-note';
+    cell.className = cls;
+
+    const num = document.createElement('div');
+    num.className = 'cal-cell-num'; num.textContent = day;
+    cell.appendChild(num);
+
+    if (tasks.length) {
+      const preview = document.createElement('div'); preview.className = 'cal-cell-preview';
+      tasks.slice(0,3).forEach(t => {
+        const l = document.createElement('div'); l.className = 'cal-cell-line'; l.textContent = t;
+        preview.appendChild(l);
+      });
+      cell.appendChild(preview);
+    }
+    cell.addEventListener('click', () => openDayView(key));
+    return cell;
+  }
+
+  // ── 查看日期 ─────────────────────────────────
+  function openDayView(key) {
+    const modal = document.getElementById('cal-day-modal');
+    const tasks = (calData[key]||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    document.getElementById('calDayDate').textContent = key;
+    const ct = document.getElementById('calDayTasks');
+    ct.innerHTML = tasks.length
+      ? tasks.map(t=>`<div class="cal-day-task">${t}</div>`).join('')
+      : `<div class="cal-day-empty">這天沒有行程</div>`;
+    modal.style.display = 'flex';
+    document.getElementById('calDayEditBtn').onclick = () => { modal.style.display='none'; openEdit(key); };
+    document.getElementById('calDayClose').onclick   = () => modal.style.display='none';
+  }
+
+  // ── 編輯日期 ─────────────────────────────────
+  function openEdit(key) {
+    const modal = document.getElementById('cal-edit-modal');
+    document.getElementById('calEditDate').textContent = key;
+    document.getElementById('calEditInput').value = calData[key] || '';
+    modal.style.display = 'flex';
+    document.getElementById('calEditCancel').onclick = () => modal.style.display='none';
+    document.getElementById('calEditSave').onclick   = async () => {
+      const content = document.getElementById('calEditInput').value.trim();
+      calData[key] = content;
+      try { localStorage.setItem(CAL_KEY, JSON.stringify(calData)); } catch {}
+      pushToSheet(key, content);
+      modal.style.display = 'none';
+      renderCalGrid();
+    };
+  }
+
+  // ── 初始化 ────────────────────────────────────
+  function init() {
+    // 載入本機快取
+    try { calData = JSON.parse(localStorage.getItem(CAL_KEY) || '{}'); } catch { calData = {}; }
+
+    // 開啟行事曆按鈕
+    const openBtn = document.getElementById('openCalendarBtn');
+    const modal   = document.getElementById('calendar-modal');
+    if (openBtn && modal) {
+      openBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+        renderCalGrid();
+        syncFromSheet();  // 開啟時同步
+      });
+    }
+    // 關閉
+    document.getElementById('calModalClose')?.addEventListener('click', () => {
+      if (modal) modal.style.display = 'none';
+    });
+    // 點 overlay 關閉
+    if (modal) modal.addEventListener('click', e => { if (e.target === modal) modal.style.display='none'; });
+
+    // 月份導航
+    document.getElementById('calPrevBtn')?.addEventListener('click', () => {
+      calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalGrid();
+    });
+    document.getElementById('calNextBtn')?.addEventListener('click', () => {
+      calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalGrid();
+    });
+    document.getElementById('calTodayBtn')?.addEventListener('click', () => {
+      calYear = new Date().getFullYear(); calMonth = new Date().getMonth(); renderCalGrid();
+    });
+  }
+
+  // DOM 載入後初始化
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
