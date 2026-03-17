@@ -2294,27 +2294,15 @@ if ('serviceWorker' in navigator) {
 
   // ── 初始化 ────────────────────────────────────
   function init() {
-    // 載入本機快取
     try { calData = JSON.parse(localStorage.getItem(CAL_KEY) || '{}'); } catch { calData = {}; }
 
-    // 開啟行事曆按鈕
-    const openBtn = document.getElementById('openCalendarBtn');
-    const modal   = document.getElementById('calendar-modal');
-    if (openBtn && modal) {
-      openBtn.addEventListener('click', () => {
-        modal.style.display = 'flex';
-        renderCalGrid();
-        syncFromSheet();  // 開啟時同步
-      });
-    }
-    // 關閉
+    // 行事曆 modal 現在從工作台開啟
+    const calModal = document.getElementById('calendar-modal');
     document.getElementById('calModalClose')?.addEventListener('click', () => {
-      if (modal) modal.style.display = 'none';
+      if (calModal) calModal.style.display = 'none';
     });
-    // 點 overlay 關閉
-    if (modal) modal.addEventListener('click', e => { if (e.target === modal) modal.style.display='none'; });
+    if (calModal) calModal.addEventListener('click', e => { if (e.target === calModal) calModal.style.display='none'; });
 
-    // 月份導航
     document.getElementById('calPrevBtn')?.addEventListener('click', () => {
       calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalGrid();
     });
@@ -2324,9 +2312,194 @@ if ('serviceWorker' in navigator) {
     document.getElementById('calTodayBtn')?.addEventListener('click', () => {
       calYear = new Date().getFullYear(); calMonth = new Date().getMonth(); renderCalGrid();
     });
+
+    // 從工作台開行事曆
+    document.getElementById('wsOpenCalBtn')?.addEventListener('click', () => {
+      document.getElementById('workspace-modal').style.display = 'none';
+      calModal.style.display = 'flex';
+      renderCalGrid();
+      syncFromSheet();
+    });
   }
 
-  // DOM 載入後初始化
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+// ══════════════════════════════════════════════
+//  工作台入口模組
+// ══════════════════════════════════════════════
+(function() {
+  const wsModal = document.getElementById('workspace-modal');
+
+  document.getElementById('openWorkspaceBtn')?.addEventListener('click', () => {
+    wsModal.style.display = 'flex';
+  });
+  document.getElementById('wsModalClose')?.addEventListener('click', () => {
+    wsModal.style.display = 'none';
+  });
+  wsModal?.addEventListener('click', e => { if (e.target === wsModal) wsModal.style.display = 'none'; });
+})();
+
+// ══════════════════════════════════════════════
+//  ACS 記事本模組
+// ══════════════════════════════════════════════
+(function() {
+  let acsNotes   = [];
+  let editingId  = null;
+  const NOTES_KEY = 'acs_notes_data';
+
+  function noteId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+  function getGasUrl() {
+    try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
+  }
+  async function gasCall(params) {
+    const url = getGasUrl(); if (!url) return null;
+    try {
+      const qs = Object.entries(params).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
+      const res = await fetch(`${url}?${qs}`, { mode: 'cors', cache: 'no-store' });
+      return await res.json();
+    } catch { return null; }
+  }
+
+  // ── 同步 ──────────────────────────────────────
+  async function syncNotesFromSheet() {
+    const status = document.getElementById('notesSyncStatus');
+    if (status) status.textContent = '同步中...';
+    const res = await gasCall({ action: 'getNotes' });
+    if (res?.success && Array.isArray(res.notes) && res.notes.length > 0) {
+      const cloudMap = {};
+      res.notes.forEach(n => { if (n?.id) cloudMap[n.id] = n; });
+      acsNotes.forEach(n => { if (!cloudMap[n.id]) cloudMap[n.id] = n; });
+      acsNotes = Object.values(cloudMap).sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+      try { localStorage.setItem(NOTES_KEY, JSON.stringify(acsNotes)); } catch {}
+      if (status) status.textContent = '✓ 已同步';
+      setTimeout(() => { if (status) status.textContent = ''; }, 2000);
+      renderNotesList();
+    } else {
+      if (status) status.textContent = getGasUrl() ? '⚠ 同步失敗' : '';
+    }
+  }
+
+  async function pushNoteToSheet(note, deleted = false) {
+    const noteJson = deleted ? '__EMPTY__' : encodeURIComponent(JSON.stringify(note));
+    await gasCall({ action: 'setNote', noteId: note.id, noteJson });
+  }
+
+  // ── 渲染清單 ──────────────────────────────────
+  function renderNotesList() {
+    const list = document.getElementById('acsNotesList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!acsNotes.length) {
+      list.innerHTML = '<div class="acs-notes-empty">還沒有筆記，點 ＋ 新增</div>';
+      return;
+    }
+    acsNotes.forEach(note => {
+      const el = document.createElement('div'); el.className = 'acs-note-item';
+      const tagsHtml = (note.tags||[]).map(t => `<span class="acs-note-tag">${t}</span>`).join('');
+      const d = new Date(note.updatedAt||Date.now());
+      const time = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      el.innerHTML = `
+        <div class="acs-note-title">${note.title || '（無標題）'}</div>
+        <div class="acs-note-preview">${note.content || '（空白）'}</div>
+        <div class="acs-note-footer">${tagsHtml}<span class="acs-note-time">${time}</span></div>
+      `;
+      el.addEventListener('click', () => openNoteView(note.id));
+      list.appendChild(el);
+    });
+  }
+
+  // ── 查看 ──────────────────────────────────────
+  function openNoteView(id) {
+    const note = acsNotes.find(n => n.id === id);
+    if (!note) return;
+    const modal = document.getElementById('note-view-modal');
+    document.getElementById('noteViewTitle').textContent   = note.title || '（無標題）';
+    document.getElementById('noteViewContent').textContent = note.content || '';
+    document.getElementById('noteViewTags').innerHTML = (note.tags||[]).map(t=>`<span class="acs-note-tag">${t}</span>`).join('');
+    modal.style.display = 'flex';
+    document.getElementById('noteViewEditBtn').onclick = () => { modal.style.display='none'; openNoteEdit(id); };
+    document.getElementById('noteViewClose').onclick   = () => modal.style.display='none';
+  }
+
+  // ── 編輯 ──────────────────────────────────────
+  function openNoteEdit(id) {
+    const isNew = !id;
+    const note  = isNew ? null : acsNotes.find(n => n.id === id);
+    editingId   = id || null;
+    const modal = document.getElementById('note-edit-modal');
+    document.getElementById('noteEditTitle').textContent   = isNew ? '新增筆記' : '編輯筆記';
+    document.getElementById('noteEditTitleInput').value    = note?.title   || '';
+    document.getElementById('noteEditTagsInput').value     = (note?.tags||[]).join(', ');
+    document.getElementById('noteEditContent').value       = note?.content || '';
+    document.getElementById('noteEditDeleteBtn').style.display = isNew ? 'none' : '';
+    modal.style.display = 'flex';
+  }
+
+  // ── 初始化 ────────────────────────────────────
+  function init() {
+    try { acsNotes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); } catch { acsNotes = []; }
+
+    // 開啟記事本（從工作台）
+    document.getElementById('wsOpenNotesBtn')?.addEventListener('click', () => {
+      document.getElementById('workspace-modal').style.display = 'none';
+      document.getElementById('notes-modal').style.display = 'flex';
+      renderNotesList();
+      syncNotesFromSheet();
+    });
+
+    // 關閉記事本
+    document.getElementById('notesModalClose')?.addEventListener('click', () => {
+      document.getElementById('notes-modal').style.display = 'none';
+    });
+    document.getElementById('notes-modal')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('notes-modal'))
+        document.getElementById('notes-modal').style.display = 'none';
+    });
+
+    // 新增按鈕
+    document.getElementById('notesAddBtn')?.addEventListener('click', () => openNoteEdit(null));
+
+    // 取消編輯
+    document.getElementById('noteEditCancel')?.addEventListener('click', () => {
+      document.getElementById('note-edit-modal').style.display = 'none';
+    });
+
+    // 儲存
+    document.getElementById('noteEditSave')?.addEventListener('click', async () => {
+      const title   = document.getElementById('noteEditTitleInput').value.trim();
+      const content = document.getElementById('noteEditContent').value.trim();
+      const tags    = document.getElementById('noteEditTagsInput').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const now     = Date.now();
+      let savedNote;
+      if (editingId) {
+        const note = acsNotes.find(n => n.id === editingId);
+        if (note) { Object.assign(note, { title, content, tags, updatedAt: now }); savedNote = note; }
+      } else {
+        savedNote = { id: noteId(), title, content, tags, createdAt: now, updatedAt: now };
+        acsNotes.unshift(savedNote);
+      }
+      try { localStorage.setItem(NOTES_KEY, JSON.stringify(acsNotes)); } catch {}
+      if (savedNote) pushNoteToSheet(savedNote);
+      document.getElementById('note-edit-modal').style.display = 'none';
+      renderNotesList();
+    });
+
+    // 刪除
+    document.getElementById('noteEditDeleteBtn')?.addEventListener('click', async () => {
+      if (!editingId) return;
+      const note = acsNotes.find(n => n.id === editingId);
+      acsNotes = acsNotes.filter(n => n.id !== editingId);
+      try { localStorage.setItem(NOTES_KEY, JSON.stringify(acsNotes)); } catch {}
+      if (note) pushNoteToSheet(note, true);
+      document.getElementById('note-edit-modal').style.display = 'none';
+      renderNotesList();
+    });
+  }
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
