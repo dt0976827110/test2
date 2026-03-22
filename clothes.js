@@ -14,6 +14,7 @@
 
   let currentTab    = 'staging'; // staging | inbound | stock | outbound | surplus
   let outboundCart  = [];        // 新增出貨時的購物車
+  let isSubmitting   = false;     // 防重複提交
   let editingStaging = null;     // 編輯中的核對單
   let isClothesOpen = false;
 
@@ -201,9 +202,11 @@
   };
 
   window.clCommitStaging = function(id) {
+    if (isSubmitting) return;
     const row = stagingList.find(r => r.id === id);
     if (!row) return;
     showClConfirm(`確定將「${row.style}」入庫？`, async () => {
+      isSubmitting = true;
       const calc = calcStaging(row);
       const inboundRow = {
         id: row.id,
@@ -256,6 +259,7 @@
       saveLocal('clothes_staging', stagingList);
       saveLocal('clothes_inbound', inboundList);
       saveLocal('clothes_stock', stockList);
+      isSubmitting = false;
       showClToast('✅ 已入庫');
       renderStaging();
     });
@@ -323,7 +327,7 @@
           <span>單件成本</span><span>NT$ ${(row.unitNtPrice||0).toFixed(0)}</span>
         </div>
         <div class="cl-card-row">
-          <span>入庫時間</span><span>${formatDate(row.inboundAt)}</span>
+          <span>入庫時間</span><span>${formatDateTime(row.inboundAt)}</span>
         </div>
       </div>`;
     });
@@ -438,6 +442,10 @@
         <div class="cl-card-row cl-card-row-highlight">
           <span>訂單合計</span><span>NT$ ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span>
         </div>
+        ${order.status !== '已出貨' ? `
+        <div class="cl-card-actions">
+          <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.orderId}')">標記為已出貨</button>
+        </div>` : ''}
       </div>`;
     });
     container.innerHTML = html;
@@ -491,7 +499,21 @@
     modal.style.display = 'flex';
   }
 
-  window.clAddToCart = function() {
+  window.clMarkOutboundDone = function(orderId) {
+    showClConfirm('確定標記為已出貨？', async () => {
+      // 更新本機
+      outboundList.forEach(row => {
+        if ((row.orderId || row.id) === orderId) row.status = '已出貨';
+      });
+      saveLocal('clothes_outbound', outboundList);
+      // 同步 GAS
+      await gasCall({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
+      showClToast('✅ 已標記為已出貨');
+      renderOutbound();
+    });
+  };
+
+    window.clAddToCart = function() {
     const modal = document.getElementById('cl-outbound-modal');
     const sel   = modal.querySelector('#cl-ob-product');
     const qty   = parseInt(modal.querySelector('#cl-ob-qty').value) || 1;
@@ -576,6 +598,7 @@
   //  提交動作
   // ══════════════════════════════════════════════
   async function submitStaging() {
+    if (isSubmitting) return;
     const get = id => document.getElementById(id)?.value?.trim() || '';
     const row = {
       id:          editingStaging?.id || genId(),
@@ -591,8 +614,15 @@
       status:      '待入庫'
     };
     if (!row.style || !row.krwCost || !row.qty) return showClToast('請填寫款式、韓幣成本、數量');
-
-    await gasCall({ action: 'clothes_addStaging', data: JSON.stringify(row) });
+    isSubmitting = true;
+    const saveBtn = document.getElementById('cl-staging-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '儲存中…'; }
+    try {
+      await gasCall({ action: 'clothes_addStaging', data: JSON.stringify(row) });
+    } finally {
+      isSubmitting = false;
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
+    }
 
     if (editingStaging) {
       const idx = stagingList.findIndex(r => r.id === editingStaging.id);
@@ -624,6 +654,7 @@
   }
 
   async function submitOutbound() {
+    if (isSubmitting) return;
     if (!outboundCart.length) return showClToast('請先加入商品');
     const modal    = document.getElementById('cl-outbound-modal');
     const orderId  = modal.querySelector('#cl-ob-order').value.trim() || genId().slice(0,8);
@@ -638,7 +669,15 @@
       qty: item.qty, subtotal: item.subtotal
     }));
 
-    await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
+    isSubmitting = true;
+    const obBtn = document.getElementById('cl-ob-submit');
+    if (obBtn) { obBtn.disabled = true; obBtn.textContent = '處理中…'; }
+    try {
+      await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
+    } finally {
+      isSubmitting = false;
+      if (obBtn) { obBtn.disabled = false; obBtn.textContent = '確認出貨'; }
+    }
 
     // 扣庫存
     rows.forEach(row => {
@@ -664,8 +703,17 @@
     const ntd   = parseFloat(modal.querySelector('#cl-dep-ntd').value) || 0;
     const rate  = parseFloat(modal.querySelector('#cl-dep-rate').value) || 0;
     if (!ntd || !rate) return showClToast('請填寫金額與匯率');
+    if (isSubmitting) return;
+    isSubmitting = true;
+    const depBtn = document.getElementById('cl-deposit-save');
+    if (depBtn) { depBtn.disabled = true; depBtn.textContent = '儲存中…'; }
     const row = { id: genId(), date, ntd, rate };
-    await gasCall({ action: 'clothes_addDeposit', data: JSON.stringify(row) });
+    try {
+      await gasCall({ action: 'clothes_addDeposit', data: JSON.stringify(row) });
+    } finally {
+      isSubmitting = false;
+      if (depBtn) { depBtn.disabled = false; depBtn.textContent = '儲存'; }
+    }
     surplusData.deposits.unshift(row);
     saveLocal('clothes_surplus', surplusData);
     modal.style.display = 'none';
@@ -682,8 +730,17 @@
     const note     = modal.querySelector('#cl-exp-note').value.trim() || '';
     const total    = product + agency + shipping;
     if (!total) return showClToast('請填寫至少一項支出');
+    if (isSubmitting) return;
+    isSubmitting = true;
+    const expBtn = document.getElementById('cl-expense-save');
+    if (expBtn) { expBtn.disabled = true; expBtn.textContent = '儲存中…'; }
     const row = { id: genId(), date, product, agency, shipping, total, note };
-    await gasCall({ action: 'clothes_addExpense', data: JSON.stringify(row) });
+    try {
+      await gasCall({ action: 'clothes_addExpense', data: JSON.stringify(row) });
+    } finally {
+      isSubmitting = false;
+      if (expBtn) { expBtn.disabled = false; expBtn.textContent = '儲存'; }
+    }
     surplusData.expenses.unshift(row);
     saveLocal('clothes_surplus', surplusData);
     modal.style.display = 'none';
@@ -701,9 +758,22 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
   function formatDate(str) {
-    if (!str) return '—';
-    try { return new Date(str).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' }); }
-    catch { return str; }
+    if (!str || str === 'undefined' || str === 'null') return '—';
+    try {
+      const d = new Date(str);
+      if (isNaN(d.getTime())) return String(str).slice(0, 10) || '—';
+      return d.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
+    } catch { return String(str).slice(0, 10) || '—'; }
+  }
+
+  function formatDateTime(str) {
+    if (!str || str === 'undefined' || str === 'null') return '—';
+    try {
+      const d = new Date(str);
+      if (isNaN(d.getTime())) return String(str).slice(0, 16) || '—';
+      return d.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' }) +
+        ' ' + d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+    } catch { return String(str).slice(0, 16) || '—'; }
   }
   function saveLocal(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
