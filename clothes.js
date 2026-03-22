@@ -40,6 +40,7 @@
     const res = await gasCall({ action: 'clothes_getStagingList' });
     if (res?.success) stagingList = res.data || [];
     else stagingList = JSON.parse(localStorage.getItem('clothes_staging') || '[]');
+    stagingList.sort((a, b) => new Date(b.date) - new Date(a.date));
     renderStaging();
   }
 
@@ -47,6 +48,7 @@
     const res = await gasCall({ action: 'clothes_getInbound' });
     if (res?.success) inboundList = res.data || [];
     else inboundList = JSON.parse(localStorage.getItem('clothes_inbound') || '[]');
+    inboundList.sort((a, b) => new Date(b.inboundAt || b.orderDate) - new Date(a.inboundAt || a.orderDate));
     renderInbound();
   }
 
@@ -621,19 +623,21 @@
     const deps  = surplusData.deposits  || [];
     const exps  = surplusData.expenses  || [];
 
-    const totalDeposit  = deps.reduce((s, d) => s + (parseFloat(d.ntd) || 0), 0);
-    const totalExpense  = exps.reduce((s, e) => s + (parseFloat(e.total) || 0), 0);
-    const balance       = totalDeposit - totalExpense;
+    // 入金：台幣 × 匯率 → 韓幣
+    const totalDepositKrw = deps.reduce((s, d) => s + Math.round((parseFloat(d.ntd)||0) * (parseFloat(d.rate)||1)), 0);
+    // 支出：直接是韓幣
+    const totalExpenseKrw = exps.reduce((s, e) => s + (parseFloat(e.total) || 0), 0);
+    const balanceKrw      = totalDepositKrw - totalExpenseKrw;
 
     const balEl = document.getElementById('cl-surplus-balance');
     if (balEl) {
-      balEl.textContent = `NT$ ${balance.toLocaleString(undefined,{maximumFractionDigits:0})}`;
-      balEl.className   = 'cl-surplus-balance ' + (balance >= 0 ? 'cl-balance-pos' : 'cl-balance-neg');
+      balEl.textContent = `₩${balanceKrw.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+      balEl.className   = 'cl-surplus-balance ' + (balanceKrw >= 0 ? 'cl-balance-pos' : 'cl-balance-neg');
     }
     const depEl = document.getElementById('cl-surplus-deposit-total');
     const expEl = document.getElementById('cl-surplus-expense-total');
-    if (depEl) depEl.textContent = `NT$ ${totalDeposit.toLocaleString(undefined,{maximumFractionDigits:0})}`;
-    if (expEl) expEl.textContent = `NT$ ${totalExpense.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+    if (depEl) depEl.textContent = `₩${totalDepositKrw.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+    if (expEl) expEl.textContent = `₩${totalExpenseKrw.toLocaleString(undefined,{maximumFractionDigits:0})}`;
 
     // 入金列表
     const depList = document.getElementById('cl-deposit-list');
@@ -644,11 +648,11 @@
           <span class="cl-surplus-date">${formatDate(d.date)}</span>
           <span>NT$ ${(parseFloat(d.ntd)||0).toLocaleString()}</span>
           <span class="cl-surplus-rate">匯率 ${d.rate}</span>
-          <span class="cl-surplus-krw">₩${Math.round((d.ntd||0)*(d.rate||1)).toLocaleString()}</span>
+          <span class="cl-surplus-krw">₩${Math.round((parseFloat(d.ntd)||0)*(parseFloat(d.rate)||1)).toLocaleString()}</span>
         </div>`).join('');
     }
 
-    // 支出列表
+    // 支出列表（韓幣）
     const expList = document.getElementById('cl-expense-list');
     if (expList) {
       expList.innerHTML = !exps.length ? '<div class="cl-empty-small">尚無支出紀錄</div>' :
@@ -656,10 +660,10 @@
         <div class="cl-surplus-row">
           <span class="cl-surplus-date">${formatDate(e.date)}</span>
           <span class="cl-surplus-label">${e.note || '支出'}</span>
-          <span>商品 ${(e.product||0).toLocaleString()}</span>
-          <span>代購 ${(e.agency||0).toLocaleString()}</span>
-          <span>運費 ${(e.shipping||0).toLocaleString()}</span>
-          <span class="cl-surplus-total">= NT$ ${(parseFloat(e.total)||0).toLocaleString()}</span>
+          <span>商品 ₩${(parseFloat(e.product)||0).toLocaleString()}</span>
+          <span>代購 ₩${(parseFloat(e.agency)||0).toLocaleString()}</span>
+          <span>運費 ₩${(parseFloat(e.shipping)||0).toLocaleString()}</span>
+          <span class="cl-surplus-total">= ₩${(parseFloat(e.total)||0).toLocaleString()}</span>
         </div>`).join('');
     }
   }
