@@ -637,11 +637,12 @@
   }
 
   window.clEditOutbound = async function(orderId) {
+    // 用 batchId 分組（跟 renderOutbound 一致）
     const order = Object.values((() => {
       const o = {};
       outboundList.forEach(r => {
-        const k = r.orderId || r.id;
-        if (!o[k]) o[k] = { ...r, items: [] };
+        const k = r.batchId || r.orderId || r.id;
+        if (!o[k]) o[k] = { batchId: k, ...r, items: [] };
         o[k].items.push(r);
       });
       return o;
