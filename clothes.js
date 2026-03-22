@@ -48,13 +48,7 @@
     const res = await gasCall({ action: 'clothes_getInbound' });
     if (res?.success) inboundList = res.data || [];
     else inboundList = JSON.parse(localStorage.getItem('clothes_inbound') || '[]');
-    // 解析日期，支援 "2026-03-15 20:16" 及 ISO 格式
-    function parseInboundDate(row) {
-      const str = row.inboundAt || row.orderDate || '';
-      const d = new Date(str.replace(' ', 'T'));
-      return isNaN(d.getTime()) ? 0 : d.getTime();
-    }
-    inboundList.sort((a, b) => parseInboundDate(b) - parseInboundDate(a));
+    inboundList.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
     renderInbound();
   }
 
@@ -321,16 +315,7 @@
       container.innerHTML = `<div class="cl-empty">尚無進貨紀錄</div>`;
       return;
     }
-    // 每次渲染前重新排序，確保最新在最上面
-    const sorted = [...inboundList].sort((a, b) => {
-      const getTs = r => {
-        const str = r.inboundAt || r.orderDate || '';
-        if (!str) return 0;
-        const d = new Date(str.replace(' ', 'T'));
-        return isNaN(d.getTime()) ? 0 : d.getTime();
-      };
-      return getTs(b) - getTs(a);
-    });
+    const sorted = [...inboundList].sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
     let html = '';
     sorted.forEach(row => {
       html += `
