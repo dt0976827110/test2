@@ -586,7 +586,7 @@
     modal.querySelector('#cl-ob-shipping').value = '7-11';
     modal.querySelector('#cl-ob-bank').value     = '';
     modal.querySelector('#cl-ob-date').value     = today();
-    modal.querySelector('#cl-ob-status').value   = '已出貨';
+    modal.querySelector('#cl-ob-status').value   = '待出貨';
     renderOutboundCart();
 
     // 先確保庫存已載入
@@ -632,6 +632,10 @@
   }
 
   window.clMarkOutboundDone = function(orderId) {
+    // 找到這筆訂單的 IG 帳號
+    const order = outboundList.find(r => (r.orderId || r.id) === orderId);
+    const igHandle = order?.ig ? order.ig.replace(/^@/, '') : null;
+
     showClConfirm('確定標記為已出貨？', async () => {
       // 更新本機
       outboundList.forEach(row => {
@@ -642,6 +646,10 @@
       await gasCall({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
       showClToast('✅ 已標記為已出貨');
       renderOutbound();
+      // 跳到 IG 私訊
+      if (igHandle) {
+        window.open('https://ig.me/m/' + igHandle, '_blank');
+      }
     });
   };
 
@@ -835,7 +843,7 @@
       await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
     } finally {
       isSubmitting = false;
-      if (obBtn) { obBtn.disabled = false; obBtn.textContent = '確認出貨'; }
+      if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     }
 
     // 扣庫存
