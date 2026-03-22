@@ -499,6 +499,7 @@
     filteredOutbound.forEach(row => {
       const key = row.orderId || row.id;
       if (!orders[key]) orders[key] = { orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '' };
+      else orders[key].status = row.status; // 用最後一筆的狀態（標記後所有筆都是同狀態）
       orders[key].items.push(row);
     });
 
@@ -537,6 +538,7 @@
           </div>
           ${order.status !== '已出貨' ? `
           <div class="cl-card-actions">
+            <button class="cl-btn cl-btn-ghost" onclick="clEditOutbound('${order.orderId}')">編輯</button>
             <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.orderId}')">標記為已出貨</button>
           </div>` : ''}
         </div>
@@ -577,6 +579,9 @@
 
   async function openOutboundForm() {
     outboundCart = [];
+    isSubmitting = false; // 每次開啟都重置提交鎖
+    const obBtn = document.getElementById('cl-ob-submit');
+    if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     const modal = document.getElementById('cl-outbound-modal');
     if (!modal) return;
     modal.querySelector('#cl-ob-ig').value       = '';
@@ -586,7 +591,6 @@
     modal.querySelector('#cl-ob-shipping').value = '7-11';
     modal.querySelector('#cl-ob-bank').value     = '';
     modal.querySelector('#cl-ob-date').value     = today();
-    modal.querySelector('#cl-ob-status').value   = '待出貨';
     renderOutboundCart();
 
     // 先確保庫存已載入
@@ -594,6 +598,7 @@
     if (sel) {
       sel.innerHTML = `<option value="">載入中…</option>`;
       modal.style.display = 'flex';
+      modal.querySelector('#cl-ob-status').value = '待出貨';
 
       // 每次都重新拉最新庫存，確保即時反映入庫/出貨
       const gasUrl = getGasUrl();
@@ -631,12 +636,65 @@
     }
   }
 
+  window.clEditOutbound = async function(orderId) {
+    const order = Object.values((() => {
+      const o = {};
+      outboundList.forEach(r => {
+        const k = r.orderId || r.id;
+        if (!o[k]) o[k] = { ...r, items: [] };
+        o[k].items.push(r);
+      });
+      return o;
+    })()).find(o => o.orderId === orderId);
+    if (!order) return;
+
+    outboundCart = order.items.map(item => ({
+      productCode: item.productCode,
+      style: item.style, size: item.size,
+      cost: item.cost, price: item.price,
+      qty: item.qty, subtotal: item.subtotal
+    }));
+
+    isSubmitting = false;
+    const obBtn = document.getElementById('cl-ob-submit');
+    if (obBtn) { obBtn.disabled = false; obBtn.textContent = '儲存修改'; }
+
+    const modal = document.getElementById('cl-outbound-modal');
+    if (!modal) return;
+    modal.querySelector('#cl-ob-ig').value       = order.ig || '';
+    modal.querySelector('#cl-ob-name').value     = order.name || '';
+    modal.querySelector('#cl-ob-phone').value    = order.phone || '';
+    modal.querySelector('#cl-ob-address').value  = order.address || '';
+    modal.querySelector('#cl-ob-shipping').value = order.shipping || '7-11';
+    modal.querySelector('#cl-ob-bank').value     = order.bank || '';
+    modal.querySelector('#cl-ob-date').value     = order.date || today();
+    modal.style.display = 'flex';
+    modal.querySelector('#cl-ob-status').value   = order.status || '待出貨';
+    modal.dataset.editOrderId = orderId; // 記錄編輯中的 orderId
+
+    // 填庫存選單
+    const sel = modal.querySelector('#cl-ob-product');
+    if (sel) {
+      const gasUrl = getGasUrl();
+      if (gasUrl) {
+        const freshRes = await gasCall({ action: 'clothes_getStock' });
+        if (freshRes?.success) { stockList = freshRes.data || []; saveLocal('clothes_stock', stockList); }
+      }
+      const available = stockList.filter(s => parseInt(s.stock) > 0);
+      sel.innerHTML = `<option value="">選擇商品</option>` +
+        available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${parseInt(s.stock)}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
+    }
+    renderOutboundCart();
+  };
+
   window.clMarkOutboundDone = function(orderId) {
-    // 找到這筆訂單的 IG 帳號
     const order = outboundList.find(r => (r.orderId || r.id) === orderId);
     const igHandle = order?.ig ? order.ig.replace(/^@/, '') : null;
 
     showClConfirm('確定標記為已出貨？', async () => {
+      // 先開 IG（必須在使用者點擊的同步流程中執行，才不會被 popup blocker 攔截）
+      const igWin = igHandle ? window.open('https://ig.me/m/' + igHandle, '_blank') : null;
+
       // 更新本機
       outboundList.forEach(row => {
         if ((row.orderId || row.id) === orderId) row.status = '已出貨';
@@ -646,10 +704,6 @@
       await gasCall({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
       showClToast('✅ 已標記為已出貨');
       renderOutbound();
-      // 跳到 IG 私訊
-      if (igHandle) {
-        window.open('https://ig.me/m/' + igHandle, '_blank');
-      }
     });
   };
 
@@ -820,12 +874,13 @@
     const shipping = modal.querySelector('#cl-ob-shipping').value;
     const bank     = modal.querySelector('#cl-ob-bank').value.trim();
     const date     = modal.querySelector('#cl-ob-date').value || today();
-    const status   = modal.querySelector('#cl-ob-status').value || '已出貨';
+    const status   = modal.querySelector('#cl-ob-status').value || '待出貨';
+    const editOrderId = modal.dataset.editOrderId || null;
 
     if (!ig || !name || !phone || !address || !bank)
       return showClToast('請填寫所有收件資料');
 
-    const orderId = ig + '_' + date.replace(/-/g,'').slice(4); // e.g. @user_0323
+    const orderId = editOrderId || genId(); // 編輯時保留原 orderId
 
     const rows = outboundCart.map(item => ({
       id: genId(), orderId, date, status,
@@ -840,10 +895,15 @@
     const obBtn = document.getElementById('cl-ob-submit');
     if (obBtn) { obBtn.disabled = true; obBtn.textContent = '處理中…'; }
     try {
+      if (editOrderId) {
+        // 編輯模式：先移除舊的同 orderId 資料
+        outboundList = outboundList.filter(r => (r.orderId || r.id) !== editOrderId);
+      }
       await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
     } finally {
       isSubmitting = false;
       if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
+      modal.dataset.editOrderId = ''; // 清除編輯狀態
     }
 
     // 扣庫存
