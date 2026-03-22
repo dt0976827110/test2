@@ -523,19 +523,28 @@
       modal.style.display = 'flex';
 
       // 每次都重新拉最新庫存，確保即時反映入庫/出貨
-      const freshRes = await gasCall({ action: 'clothes_getStock' });
-      if (freshRes?.success) {
-        stockList = freshRes.data || [];
-        saveLocal('clothes_stock', stockList);
+      const gasUrl = getGasUrl();
+      if (!gasUrl) {
+        // GAS URL 未設定，直接用本機快取
+        stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
       } else {
-        // GAS 失敗 fallback 本機快取
-        if (!stockList.length) stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
+        const freshRes = await gasCall({ action: 'clothes_getStock' });
+        if (freshRes?.success) {
+          stockList = freshRes.data || [];
+          saveLocal('clothes_stock', stockList);
+        } else {
+          // GAS 回傳失敗，fallback 本機快取
+          const cached = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
+          if (cached.length) stockList = cached;
+        }
       }
 
       const available = stockList.filter(s => parseInt(s.stock) > 0 && !s.isSample);
       if (available.length) {
         sel.innerHTML = `<option value="">選擇商品</option>` +
           available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
+      } else if (!gasUrl) {
+        sel.innerHTML = `<option value="">請先在設定綁定 GAS 網址</option>`;
       } else {
         sel.innerHTML = `<option value="">目前無可售庫存</option>`;
       }
@@ -801,17 +810,21 @@
     const chevron = headerEl.querySelector('.cl-chevron');
     const isOpen = card.classList.contains('cl-card-open');
     if (isOpen) {
+      // 收合：先鎖住高度再縮回 0
       body.style.maxHeight = body.scrollHeight + 'px';
-      requestAnimationFrame(() => { body.style.maxHeight = '0'; });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { body.style.maxHeight = '0'; });
+      });
       card.classList.remove('cl-card-open');
       if (chevron) chevron.style.transform = '';
     } else {
-      body.style.maxHeight = '0';
+      // 展開
       card.classList.add('cl-card-open');
       body.style.maxHeight = body.scrollHeight + 'px';
       if (chevron) chevron.style.transform = 'rotate(90deg)';
-      // 動畫結束後移除 maxHeight 限制，避免動態內容被截斷
-      body.addEventListener('transitionend', function once() {
+      // transition 結束後解除高度限制（允許動態內容增高）
+      body.addEventListener('transitionend', function once(e) {
+        if (e.propertyName !== 'max-height') return;
         if (card.classList.contains('cl-card-open')) body.style.maxHeight = 'none';
         body.removeEventListener('transitionend', once);
       });

@@ -1277,6 +1277,13 @@ body.dark  .cl-nav-item.active svg { stroke: #a78bfa; }
   border-radius: 14px; padding: 16px;
   display: flex; flex-direction: column; gap: 8px;
 }
+.cl-card-collapse {
+  gap: 0;
+  overflow: hidden;
+}
+.cl-card-collapse .cl-card-header {
+  padding-bottom: 0;
+}
 body.light .cl-card { background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
 body.dark  .cl-card { background: #1e1e1e; border: 1px solid #2a2a2a; }
 
@@ -1589,13 +1596,19 @@ body.dark  .cl-toast { background: #eee; color: #1a1a1a; }
 .cl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ── 摺疊卡片 ── */
+.cl-card-body {
+  display: flex; flex-direction: column; gap: 8px;
+  padding-top: 10px;
+}
 .cl-card-collapse .cl-card-body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-top: 0;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding-top 0.3s ease;
 }
 .cl-card-collapse.cl-card-open .cl-card-body {
-  max-height: none; /* JS 控制過渡後設為 none */
+  padding-top: 10px;
 }
 
 .cl-card-toggle {
