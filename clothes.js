@@ -40,7 +40,12 @@
     const res = await gasCall({ action: 'clothes_getStagingList' });
     if (res?.success) stagingList = res.data || [];
     else stagingList = JSON.parse(localStorage.getItem('clothes_staging') || '[]');
-    stagingList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    stagingList.sort((a, b) => {
+      const dateDiff = new Date(b.date) - new Date(a.date);
+      if (dateDiff !== 0) return dateDiff;
+      // 同日期時用 ID（時間戳）決定順序，新增的 ID 較大
+      return String(b.id) > String(a.id) ? 1 : -1;
+    });
     renderStaging();
   }
 
@@ -48,7 +53,17 @@
     const res = await gasCall({ action: 'clothes_getInbound' });
     if (res?.success) inboundList = res.data || [];
     else inboundList = JSON.parse(localStorage.getItem('clothes_inbound') || '[]');
-    inboundList.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+    inboundList.sort((a, b) => {
+      const dateDiff = new Date(b.orderDate) - new Date(a.orderDate);
+      if (dateDiff !== 0) return dateDiff;
+      // 同日期時用入庫時間決定順序
+      const parseTs = str => {
+        if (!str) return 0;
+        const d = new Date(str.replace(' ', 'T'));
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+      };
+      return parseTs(b.inboundAt) - parseTs(a.inboundAt);
+    });
     renderInbound();
   }
 
@@ -315,7 +330,16 @@
       container.innerHTML = `<div class="cl-empty">尚無進貨紀錄</div>`;
       return;
     }
-    const sorted = [...inboundList].sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+    const sorted = [...inboundList].sort((a, b) => {
+      const dateDiff = new Date(b.orderDate) - new Date(a.orderDate);
+      if (dateDiff !== 0) return dateDiff;
+      const parseTs = str => {
+        if (!str) return 0;
+        const d = new Date(str.replace(' ', 'T'));
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+      };
+      return parseTs(b.inboundAt) - parseTs(a.inboundAt);
+    });
     let html = '';
     sorted.forEach(row => {
       html += `
