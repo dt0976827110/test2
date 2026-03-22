@@ -405,9 +405,9 @@
       (s.productCode || '').toLowerCase().includes(kw)
     );
     if (stockFilter === 'available') {
-      list = list.filter(s => parseInt(s.stock) > 0);
+      list = list.filter(s => s.status === '可售' || s.status === '含樣品');
     } else if (stockFilter === 'sold') {
-      list = list.filter(s => parseInt(s.stock) <= 0);
+      list = list.filter(s => s.status === '售完' || s.status === '下架');
     }
 
     if (!list.length) {
