@@ -1104,11 +1104,29 @@ function doGet(e) {
 
   <!-- ① 貨運核對單 -->
   <div class="cl-page" data-page="staging" style="display:flex">
+    <div class="cl-filter-bar">
+      <button class="cl-filter-btn active" data-filter="all">全部</button>
+      <button class="cl-filter-btn" data-filter="待入庫">待入庫</button>
+      <button class="cl-filter-btn" data-filter="已入庫">已入庫</button>
+      <button class="cl-filter-btn" data-filter="廠商退款">廠商退款</button>
+    </div>
     <div id="cl-staging-list" class="cl-list-wrap"></div>
   </div>
 
   <!-- ② 進貨明細 -->
-  <div class="cl-page" data-page="inbound" style="display:none">
+  <div class="cl-page" data-page="inbound" id="tab-inbound" style="display:none">
+    <div class="cl-filter-bar">
+      <button class="cl-filter-btn active" data-days="0">全部</button>
+      <button class="cl-filter-btn" data-days="7">7天</button>
+      <button class="cl-filter-btn" data-days="30">30天</button>
+      <button class="cl-filter-btn" data-days="90">90天</button>
+      <button class="cl-filter-btn" data-days="custom">自訂</button>
+    </div>
+    <div class="cl-custom-date-range" id="cl-inbound-custom-range" style="display:none">
+      <input type="date" id="cl-inbound-date-from" class="cl-input cl-input-sm"/>
+      <span style="color:var(--color-text-secondary);font-size:12px">～</span>
+      <input type="date" id="cl-inbound-date-to" class="cl-input cl-input-sm"/>
+    </div>
     <div id="cl-inbound-list" class="cl-list-wrap"></div>
   </div>
 
@@ -1117,17 +1135,34 @@ function doGet(e) {
     <div class="cl-search-bar">
       <input id="cl-stock-search" type="text" placeholder="搜尋款式或代碼…" class="cl-search-input"/>
     </div>
+    <div class="cl-filter-bar">
+      <button class="cl-filter-btn active" data-stock-filter="all">全部</button>
+      <button class="cl-filter-btn" data-stock-filter="available">可售</button>
+      <button class="cl-filter-btn" data-stock-filter="sold">售完</button>
+    </div>
     <div class="cl-stock-stat-bar"><span id="cl-stock-stat"></span></div>
     <div id="cl-stock-list" class="cl-list-wrap"></div>
   </div>
 
   <!-- ④ 出貨明細 -->
-  <div class="cl-page" data-page="outbound" style="display:none">
+  <div class="cl-page" data-page="outbound" id="tab-outbound" style="display:none">
+    <div class="cl-filter-bar">
+      <button class="cl-filter-btn active" data-days="0">全部</button>
+      <button class="cl-filter-btn" data-days="7">7天</button>
+      <button class="cl-filter-btn" data-days="30">30天</button>
+      <button class="cl-filter-btn" data-days="90">90天</button>
+      <button class="cl-filter-btn" data-days="custom">自訂</button>
+    </div>
+    <div class="cl-custom-date-range" id="cl-outbound-custom-range" style="display:none">
+      <input type="date" id="cl-outbound-date-from" class="cl-input cl-input-sm"/>
+      <span style="color:var(--color-text-secondary);font-size:12px">～</span>
+      <input type="date" id="cl-outbound-date-to" class="cl-input cl-input-sm"/>
+    </div>
     <div id="cl-outbound-list" class="cl-list-wrap"></div>
   </div>
 
   <!-- ⑤ 預存盈餘 -->
-  <div class="cl-page" data-page="surplus" style="display:none">
+  <div class="cl-page" data-page="surplus" id="tab-surplus" style="display:none">
     <div class="cl-surplus-summary">
       <div class="cl-surplus-summary-row">
         <div class="cl-surplus-item">
@@ -1143,6 +1178,18 @@ function doGet(e) {
         <span class="cl-surplus-label">結餘</span>
         <span id="cl-surplus-balance" class="cl-surplus-balance">₩0</span>
       </div>
+    </div>
+    <div class="cl-filter-bar">
+      <button class="cl-filter-btn active" data-days="0">全部</button>
+      <button class="cl-filter-btn" data-days="7">7天</button>
+      <button class="cl-filter-btn" data-days="30">30天</button>
+      <button class="cl-filter-btn" data-days="90">90天</button>
+      <button class="cl-filter-btn" data-days="custom">自訂</button>
+    </div>
+    <div class="cl-custom-date-range" id="cl-surplus-custom-range" style="display:none">
+      <input type="date" id="cl-surplus-date-from" class="cl-input cl-input-sm"/>
+      <span style="color:var(--color-text-secondary);font-size:12px">～</span>
+      <input type="date" id="cl-surplus-date-to" class="cl-input cl-input-sm"/>
     </div>
     <div class="cl-surplus-section">
       <div class="cl-section-label">入金紀錄</div>
@@ -1297,20 +1344,52 @@ function doGet(e) {
         <button class="cl-modal-close" id="cl-outbound-modal-close">✕</button>
       </div>
       <div class="cl-modal-body">
+        <div class="cl-divider">收件資料</div>
         <div class="cl-form-row">
-          <label>訂單編號</label>
-          <input id="cl-ob-order" type="text" placeholder="自動產生可留空" class="cl-input"/>
+          <label>IG 帳號</label>
+          <input id="cl-ob-ig" type="text" placeholder="@username" class="cl-input"/>
+        </div>
+        <div class="cl-form-row-group">
+          <div class="cl-form-row">
+            <label>姓名</label>
+            <input id="cl-ob-name" type="text" placeholder="王小明" class="cl-input"/>
+          </div>
+          <div class="cl-form-row">
+            <label>電話</label>
+            <input id="cl-ob-phone" type="tel" placeholder="09xx-xxx-xxx" class="cl-input"/>
+          </div>
         </div>
         <div class="cl-form-row">
-          <label>出貨日期</label>
-          <input id="cl-ob-date" type="date" class="cl-input"/>
+          <label>地址</label>
+          <input id="cl-ob-address" type="text" placeholder="完整地址" class="cl-input"/>
         </div>
-        <div class="cl-form-row">
-          <label>狀態</label>
-          <select id="cl-ob-status" class="cl-input cl-input-sm">
-            <option value="已出貨">已出貨</option>
-            <option value="待出貨">待出貨</option>
-          </select>
+        <div class="cl-form-row-group">
+          <div class="cl-form-row">
+            <label>寄送方式</label>
+            <select id="cl-ob-shipping" class="cl-input">
+              <option value="7-11">7-11</option>
+              <option value="全家">全家</option>
+              <option value="宅配">宅配</option>
+              <option value="面交">面交</option>
+            </select>
+          </div>
+          <div class="cl-form-row">
+            <label>銀行後五碼</label>
+            <input id="cl-ob-bank" type="text" placeholder="12345" maxlength="5" class="cl-input"/>
+          </div>
+        </div>
+        <div class="cl-form-row-group">
+          <div class="cl-form-row">
+            <label>出貨日期</label>
+            <input id="cl-ob-date" type="date" class="cl-input"/>
+          </div>
+          <div class="cl-form-row">
+            <label>狀態</label>
+            <select id="cl-ob-status" class="cl-input">
+              <option value="已出貨">已出貨</option>
+              <option value="待出貨">待出貨</option>
+            </select>
+          </div>
         </div>
         <div class="cl-divider">加入商品</div>
         <div class="cl-form-row">

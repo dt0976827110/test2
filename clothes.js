@@ -16,6 +16,17 @@
   let outboundCart  = [];        // 新增出貨時的購物車
   let isSubmitting   = false;     // 防重複提交
   let editingStaging = null;     // 編輯中的核對單
+  let stagingFilter   = 'all';   // 核對單篩選
+  let inboundDays     = 0;       // 進貨時間篩選（0=全部）
+  let inboundFrom     = '';
+  let inboundTo       = '';
+  let outboundDays    = 0;       // 出貨時間篩選
+  let outboundFrom    = '';
+  let outboundTo      = '';
+  let surplusDays     = 0;       // 盈餘時間篩選
+  let surplusFrom     = '';
+  let surplusTo       = '';
+  let stockFilter     = 'all';   // 庫存篩選
   let isClothesOpen = false;
 
   // ── GAS 通訊 ─────────────────────────────────
@@ -154,9 +165,10 @@
       return;
     }
 
-    // 依狀態分組顯示
+    // 依篩選+狀態分組顯示
+    const filtered = stagingFilter === 'all' ? stagingList : stagingList.filter(r => r.status === stagingFilter);
     const groups = { '待入庫': [], '已入庫': [], '廠商退款': [] };
-    stagingList.forEach(row => { (groups[row.status] || groups['待入庫']).push(row); });
+    filtered.forEach(row => { (groups[row.status] || groups['待入庫']).push(row); });
 
     let html = '';
     ['待入庫', '已入庫', '廠商退款'].forEach(status => {
@@ -330,7 +342,8 @@
       container.innerHTML = `<div class="cl-empty">尚無進貨紀錄</div>`;
       return;
     }
-    const sorted = [...inboundList].sort((a, b) => {
+    const filteredInbound = filterByDays(inboundList, 'orderDate', inboundDays, inboundFrom, inboundTo);
+    const sorted = [...filteredInbound].sort((a, b) => {
       const dateDiff = new Date(b.orderDate) - new Date(a.orderDate);
       if (dateDiff !== 0) return dateDiff;
       const parseTs = str => {
@@ -386,6 +399,11 @@
       (s.style || '').toLowerCase().includes(kw) ||
       (s.productCode || '').toLowerCase().includes(kw)
     );
+    if (stockFilter === 'available') {
+      list = list.filter(s => parseInt(s.stock) > 0);
+    } else if (stockFilter === 'sold') {
+      list = list.filter(s => parseInt(s.stock) <= 0);
+    }
 
     if (!list.length) {
       container.innerHTML = `<div class="cl-empty">尚無庫存商品</div>`;
@@ -469,11 +487,13 @@
       return;
     }
 
+    // 時間篩選
+    const filteredOutbound = filterByDays(outboundList, 'date', outboundDays, outboundFrom, outboundTo);
     // 依訂單編號分組
     const orders = {};
-    outboundList.forEach(row => {
+    filteredOutbound.forEach(row => {
       const key = row.orderId || row.id;
-      if (!orders[key]) orders[key] = { orderId: row.orderId || '—', date: row.date, items: [], status: row.status };
+      if (!orders[key]) orders[key] = { orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '' };
       orders[key].items.push(row);
     });
 
@@ -485,8 +505,8 @@
       <div class="cl-card cl-card-collapse">
         <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
           <div class="cl-card-toggle-left">
-            <div class="cl-card-title">訂單 ${order.orderId}</div>
-            <div class="cl-card-sub">${formatDate(order.date)}</div>
+            <div class="cl-card-title">${order.ig ? order.ig : '訂單'} ${order.name ? '・' + order.name : ''}</div>
+            <div class="cl-card-sub">${formatDate(order.date)}${order.shipping ? ' ・ ' + order.shipping : ''}</div>
           </div>
           <div class="cl-card-toggle-right">
             <span class="cl-card-summary">NT$ ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span>
@@ -495,6 +515,13 @@
           </div>
         </div>
         <div class="cl-card-body">
+          ${order.ig ? `<div class="cl-card-row"><span>IG</span><span>${order.ig}</span></div>` : ''}
+          ${order.name ? `<div class="cl-card-row"><span>姓名</span><span>${order.name}</span></div>` : ''}
+          ${order.phone ? `<div class="cl-card-row"><span>電話</span><span>${order.phone}</span></div>` : ''}
+          ${order.address ? `<div class="cl-card-row"><span>地址</span><span>${order.address}</span></div>` : ''}
+          ${order.shipping ? `<div class="cl-card-row"><span>寄送方式</span><span>${order.shipping}</span></div>` : ''}
+          ${order.bank ? `<div class="cl-card-row"><span>銀行後五碼</span><span>${order.bank}</span></div>` : ''}
+          <div class="cl-card-row" style="border-top:1px dashed var(--color-border-tertiary);margin-top:4px;padding-top:8px"></div>
           ${order.items.map(item => `
           <div class="cl-card-row">
             <span>${item.style || '—'} ${item.size || ''} × ${item.qty || 1}</span>
@@ -547,9 +574,14 @@
     outboundCart = [];
     const modal = document.getElementById('cl-outbound-modal');
     if (!modal) return;
-    modal.querySelector('#cl-ob-order').value  = '';
-    modal.querySelector('#cl-ob-date').value   = today();
-    modal.querySelector('#cl-ob-status').value = '已出貨';
+    modal.querySelector('#cl-ob-ig').value       = '';
+    modal.querySelector('#cl-ob-name').value     = '';
+    modal.querySelector('#cl-ob-phone').value    = '';
+    modal.querySelector('#cl-ob-address').value  = '';
+    modal.querySelector('#cl-ob-shipping').value = '7-11';
+    modal.querySelector('#cl-ob-bank').value     = '';
+    modal.querySelector('#cl-ob-date').value     = today();
+    modal.querySelector('#cl-ob-status').value   = '已出貨';
     renderOutboundCart();
 
     // 先確保庫存已載入
@@ -646,8 +678,10 @@
   //  五、預存盈餘
   // ══════════════════════════════════════════════
   function renderSurplus() {
-    const deps  = surplusData.deposits  || [];
-    const exps  = surplusData.expenses  || [];
+    const allDeps = surplusData.deposits || [];
+    const allExps = surplusData.expenses || [];
+    const deps = filterByDays(allDeps, 'date', surplusDays, surplusFrom, surplusTo);
+    const exps = filterByDays(allExps, 'date', surplusDays, surplusFrom, surplusTo);
 
     // 入金：台幣 × 匯率 → 韓幣
     const totalDepositKrw = deps.reduce((s, d) => s + Math.round((parseFloat(d.ntd)||0) * (parseFloat(d.rate)||1)), 0);
@@ -766,12 +800,23 @@
     if (isSubmitting) return;
     if (!outboundCart.length) return showClToast('請先加入商品');
     const modal    = document.getElementById('cl-outbound-modal');
-    const orderId  = modal.querySelector('#cl-ob-order').value.trim() || genId().slice(0,8);
+    const ig       = modal.querySelector('#cl-ob-ig').value.trim();
+    const name     = modal.querySelector('#cl-ob-name').value.trim();
+    const phone    = modal.querySelector('#cl-ob-phone').value.trim();
+    const address  = modal.querySelector('#cl-ob-address').value.trim();
+    const shipping = modal.querySelector('#cl-ob-shipping').value;
+    const bank     = modal.querySelector('#cl-ob-bank').value.trim();
     const date     = modal.querySelector('#cl-ob-date').value || today();
     const status   = modal.querySelector('#cl-ob-status').value || '已出貨';
 
+    if (!ig || !name || !phone || !address || !bank)
+      return showClToast('請填寫所有收件資料');
+
+    const orderId = ig + '_' + date.replace(/-/g,'').slice(4); // e.g. @user_0323
+
     const rows = outboundCart.map(item => ({
       id: genId(), orderId, date, status,
+      ig, name, phone, address, shipping, bank,
       productCode: item.productCode,
       style: item.style, size: item.size,
       cost: item.cost, price: item.price,
@@ -855,6 +900,23 @@
     modal.style.display = 'none';
     showClToast('✅ 已記錄');
     renderSurplus();
+  }
+
+  // ── 時間篩選工具 ──────────────────────────────────
+  function filterByDays(list, dateKey, days, from, to) {
+    if (days === 0 && !from && !to) return list;
+    const now = new Date();
+    return list.filter(row => {
+      const d = new Date(row[dateKey]);
+      if (isNaN(d)) return true;
+      if (from && to) return d >= new Date(from) && d <= new Date(to + 'T23:59:59');
+      if (days > 0) {
+        const cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() - days);
+        return d >= cutoff;
+      }
+      return true;
+    });
   }
 
   // ── 摺疊卡片 ─────────────────────────────────────
@@ -1014,6 +1076,65 @@
     });
     document.getElementById('cl-deposit-save')?.addEventListener('click', submitDeposit);
     document.getElementById('cl-expense-save')?.addEventListener('click', submitExpense);
+
+    // ── 核對單篩選 ──
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        stagingFilter = btn.dataset.filter;
+        renderStaging();
+      });
+    });
+
+    // ── 庫存篩選 ──
+    document.querySelectorAll('[data-stock-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-stock-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        stockFilter = btn.dataset.stockFilter;
+        renderStock();
+      });
+    });
+
+    // ── 時間篩選通用綁定 ──
+    function bindTimFilter(selector, rangeId, fromId, toId, daysVar, fromVar, toVar, renderFn) {
+      document.querySelectorAll(selector).forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll(selector).forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const days = btn.dataset.days;
+          const range = document.getElementById(rangeId);
+          if (days === 'custom') {
+            if (range) range.style.display = 'flex';
+          } else {
+            if (range) range.style.display = 'none';
+            if (daysVar === 'inbound')  { inboundDays  = parseInt(days); inboundFrom  = ''; inboundTo  = ''; }
+            if (daysVar === 'outbound') { outboundDays = parseInt(days); outboundFrom = ''; outboundTo = ''; }
+            if (daysVar === 'surplus')  { surplusDays  = parseInt(days); surplusFrom  = ''; surplusTo  = ''; }
+            renderFn();
+          }
+        });
+      });
+      const fromEl = document.getElementById(fromId);
+      const toEl   = document.getElementById(toId);
+      if (fromEl) fromEl.addEventListener('change', e => {
+        if (daysVar === 'inbound')  inboundFrom  = e.target.value;
+        if (daysVar === 'outbound') outboundFrom = e.target.value;
+        if (daysVar === 'surplus')  surplusFrom  = e.target.value;
+        renderFn();
+      });
+      if (toEl) toEl.addEventListener('change', e => {
+        if (daysVar === 'inbound')  inboundTo  = e.target.value;
+        if (daysVar === 'outbound') outboundTo = e.target.value;
+        if (daysVar === 'surplus')  surplusTo  = e.target.value;
+        renderFn();
+      });
+    }
+
+    bindTimFilter('#tab-inbound  [data-days]', 'cl-inbound-custom-range',  'cl-inbound-date-from',  'cl-inbound-date-to',  'inbound',  '', '', renderInbound);
+    bindTimFilter('#tab-outbound [data-days]', 'cl-outbound-custom-range', 'cl-outbound-date-from', 'cl-outbound-date-to', 'outbound', '', '', renderOutbound);
+    bindTimFilter('#tab-surplus  [data-days]', 'cl-surplus-custom-range',  'cl-surplus-date-from',  'cl-surplus-date-to',  'surplus',  '', '', renderSurplus);
 
     // 服飾管理入口
     document.getElementById('wsOpenClothesBtn')?.addEventListener('click', showClothesSystem);

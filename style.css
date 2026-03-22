@@ -1650,3 +1650,28 @@ body.light .cl-card-body > .cl-card-row:first-child,
 body.light .cl-card-body > .cl-card-actions:first-child { border-color: #f0f0f0; }
 body.dark  .cl-card-body > .cl-card-row:first-child,
 body.dark  .cl-card-body > .cl-card-actions:first-child { border-color: #2a2a2a; }
+
+/* ── 篩選列 ── */
+.cl-filter-bar {
+  display: flex; gap: 6px; padding: 10px 16px 4px;
+  flex-wrap: nowrap; overflow-x: auto;
+  scrollbar-width: none;
+}
+.cl-filter-bar::-webkit-scrollbar { display: none; }
+
+.cl-filter-btn {
+  flex-shrink: 0; padding: 5px 12px;
+  border-radius: 99px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 0.5px solid; white-space: nowrap;
+  transition: all 0.15s;
+}
+body.light .cl-filter-btn { background: var(--color-background-primary); color: var(--color-text-secondary); border-color: var(--color-border-tertiary); }
+body.dark  .cl-filter-btn { background: #1e1e1e; color: #888; border-color: #333; }
+body.light .cl-filter-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+body.dark  .cl-filter-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+
+.cl-custom-date-range {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 16px 0;
+}
+.cl-custom-date-range .cl-input-sm { flex: 1; }
