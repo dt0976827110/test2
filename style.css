@@ -1211,6 +1211,7 @@ body.dark  #clothes-overlay { background: #0f0f0f; }
   padding: max(env(safe-area-inset-top), 16px) 16px 14px;
   flex-shrink: 0;
   gap: 10px;
+  z-index: 10;
 }
 body.light .cl-topbar { background: #fff; border-bottom: 1px solid #eee; }
 body.dark  .cl-topbar { background: #1a1a1a; border-bottom: 1px solid #2a2a2a; }
@@ -1242,6 +1243,7 @@ body.dark  .cl-topbar-btn { color: #a78bfa; border-color: #a78bfa; }
   display: flex; flex: 1; flex-direction: column;
   overflow-y: auto; overflow-x: hidden;
   padding-bottom: 80px;
+  min-height: 0;
 }
 
 /* Bottom nav */
@@ -1653,9 +1655,10 @@ body.dark  .cl-card-body > .cl-card-actions:first-child { border-color: #2a2a2a;
 
 /* ── 篩選列 ── */
 .cl-filter-bar {
-  display: flex; gap: 6px; padding: 10px 16px 4px;
+  display: flex; gap: 6px; padding: 10px 16px 6px;
   flex-wrap: nowrap; overflow-x: auto;
   scrollbar-width: none;
+  flex-shrink: 0;
 }
 .cl-filter-bar::-webkit-scrollbar { display: none; }
 

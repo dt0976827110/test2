@@ -132,7 +132,12 @@
       el.classList.toggle('active', el.dataset.tab === tab);
     });
     document.querySelectorAll('.cl-page').forEach(el => {
-      el.style.display = el.dataset.page === tab ? 'flex' : 'none';
+      if (el.dataset.page === tab) {
+        el.style.display = 'flex';
+        el.scrollTop = 0;
+      } else {
+        el.style.display = 'none';
+      }
     });
 
     // 右上角按鈕控制
