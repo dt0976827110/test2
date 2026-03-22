@@ -882,7 +882,7 @@
       return showClToast('請填寫所有收件資料');
 
     const batchId = editOrderId || genId(); // 唯一批次 ID（每張訂單唯一）
-    const orderId = ig;              // 訂單編號 = IG 帳號（顯示用）
+    const orderId = batchId;         // B欄存唯一ID，IG帳號另存 ig 欄
 
     const rows = outboundCart.map(item => ({
       id: genId(), orderId, batchId, date, status,
