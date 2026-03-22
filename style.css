@@ -1239,7 +1239,7 @@ body.dark  .cl-topbar-btn { color: #a78bfa; border-color: #a78bfa; }
 
 /* Pages */
 .cl-page {
-  flex: 1; flex-direction: column;
+  display: flex; flex: 1; flex-direction: column;
   overflow-y: auto; overflow-x: hidden;
   padding-bottom: 80px;
 }
@@ -1271,7 +1271,7 @@ body.dark  .cl-nav-item.active { color: #a78bfa; }
 body.dark  .cl-nav-item.active svg { stroke: #a78bfa; }
 
 /* 卡片 */
-.cl-list-wrap { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+.cl-list-wrap { flex: 1; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
 
 .cl-card {
   border-radius: 14px; padding: 16px;
