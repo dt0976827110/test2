@@ -967,11 +967,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-})();      // 每次開新增出貨都重新拉最新庫存
-      const res = await gasCall({ action: 'clothes_getStock' });
-      if (res?.success) {
-        stockList = res.data || [];
-        saveLocal('clothes_stock', stockList);
-      } else {
-        if (!stockList.length) stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
-      }
+})();
