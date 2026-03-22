@@ -149,35 +149,41 @@
         const calc = calcStaging(row);
         const statusClass = status === '待入庫' ? 'cl-badge-pending' : status === '已入庫' ? 'cl-badge-done' : 'cl-badge-refund';
         html += `
-        <div class="cl-card" data-id="${row.id}">
-          <div class="cl-card-header">
-            <div>
+        <div class="cl-card cl-card-collapse" data-id="${row.id}">
+          <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
+            <div class="cl-card-toggle-left">
               <div class="cl-card-title">${row.style || '—'}</div>
               <div class="cl-card-sub">${row.stall || '—'} ・ ${row.size || '—'} ・ ${row.source || '—'}</div>
             </div>
-            <span class="cl-badge ${statusClass}">${status}</span>
+            <div class="cl-card-toggle-right">
+              <span class="cl-card-summary">NT$ ${calc.subtotal.toFixed(0)}</span>
+              <span class="cl-badge ${statusClass}">${status}</span>
+              <span class="cl-chevron">›</span>
+            </div>
           </div>
-          <div class="cl-card-row">
-            <span>韓幣成本</span><span>₩${(row.krwCost||0).toLocaleString()} × ${row.qty||0}件</span>
+          <div class="cl-card-body">
+            <div class="cl-card-row">
+              <span>韓幣成本</span><span>₩${(row.krwCost||0).toLocaleString()} × ${row.qty||0}件</span>
+            </div>
+            <div class="cl-card-row">
+              <span>進貨匯率</span><span>${row.rate || '—'}</span>
+            </div>
+            <div class="cl-card-row">
+              <span>代購方式</span><span>${row.source || '—'}（${row.source === '振興' ? '3%' : '4%'}）</span>
+            </div>
+            <div class="cl-card-row cl-card-row-highlight">
+              <span>單件成本（NT）</span><span>NT$ ${calc.unitNtPrice.toFixed(0)}</span>
+            </div>
+            <div class="cl-card-row cl-card-row-highlight">
+              <span>合計</span><span>NT$ ${calc.subtotal.toFixed(0)}</span>
+            </div>
+            ${row.status === '待入庫' ? `
+            <div class="cl-card-actions">
+              <button class="cl-btn cl-btn-ghost" onclick="clEditStaging('${row.id}')">編輯</button>
+              <button class="cl-btn cl-btn-danger" onclick="clRefundStaging('${row.id}')">廠商退款</button>
+              <button class="cl-btn cl-btn-primary" onclick="clCommitStaging('${row.id}')">入庫</button>
+            </div>` : ''}
           </div>
-          <div class="cl-card-row">
-            <span>進貨匯率</span><span>${row.rate || '—'}</span>
-          </div>
-          <div class="cl-card-row">
-            <span>代購方式</span><span>${row.source || '—'}（${row.source === '振興' ? '3%' : '4%'}）</span>
-          </div>
-          <div class="cl-card-row cl-card-row-highlight">
-            <span>單件成本（NT）</span><span>NT$ ${calc.unitNtPrice.toFixed(0)}</span>
-          </div>
-          <div class="cl-card-row cl-card-row-highlight">
-            <span>合計</span><span>NT$ ${calc.subtotal.toFixed(0)}</span>
-          </div>
-          ${row.status === '待入庫' ? `
-          <div class="cl-card-actions">
-            <button class="cl-btn cl-btn-ghost" onclick="clEditStaging('${row.id}')">編輯</button>
-            <button class="cl-btn cl-btn-danger" onclick="clRefundStaging('${row.id}')">廠商退款</button>
-            <button class="cl-btn cl-btn-primary" onclick="clCommitStaging('${row.id}')">入庫</button>
-          </div>` : ''}
         </div>`;
       });
     });
@@ -309,25 +315,30 @@
     let html = '';
     inboundList.forEach(row => {
       html += `
-      <div class="cl-card">
-        <div class="cl-card-header">
-          <div>
+      <div class="cl-card cl-card-collapse">
+        <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
+          <div class="cl-card-toggle-left">
             <div class="cl-card-title">${row.style || '—'} <span class="cl-size-tag">${row.size || ''}</span></div>
             <div class="cl-card-sub">${formatDate(row.orderDate)} ・ ${row.stall || '—'} ・ ${row.productCode || '—'}</div>
           </div>
-          <div class="cl-card-amount">NT$ ${(row.subtotal||0).toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+          <div class="cl-card-toggle-right">
+            <span class="cl-card-summary">NT$ ${(row.subtotal||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+            <span class="cl-chevron">›</span>
+          </div>
         </div>
-        <div class="cl-card-row">
-          <span>韓幣 × 數量</span><span>₩${(row.krwCost||0).toLocaleString()} × ${row.qty||0}件</span>
-        </div>
-        <div class="cl-card-row">
-          <span>匯率 / 代購</span><span>${row.rate || '—'} ／ ${row.source || '—'}</span>
-        </div>
-        <div class="cl-card-row">
-          <span>單件成本</span><span>NT$ ${(row.unitNtPrice||0).toFixed(0)}</span>
-        </div>
-        <div class="cl-card-row">
-          <span>入庫時間</span><span>${formatDateTime(row.inboundAt)}</span>
+        <div class="cl-card-body">
+          <div class="cl-card-row">
+            <span>韓幣 × 數量</span><span>₩${(row.krwCost||0).toLocaleString()} × ${row.qty||0}件</span>
+          </div>
+          <div class="cl-card-row">
+            <span>匯率 / 代購</span><span>${row.rate || '—'} ／ ${row.source || '—'}</span>
+          </div>
+          <div class="cl-card-row">
+            <span>單件成本</span><span>NT$ ${(row.unitNtPrice||0).toFixed(0)}</span>
+          </div>
+          <div class="cl-card-row">
+            <span>入庫時間</span><span>${formatDateTime(row.inboundAt)}</span>
+          </div>
         </div>
       </div>`;
     });
@@ -365,22 +376,31 @@
       const statusClass = stock > 0 ? 'cl-badge-done' : 'cl-badge-empty';
       const statusLabel = row.isSample ? '樣品' : (stock > 0 ? '可售' : '售完');
       html += `
-      <div class="cl-card" onclick="clOpenStockEdit('${row.productCode}')">
-        <div class="cl-card-header">
-          <div>
+      <div class="cl-card cl-card-collapse">
+        <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
+          <div class="cl-card-toggle-left">
             <div class="cl-card-title">${row.style || '—'} <span class="cl-size-tag">${row.size || ''}</span></div>
             <div class="cl-card-sub">${row.productCode || '—'}</div>
           </div>
-          <span class="cl-badge ${statusClass}">${statusLabel}</span>
+          <div class="cl-card-toggle-right">
+            <span class="cl-card-summary">${stock} 件</span>
+            <span class="cl-badge ${statusClass}">${statusLabel}</span>
+            <span class="cl-chevron">›</span>
+          </div>
         </div>
-        <div class="cl-card-row">
-          <span>成本</span><span>NT$ ${(row.cost||0).toFixed(0)}</span>
-        </div>
-        <div class="cl-card-row">
-          <span>售價</span><span>${row.price ? 'NT$ ' + row.price : '—'}</span>
-        </div>
-        <div class="cl-card-row cl-card-row-highlight">
-          <span>庫存數量</span><span>${stock} 件</span>
+        <div class="cl-card-body">
+          <div class="cl-card-row">
+            <span>成本</span><span>NT$ ${(row.cost||0).toFixed(0)}</span>
+          </div>
+          <div class="cl-card-row">
+            <span>售價</span><span>${row.price ? 'NT$ ' + row.price : '—'}</span>
+          </div>
+          <div class="cl-card-row cl-card-row-highlight">
+            <span>庫存數量</span><span>${stock} 件</span>
+          </div>
+          <div class="cl-card-actions">
+            <button class="cl-btn cl-btn-primary" onclick="clOpenStockEdit('${row.productCode}')">編輯</button>
+          </div>
         </div>
       </div>`;
     });
@@ -426,26 +446,32 @@
       const total = order.items.reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0);
       const statusClass = order.status === '已出貨' ? 'cl-badge-done' : 'cl-badge-pending';
       html += `
-      <div class="cl-card">
-        <div class="cl-card-header">
-          <div>
+      <div class="cl-card cl-card-collapse">
+        <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
+          <div class="cl-card-toggle-left">
             <div class="cl-card-title">訂單 ${order.orderId}</div>
             <div class="cl-card-sub">${formatDate(order.date)}</div>
           </div>
-          <span class="cl-badge ${statusClass}">${order.status || '已出貨'}</span>
+          <div class="cl-card-toggle-right">
+            <span class="cl-card-summary">NT$ ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+            <span class="cl-badge ${statusClass}">${order.status || '已出貨'}</span>
+            <span class="cl-chevron">›</span>
+          </div>
         </div>
-        ${order.items.map(item => `
-        <div class="cl-card-row">
-          <span>${item.style || '—'} ${item.size || ''} × ${item.qty || 1}</span>
-          <span>NT$ ${(parseFloat(item.subtotal)||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
-        </div>`).join('')}
-        <div class="cl-card-row cl-card-row-highlight">
-          <span>訂單合計</span><span>NT$ ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+        <div class="cl-card-body">
+          ${order.items.map(item => `
+          <div class="cl-card-row">
+            <span>${item.style || '—'} ${item.size || ''} × ${item.qty || 1}</span>
+            <span>NT$ ${(parseFloat(item.subtotal)||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+          </div>`).join('')}
+          <div class="cl-card-row cl-card-row-highlight">
+            <span>訂單合計</span><span>NT$ ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+          </div>
+          ${order.status !== '已出貨' ? `
+          <div class="cl-card-actions">
+            <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.orderId}')">標記為已出貨</button>
+          </div>` : ''}
         </div>
-        ${order.status !== '已出貨' ? `
-        <div class="cl-card-actions">
-          <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.orderId}')">標記為已出貨</button>
-        </div>` : ''}
       </div>`;
     });
     container.innerHTML = html;
@@ -481,22 +507,41 @@
     renderOutboundCart();
   };
 
-  function openOutboundForm() {
+  async function openOutboundForm() {
     outboundCart = [];
     const modal = document.getElementById('cl-outbound-modal');
     if (!modal) return;
-    modal.querySelector('#cl-ob-order').value = '';
-    modal.querySelector('#cl-ob-date').value  = today();
+    modal.querySelector('#cl-ob-order').value  = '';
+    modal.querySelector('#cl-ob-date').value   = today();
     modal.querySelector('#cl-ob-status').value = '已出貨';
     renderOutboundCart();
-    // 填入庫存選項
+
+    // 先確保庫存已載入
     const sel = modal.querySelector('#cl-ob-product');
     if (sel) {
+      sel.innerHTML = `<option value="">載入中…</option>`;
+      modal.style.display = 'flex';
+
+      // 每次都重新拉最新庫存，確保即時反映入庫/出貨
+      const freshRes = await gasCall({ action: 'clothes_getStock' });
+      if (freshRes?.success) {
+        stockList = freshRes.data || [];
+        saveLocal('clothes_stock', stockList);
+      } else {
+        // GAS 失敗 fallback 本機快取
+        if (!stockList.length) stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
+      }
+
       const available = stockList.filter(s => parseInt(s.stock) > 0 && !s.isSample);
-      sel.innerHTML = `<option value="">選擇商品</option>` +
-        available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
+      if (available.length) {
+        sel.innerHTML = `<option value="">選擇商品</option>` +
+          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
+      } else {
+        sel.innerHTML = `<option value="">目前無可售庫存</option>`;
+      }
+    } else {
+      modal.style.display = 'flex';
     }
-    modal.style.display = 'flex';
   }
 
   window.clMarkOutboundDone = function(orderId) {
@@ -748,7 +793,32 @@
     renderSurplus();
   }
 
-  // ══════════════════════════════════════════════
+  // ── 摺疊卡片 ─────────────────────────────────────
+  window.clToggleCard = function(headerEl) {
+    const card = headerEl.closest('.cl-card-collapse');
+    if (!card) return;
+    const body = card.querySelector('.cl-card-body');
+    const chevron = headerEl.querySelector('.cl-chevron');
+    const isOpen = card.classList.contains('cl-card-open');
+    if (isOpen) {
+      body.style.maxHeight = body.scrollHeight + 'px';
+      requestAnimationFrame(() => { body.style.maxHeight = '0'; });
+      card.classList.remove('cl-card-open');
+      if (chevron) chevron.style.transform = '';
+    } else {
+      body.style.maxHeight = '0';
+      card.classList.add('cl-card-open');
+      body.style.maxHeight = body.scrollHeight + 'px';
+      if (chevron) chevron.style.transform = 'rotate(90deg)';
+      // 動畫結束後移除 maxHeight 限制，避免動態內容被截斷
+      body.addEventListener('transitionend', function once() {
+        if (card.classList.contains('cl-card-open')) body.style.maxHeight = 'none';
+        body.removeEventListener('transitionend', once);
+      });
+    }
+  };
+
+    // ══════════════════════════════════════════════
   //  工具函式
   // ══════════════════════════════════════════════
   function today() {
@@ -884,4 +954,11 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-})();
+})();      // 每次開新增出貨都重新拉最新庫存
+      const res = await gasCall({ action: 'clothes_getStock' });
+      if (res?.success) {
+        stockList = res.data || [];
+        saveLocal('clothes_stock', stockList);
+      } else {
+        if (!stockList.length) stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
+      }
