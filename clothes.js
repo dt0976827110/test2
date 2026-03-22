@@ -539,18 +539,19 @@
         }
       }
 
-      const available = stockList.map(s => {
-        const total = parseInt(s.stock) || 0;
-        const avail = s.isSample ? Math.max(0, total - 1) : total;
-        return { ...s, availStock: avail };
-      }).filter(s => s.availStock > 0);
+      const available = stockList.filter(s => parseInt(s.stock) > 0);
       if (available.length) {
         sel.innerHTML = `<option value="">選擇商品</option>` +
-          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${s.availStock}">${s.style} ${s.size}（可售${s.availStock}件）</option>`).join('');
+          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${parseInt(s.stock)}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
       } else if (!gasUrl) {
         sel.innerHTML = `<option value="">請先在設定綁定 GAS 網址</option>`;
       } else {
-        sel.innerHTML = `<option value="">目前無可售庫存</option>`;
+        // debug：印出 stockList 讓 console 可以看
+        console.log('[clothes] stockList:', JSON.stringify(stockList));
+        const msg = stockList.length === 0
+          ? '讀取失敗，請重試'
+          : '目前無可售庫存';
+        sel.innerHTML = `<option value="">${msg}</option>`;
       }
     } else {
       modal.style.display = 'flex';
@@ -579,9 +580,8 @@
     if (!sel.value) return showClToast('請選擇商品');
     const opt   = sel.options[sel.selectedIndex];
     const avail = parseInt(opt.dataset.avail) || 0;
-    // 加上購物車內已選的數量一起算
     const inCart = outboundCart.filter(i => i.productCode === sel.value).reduce((s,i) => s+i.qty, 0);
-    if (qty + inCart > avail) return showClToast(`可售庫存只剩 ${avail - inCart} 件`);
+    if (avail > 0 && qty + inCart > avail) return showClToast(`庫存只剩 ${avail - inCart} 件`);
     outboundCart.push({
       productCode: sel.value,
       style: opt.dataset.style,
