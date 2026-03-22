@@ -69,6 +69,7 @@
     const res = await gasCall({ action: 'clothes_getOutbound' });
     if (res?.success) outboundList = res.data || [];
     else outboundList = JSON.parse(localStorage.getItem('clothes_outbound') || '[]');
+    outboundList.sort((a, b) => new Date(b.date) - new Date(a.date));
     renderOutbound();
   }
 
@@ -320,8 +321,18 @@
       container.innerHTML = `<div class="cl-empty">尚無進貨紀錄</div>`;
       return;
     }
+    // 每次渲染前重新排序，確保最新在最上面
+    const sorted = [...inboundList].sort((a, b) => {
+      const getTs = r => {
+        const str = r.inboundAt || r.orderDate || '';
+        if (!str) return 0;
+        const d = new Date(str.replace(' ', 'T'));
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+      };
+      return getTs(b) - getTs(a);
+    });
     let html = '';
-    inboundList.forEach(row => {
+    sorted.forEach(row => {
       html += `
       <div class="cl-card cl-card-collapse">
         <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
