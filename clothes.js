@@ -48,7 +48,13 @@
     const res = await gasCall({ action: 'clothes_getInbound' });
     if (res?.success) inboundList = res.data || [];
     else inboundList = JSON.parse(localStorage.getItem('clothes_inbound') || '[]');
-    inboundList.sort((a, b) => new Date(b.inboundAt || b.orderDate) - new Date(a.inboundAt || a.orderDate));
+    // 解析日期，支援 "2026-03-15 20:16" 及 ISO 格式
+    function parseInboundDate(row) {
+      const str = row.inboundAt || row.orderDate || '';
+      const d = new Date(str.replace(' ', 'T'));
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    }
+    inboundList.sort((a, b) => parseInboundDate(b) - parseInboundDate(a));
     renderInbound();
   }
 
