@@ -372,9 +372,12 @@
 
     let html = '';
     list.forEach(row => {
-      const stock = parseInt(row.stock) || 0;
-      const statusClass = stock > 0 ? 'cl-badge-done' : 'cl-badge-empty';
-      const statusLabel = row.isSample ? '樣品' : (stock > 0 ? '可售' : '售完');
+      const totalStock   = parseInt(row.stock) || 0;
+      const displayStock = row.isSample ? Math.max(0, totalStock - 1) : totalStock;
+      const statusClass  = displayStock > 0 ? 'cl-badge-done' : 'cl-badge-empty';
+      const statusLabel  = row.isSample
+        ? (displayStock > 0 ? '含樣品' : '售完')
+        : (displayStock > 0 ? '可售' : '售完');
       html += `
       <div class="cl-card cl-card-collapse">
         <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
@@ -383,7 +386,7 @@
             <div class="cl-card-sub">${row.productCode || '—'}</div>
           </div>
           <div class="cl-card-toggle-right">
-            <span class="cl-card-summary">${stock} 件</span>
+            <span class="cl-card-summary">${displayStock} 件</span>
             <span class="cl-badge ${statusClass}">${statusLabel}</span>
             <span class="cl-chevron">›</span>
           </div>
@@ -396,7 +399,7 @@
             <span>售價</span><span>${row.price ? 'NT$ ' + row.price : '—'}</span>
           </div>
           <div class="cl-card-row cl-card-row-highlight">
-            <span>庫存數量</span><span>${stock} 件</span>
+            <span>庫存數量</span><span>${displayStock} 件${row.isSample ? '（含1件樣品）' : ''}</span>
           </div>
           <div class="cl-card-actions">
             <button class="cl-btn cl-btn-primary" onclick="clOpenStockEdit('${row.productCode}')">編輯</button>
@@ -416,7 +419,12 @@
     modal.querySelector('#cl-st-style').textContent = `${row.style || '—'} ${row.size || ''}`;
     modal.querySelector('#cl-st-cost').textContent  = `NT$ ${(row.cost||0).toFixed(0)}`;
     modal.querySelector('#cl-st-price').value  = row.price || '';
-    modal.querySelector('#cl-st-sample').checked = !!row.isSample;
+    const stock = parseInt(row.stock) || 0;
+    const sampleCheck = modal.querySelector('#cl-st-sample');
+    sampleCheck.checked  = !!row.isSample;
+    sampleCheck.disabled = stock <= 0;
+    const sampleRow = sampleCheck?.closest('.cl-form-row-check');
+    if (sampleRow) sampleRow.style.opacity = stock <= 0 ? '0.4' : '';
     modal.querySelector('#cl-st-status').value = row.status || '可售';
     modal.dataset.code = code;
     modal.style.display = 'flex';
@@ -700,6 +708,7 @@
   }
 
   async function submitStockEdit() {
+    if (isSubmitting) return;
     const modal = document.getElementById('cl-stock-modal');
     const code  = modal?.dataset.code;
     if (!code) return;
@@ -708,11 +717,19 @@
     row.price    = parseFloat(modal.querySelector('#cl-st-price').value) || '';
     row.isSample = modal.querySelector('#cl-st-sample').checked;
     row.status   = modal.querySelector('#cl-st-status').value;
-    await gasCall({ action: 'clothes_updateProduct', data: JSON.stringify(row) });
-    saveLocal('clothes_stock', stockList);
-    modal.style.display = 'none';
-    showClToast('✅ 已更新');
-    renderStock();
+    isSubmitting = true;
+    const saveBtn = document.getElementById('cl-stock-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '更新中…'; }
+    try {
+      await gasCall({ action: 'clothes_updateProduct', data: JSON.stringify(row) });
+      saveLocal('clothes_stock', stockList);
+      modal.style.display = 'none';
+      showClToast('✅ 已更新');
+      renderStock();
+    } finally {
+      isSubmitting = false;
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '更新'; }
+    }
   }
 
   async function submitOutbound() {
