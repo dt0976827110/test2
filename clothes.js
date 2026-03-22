@@ -539,10 +539,14 @@
         }
       }
 
-      const available = stockList.filter(s => parseInt(s.stock) > 0 && !s.isSample);
+      const available = stockList.map(s => {
+        const total = parseInt(s.stock) || 0;
+        const avail = s.isSample ? Math.max(0, total - 1) : total;
+        return { ...s, availStock: avail };
+      }).filter(s => s.availStock > 0);
       if (available.length) {
         sel.innerHTML = `<option value="">選擇商品</option>` +
-          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
+          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${s.availStock}">${s.style} ${s.size}（可售${s.availStock}件）</option>`).join('');
       } else if (!gasUrl) {
         sel.innerHTML = `<option value="">請先在設定綁定 GAS 網址</option>`;
       } else {
@@ -573,7 +577,11 @@
     const qty   = parseInt(modal.querySelector('#cl-ob-qty').value) || 1;
     const price = parseFloat(modal.querySelector('#cl-ob-price').value) || 0;
     if (!sel.value) return showClToast('請選擇商品');
-    const opt  = sel.options[sel.selectedIndex];
+    const opt   = sel.options[sel.selectedIndex];
+    const avail = parseInt(opt.dataset.avail) || 0;
+    // 加上購物車內已選的數量一起算
+    const inCart = outboundCart.filter(i => i.productCode === sel.value).reduce((s,i) => s+i.qty, 0);
+    if (qty + inCart > avail) return showClToast(`可售庫存只剩 ${avail - inCart} 件`);
     outboundCart.push({
       productCode: sel.value,
       style: opt.dataset.style,
