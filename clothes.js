@@ -497,7 +497,9 @@
     // 依批次 ID 分組（batchId = 每次新增產生的唯一 ID）
     const orders = {};
     filteredOutbound.forEach(row => {
-      const key = row.batchId || row.orderId || row.id;
+      // 新資料：orderId 是 batchId（唯一ID）；舊資料：orderId 是 IG 帳號（含@或舊格式）→ 用 id 讓每列獨立
+      const isOldFormat = (row.orderId || '').startsWith('@') || (row.orderId || '').includes('sds') || (row.orderId || '').includes('cyn');
+      const key = isOldFormat ? row.id : (row.batchId || row.orderId || row.id);
       if (!orders[key]) orders[key] = { batchId: key, orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '' };
       else orders[key].status = row.status;
       orders[key].items.push(row);
