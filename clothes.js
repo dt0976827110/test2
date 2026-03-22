@@ -494,12 +494,12 @@
 
     // 時間篩選
     const filteredOutbound = filterByDays(outboundList, 'date', outboundDays, outboundFrom, outboundTo);
-    // 依訂單編號分組
+    // 依批次 ID 分組（batchId = 每次新增產生的唯一 ID）
     const orders = {};
     filteredOutbound.forEach(row => {
-      const key = row.orderId || row.id;
-      if (!orders[key]) orders[key] = { orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '' };
-      else orders[key].status = row.status; // 用最後一筆的狀態（標記後所有筆都是同狀態）
+      const key = row.batchId || row.orderId || row.id;
+      if (!orders[key]) orders[key] = { batchId: key, orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '' };
+      else orders[key].status = row.status;
       orders[key].items.push(row);
     });
 
@@ -538,8 +538,8 @@
           </div>
           ${order.status !== '已出貨' ? `
           <div class="cl-card-actions">
-            <button class="cl-btn cl-btn-ghost" onclick="clEditOutbound('${order.orderId}')">編輯</button>
-            <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.orderId}')">標記為已出貨</button>
+            <button class="cl-btn cl-btn-ghost" onclick="clEditOutbound('${order.batchId}')">編輯</button>
+            <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.batchId}')">標記為已出貨</button>
           </div>` : ''}
         </div>
       </div>`;
@@ -645,7 +645,7 @@
         o[k].items.push(r);
       });
       return o;
-    })()).find(o => o.orderId === orderId);
+    })()).find(o => o.batchId === orderId);
     if (!order) return;
 
     outboundCart = order.items.map(item => ({
@@ -688,7 +688,7 @@
   };
 
   window.clMarkOutboundDone = function(orderId) {
-    const order = outboundList.find(r => (r.orderId || r.id) === orderId);
+    const order = outboundList.find(r => (r.batchId || r.orderId || r.id) === orderId);
     const igHandle = order?.ig ? order.ig.replace(/^@/, '') : null;
 
     showClConfirm('確定標記為已出貨？', async () => {
@@ -697,7 +697,7 @@
 
       // 更新本機
       outboundList.forEach(row => {
-        if ((row.orderId || row.id) === orderId) row.status = '已出貨';
+        if ((row.batchId || row.orderId || row.id) === orderId) row.status = '已出貨';
       });
       saveLocal('clothes_outbound', outboundList);
       // 同步 GAS
@@ -880,10 +880,11 @@
     if (!ig || !name || !phone || !address || !bank)
       return showClToast('請填寫所有收件資料');
 
-    const orderId = editOrderId || genId(); // 編輯時保留原 orderId
+    const batchId = editOrderId || genId(); // 唯一批次 ID（每張訂單唯一）
+    const orderId = ig;              // 訂單編號 = IG 帳號（顯示用）
 
     const rows = outboundCart.map(item => ({
-      id: genId(), orderId, date, status,
+      id: genId(), orderId, batchId, date, status,
       ig, name, phone, address, shipping, bank,
       productCode: item.productCode,
       style: item.style, size: item.size,
@@ -897,7 +898,7 @@
     try {
       if (editOrderId) {
         // 編輯模式：先移除舊的同 orderId 資料
-        outboundList = outboundList.filter(r => (r.orderId || r.id) !== editOrderId);
+        outboundList = outboundList.filter(r => (r.batchId || r.orderId || r.id) !== editOrderId);
       }
       await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
     } finally {
