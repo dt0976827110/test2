@@ -462,10 +462,10 @@
     list.forEach(row => {
       const totalStock   = parseInt(row.stock) || 0;
       const displayStock = row.isSample ? totalStock - 1 : totalStock;
-      const statusClass  = displayStock > 0 ? 'cl-badge-done' : (displayStock < 0 ? 'cl-badge-reorder' : 'cl-badge-empty');
-      const statusLabel  = row.isSample
-        ? (displayStock > 0 ? '含樣品' : (totalStock < 0 ? '追加' : '售完'))
-        : (displayStock > 0 ? '可售' : (displayStock < 0 ? '追加' : '售完'));
+      let statusLabel, statusClass;
+      if (displayStock > 0)      { statusLabel = row.isSample ? '含樣品' : '可售'; statusClass = 'cl-badge-done'; }
+      else if (displayStock < 0) { statusLabel = '追加'; statusClass = 'cl-badge-reorder'; }
+      else                       { statusLabel = '售完'; statusClass = 'cl-badge-empty'; }
       html += `
       <div class="cl-card cl-card-collapse">
         <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
