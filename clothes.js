@@ -900,7 +900,8 @@
     if (obBtn) { obBtn.disabled = true; obBtn.textContent = '處理中…'; }
     try {
       if (editOrderId) {
-        // 編輯模式：先移除舊的同 orderId 資料
+        // 編輯模式：先刪 Sheet 舊資料，再移除本機舊資料
+        await gasCall({ action: 'clothes_deleteOutboundBatch', batchId: editOrderId });
         outboundList = outboundList.filter(r => (r.batchId || r.orderId || r.id) !== editOrderId);
       }
       await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
