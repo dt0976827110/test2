@@ -34,16 +34,24 @@
     try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
   }
 
+  async function gasCallWithStatus(params) { return gasCall(params); } // alias，向後相容
   async function gasCall(params) {
     const url = getGasUrl();
     if (!url) return null;
+    setSyncStatus('syncing', '同步中…');
     try {
       const qs = Object.entries(params)
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
         .join('&');
-      const res = await fetch(`${url}?${qs}`);
-      return await res.json();
-    } catch { return null; }
+      const res  = await fetch(`${url}?${qs}`);
+      const data = await res.json();
+      if (data?.success !== false) setSyncStatus('done', '✓ 已同步');
+      else setSyncStatus('error', '⚠ 同步失敗');
+      return data;
+    } catch {
+      setSyncStatus('error', '⚠ 同步失敗');
+      return null;
+    }
   }
 
   // ── 資料載入 ──────────────────────────────────
@@ -453,7 +461,7 @@
     let html = '';
     list.forEach(row => {
       const totalStock   = parseInt(row.stock) || 0;
-      const displayStock = row.isSample ? Math.max(0, totalStock - 1) : totalStock; // 樣品不顯示負數，只有真實出貨才能是負數
+      const displayStock = row.isSample ? totalStock - 1 : totalStock;
       const statusClass  = displayStock > 0 ? 'cl-badge-done' : 'cl-badge-empty';
       const statusLabel  = row.isSample
         ? (displayStock > 0 ? '含樣品' : '售完')
@@ -1103,23 +1111,7 @@
     }
   }
 
-  // gasCall 包裝：自動顯示同步狀態
-  const _origGasCall = gasCall;
-  async function gasCallWithStatus(params) {
-    setSyncStatus('syncing', '同步中…');
-    try {
-      const res = await _origGasCall(params);
-      if (res?.success !== false) {
-        setSyncStatus('done', '✓ 已同步');
-      } else {
-        setSyncStatus('error', '⚠ 同步失敗');
-      }
-      return res;
-    } catch(e) {
-      setSyncStatus('error', '⚠ 同步失敗');
-      throw e;
-    }
-  }
+
 
   // ── 摺疊卡片 ─────────────────────────────────────
   window.clToggleCard = function(headerEl) {
