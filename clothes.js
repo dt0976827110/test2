@@ -530,7 +530,7 @@
       // 新資料：orderId 是 batchId（唯一ID）；舊資料：orderId 是 IG 帳號（含@或舊格式）→ 用 id 讓每列獨立
       const isOldFormat = (row.orderId || '').startsWith('@') || (row.orderId || '').includes('sds') || (row.orderId || '').includes('cyn');
       const key = isOldFormat ? row.id : (row.batchId || row.orderId || row.id);
-      if (!orders[key]) orders[key] = { batchId: key, orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '' };
+      if (!orders[key]) orders[key] = { batchId: key, orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '', fee: row.fee || 0 };
       else orders[key].status = row.status;
       orders[key].items.push(row);
     });
@@ -565,8 +565,9 @@
             <span>${item.style || '—'} ${item.size || ''} × ${item.qty || 1}</span>
             <span>NT$ ${(parseFloat(item.subtotal)||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
           </div>`).join('')}
+          ${order.fee ? `<div class="cl-card-row"><span>運費</span><span>NT$ ${(parseFloat(order.fee)||0).toLocaleString()}</span></div>` : ''}
           <div class="cl-card-row cl-card-row-highlight">
-            <span>訂單合計</span><span>NT$ ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+            <span>訂單合計</span><span>NT$ ${(total + (parseFloat(order.fee)||0)).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
           </div>
           ${order.status !== '已出貨' ? `
           <div class="cl-card-actions">
@@ -584,16 +585,16 @@
     const el = document.getElementById('cl-ob-cart-items');
     const totalEl = document.getElementById('cl-ob-cart-total');
     if (!el) return;
-    if (!outboundCart.length) {
-      el.innerHTML = `<div class="cl-cart-empty">尚未加入商品</div>`;
-      if (totalEl) totalEl.textContent = 'NT$ 0';
-      return;
-    }
     const feeSelectEl = document.getElementById('cl-ob-fee-select');
     const feeInputEl  = document.getElementById('cl-ob-fee');
     const shippingFee = feeSelectEl?.value === 'custom'
       ? (parseFloat(feeInputEl?.value) || 0)
       : (parseFloat(feeSelectEl?.value) || 0);
+    if (!outboundCart.length) {
+      el.innerHTML = `<div class="cl-cart-empty">尚未加入商品</div>`;
+      if (totalEl) totalEl.textContent = `NT$ ${shippingFee.toLocaleString()}`;
+      return;
+    }
     const itemTotal = outboundCart.reduce((s, i) => s + (i.price * i.qty), 0);
     const total = itemTotal + shippingFee;
     el.innerHTML = outboundCart.map((item, idx) => `
@@ -621,8 +622,7 @@
     selectedProductCode = '';
     const searchInput = document.getElementById('cl-ob-search');
     if (searchInput) searchInput.value = '';
-    const feeEl = document.getElementById('cl-ob-shipping-fee');
-    if (feeEl) feeEl.value = '';
+
     const hiddenInput = document.getElementById('cl-ob-product');
     if (hiddenInput) hiddenInput.value = '';
     const panel = document.getElementById('cl-ob-panel');
@@ -945,11 +945,10 @@
     const batchId = editOrderId || genId(); // 唯一批次 ID（每張訂單唯一）
     const orderId = batchId;         // B欄存唯一ID，IG帳號另存 ig 欄
 
-    const shippingFee = parseFloat(modal.querySelector('#cl-ob-shipping-fee')?.value) || 0;
     const rows = outboundCart.map((item, idx) => ({
       id: genId(), orderId, batchId, date, status,
       ig, name, phone, address, shipping, bank, fee,
-      shippingFee: idx === 0 ? shippingFee : 0, // 運費只記錄在第一筆
+      shippingFee: idx === 0 ? fee : 0, // 運費只記錄在第一筆
       productCode: item.productCode,
       style: item.style, size: item.size,
       cost: item.cost, price: item.price,
