@@ -434,7 +434,7 @@
     } else if (stockFilter === 'reorder') {
       list = list.filter(s => {
         const total = parseInt(s.stock) || 0;
-        const avail = s.isSample ? total - 1 : total;
+        const avail = s.isSample ? Math.max(0, total - 1) : total;
         return avail < 0;
       });
     }
@@ -453,11 +453,11 @@
     let html = '';
     list.forEach(row => {
       const totalStock   = parseInt(row.stock) || 0;
-      const displayStock = row.isSample ? totalStock - 1 : totalStock; // 允許顯示負數（代表追加）
+      const displayStock = row.isSample ? Math.max(0, totalStock - 1) : totalStock; // 樣品不顯示負數，只有真實出貨才能是負數
       const statusClass  = displayStock > 0 ? 'cl-badge-done' : 'cl-badge-empty';
       const statusLabel  = row.isSample
-        ? (displayStock > 0 ? '含樣品' : (displayStock < 0 ? '追加' : '售完'))
-        : (displayStock > 0 ? '可售'   : (displayStock < 0 ? '追加' : '售完'));
+        ? (displayStock > 0 ? '含樣品' : '售完')
+        : (displayStock > 0 ? '可售' : (displayStock < 0 ? '追加' : '售完'));
       html += `
       <div class="cl-card cl-card-collapse">
         <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
