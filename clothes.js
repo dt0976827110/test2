@@ -606,11 +606,12 @@
     outboundCart = [];
     isSubmitting = false; // 每次開啟都重置提交鎖
     selectedProductCode = '';
-    const triggerText = document.getElementById('cl-ob-trigger-text');
-    if (triggerText) triggerText.textContent = '選擇商品';
+    const searchInput = document.getElementById('cl-ob-search');
+    if (searchInput) searchInput.value = '';
     const hiddenInput = document.getElementById('cl-ob-product');
     if (hiddenInput) hiddenInput.value = '';
-    document.getElementById('cl-ob-panel')?.style && (document.getElementById('cl-ob-panel').style.display = 'none');
+    const panel = document.getElementById('cl-ob-panel');
+    if (panel) panel.style.display = 'none';
     const obBtn = document.getElementById('cl-ob-submit');
     if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     const modal = document.getElementById('cl-outbound-modal');
@@ -743,8 +744,8 @@
     // 重置下拉
     hidden.value = '';
     selectedProductCode = '';
-    const triggerText = document.getElementById('cl-ob-trigger-text');
-    if (triggerText) triggerText.textContent = '選擇商品';
+    const searchEl = document.getElementById('cl-ob-search');
+    if (searchEl) searchEl.value = '';
     modal.querySelector('#cl-ob-qty').value   = '1';
     modal.querySelector('#cl-ob-price').value = '';
     renderOutboundCart();
@@ -1003,45 +1004,27 @@
     renderSurplus();
   }
 
-  // ── 自製商品下拉 ──────────────────────────────────
+  // ── 自製商品下拉（仿 app.js 模式）──────────────────
   let dropdownStockList = [];
   let selectedProductCode = '';
 
-  window.clToggleDropdown = function() {
-    const panel = document.getElementById('cl-ob-panel');
-    if (!panel) return;
-    const isOpen = panel.style.display !== 'none';
-    if (isOpen) {
-      panel.style.display = 'none';
-    } else {
-      panel.style.display = 'block';
-      const search = document.getElementById('cl-ob-search');
-      if (search) { search.value = ''; search.focus(); }
-      clRenderDropdownList('');
-    }
-  };
-
-  window.clSelectProduct = function(code, text) {
+  window.clSelectProduct = function(code, label) {
     selectedProductCode = code;
     document.getElementById('cl-ob-product').value = code;
-    document.getElementById('cl-ob-trigger-text').textContent = text;
+    document.getElementById('cl-ob-search').value  = label;
     document.getElementById('cl-ob-panel').style.display = 'none';
-    // 自動帶入售價
     const item = dropdownStockList.find(s => s.productCode === code);
-    if (item && item.price) {
+    if (item) {
       const priceEl = document.getElementById('cl-ob-price');
-      if (priceEl && !priceEl.value) priceEl.value = item.price;
-    }
-    // 更新 data attributes 供 clAddToCart 使用
-    document.getElementById('cl-ob-product').dataset.style = item?.style || '';
-    document.getElementById('cl-ob-product').dataset.size  = item?.size  || '';
-    document.getElementById('cl-ob-product').dataset.cost  = item?.cost  || 0;
-    document.getElementById('cl-ob-product').dataset.price = item?.price || '';
-    document.getElementById('cl-ob-product').dataset.avail = (() => {
-      if (!item) return 0;
+      if (priceEl && !priceEl.value && item.price) priceEl.value = item.price;
+      const h = document.getElementById('cl-ob-product');
+      h.dataset.style = item.style || '';
+      h.dataset.size  = item.size  || '';
+      h.dataset.cost  = item.cost  || 0;
+      h.dataset.price = item.price || '';
       const total = parseInt(item.stock) || 0;
-      return item.isSample ? Math.max(0, total - 1) : total;
-    })();
+      h.dataset.avail = item.isSample ? Math.max(0, total - 1) : total;
+    }
   };
 
   function clRenderDropdownList(kw) {
@@ -1053,20 +1036,18 @@
           (s.productCode || '').toLowerCase().includes(kw) ||
           (s.size || '').toLowerCase().includes(kw))
       : dropdownStockList;
-    if (!filtered.length) {
-      list.innerHTML = '<div class="cl-dropdown-empty">無符合商品</div>';
-      return;
-    }
-    list.innerHTML = filtered.map(s => {
-      const total = parseInt(s.stock) || 0;
-      const avail = s.isSample ? Math.max(0, total - 1) : total;
-      const stockLabel = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
-      const isActive = s.productCode === selectedProductCode ? ' active' : '';
-      return `<div class="cl-dropdown-item${isActive}" onclick="clSelectProduct('${s.productCode}', '${(s.style||'').replace(/'/g,"\'")} ${s.size||''}')">
-        <span class="cl-dropdown-item-name">${s.style || '—'} <span style="opacity:0.6;font-weight:400">${s.size || ''}</span></span>
-        <span class="cl-dropdown-item-stock">${stockLabel}</span>
-      </div>`;
-    }).join('');
+    list.innerHTML = filtered.length
+      ? filtered.map(s => {
+          const total = parseInt(s.stock) || 0;
+          const avail = s.isSample ? Math.max(0, total - 1) : total;
+          const stockLabel = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
+          const label = `${s.style || '—'} ${s.size || ''}`;
+          return `<div class="cl-dropdown-item${s.productCode === selectedProductCode ? ' active' : ''}" onmousedown="clSelectProduct('${s.productCode}', '${label.replace(/'/g,"\'")}')">
+            <span class="cl-dropdown-item-name">${s.style || '—'} <span style="opacity:0.55;font-weight:400;font-size:12px">${s.size || ''}</span></span>
+            <span class="cl-dropdown-item-stock">${stockLabel}</span>
+          </div>`;
+        }).join('')
+      : '<div class="cl-dropdown-empty">無符合商品</div>';
   }
 
   // ── 尺寸下拉切換 ──────────────────────────────────
@@ -1240,20 +1221,25 @@
     document.getElementById('cl-ob-add-item')?.addEventListener('click', clAddToCart);
     document.getElementById('cl-ob-submit')?.addEventListener('click', submitOutbound);
 
-    // ── 自製下拉搜尋 ──
-    document.addEventListener('input', e => {
-      if (e.target.id === 'cl-ob-search') {
-        clRenderDropdownList(e.target.value.trim().toLowerCase());
-      }
+    // ── 自製下拉搜尋（仿 app.js 模式）──
+    document.getElementById('cl-ob-search')?.addEventListener('focus', function() {
+      if (!dropdownStockList.length) return;
+      clRenderDropdownList(this.value.trim().toLowerCase());
+      document.getElementById('cl-ob-panel').style.display = 'block';
     });
-    // 點外面關閉下拉
-    document.addEventListener('click', e => {
-      const dd = document.getElementById('cl-ob-dropdown');
-      if (dd && !dd.contains(e.target)) {
+    document.getElementById('cl-ob-search')?.addEventListener('input', function() {
+      if (!dropdownStockList.length) return;
+      clRenderDropdownList(this.value.trim().toLowerCase());
+      document.getElementById('cl-ob-panel').style.display = 'block';
+      document.getElementById('cl-ob-product').value = '';
+      selectedProductCode = '';
+    });
+    document.getElementById('cl-ob-search')?.addEventListener('blur', function() {
+      setTimeout(() => {
         const panel = document.getElementById('cl-ob-panel');
         if (panel) panel.style.display = 'none';
-      }
-    }, true);
+      }, 150);
+    });
 
     // ── 盈餘 ──
     document.getElementById('cl-deposit-btn')?.addEventListener('click', () => {

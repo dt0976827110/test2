@@ -1407,14 +1407,8 @@ function doGet(e) {
         <div class="cl-form-row">
           <label>選擇商品</label>
           <div class="cl-custom-dropdown" id="cl-ob-dropdown">
-            <div class="cl-dropdown-trigger" id="cl-ob-trigger" onclick="clToggleDropdown()">
-              <span id="cl-ob-trigger-text">選擇商品</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
+            <input id="cl-ob-search" type="text" placeholder="搜尋或選擇商品…" class="cl-input" autocomplete="off"/>
             <div class="cl-dropdown-panel" id="cl-ob-panel" style="display:none">
-              <div class="cl-dropdown-search-wrap">
-                <input id="cl-ob-search" type="text" placeholder="搜尋款式或代碼…" class="cl-dropdown-search" autocomplete="off"/>
-              </div>
               <div class="cl-dropdown-list" id="cl-ob-list"></div>
             </div>
           </div>
