@@ -462,7 +462,7 @@
     list.forEach(row => {
       const totalStock   = parseInt(row.stock) || 0;
       const displayStock = row.isSample ? totalStock - 1 : totalStock;
-      const statusClass  = displayStock > 0 ? 'cl-badge-done' : 'cl-badge-empty';
+      const statusClass  = displayStock > 0 ? 'cl-badge-done' : (displayStock < 0 ? 'cl-badge-reorder' : 'cl-badge-empty');
       const statusLabel  = row.isSample
         ? (displayStock > 0 ? '含樣品' : '售完')
         : (displayStock > 0 ? '可售' : (displayStock < 0 ? '追加' : '售完'));
@@ -965,6 +965,7 @@
     outboundCart = [];
     showClToast('✅ 出貨完成');
     renderOutbound();
+    renderStock(); // 更新庫存頁顯示
   }
 
   async function submitDeposit() {

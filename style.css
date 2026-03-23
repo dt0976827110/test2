@@ -1836,3 +1836,6 @@ body.light .cl-sync-status.done    { color: #1D9E75; }
 body.dark  .cl-sync-status.done    { color: #5DCAA5; }
 body.light .cl-sync-status.error   { color: #D85A30; }
 body.dark  .cl-sync-status.error   { color: #F0997B; }
+
+body.light .cl-badge-reorder { background: #FAEEDA; color: #854F0B; }
+body.dark  .cl-badge-reorder { background: #412402; color: #FAC775; }
