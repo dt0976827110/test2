@@ -947,12 +947,12 @@
 
     const rows = outboundCart.map((item, idx) => ({
       id: genId(), orderId, batchId, date, status,
-      ig, name, phone, address, shipping, bank, fee,
-      shippingFee: idx === 0 ? fee : 0, // 運費只記錄在第一筆
+      ig, name, phone, address, shipping, bank,
+      fee: idx === 0 ? fee : 0, // 運費只記錄在第一筆
       productCode: item.productCode,
       style: item.style, size: item.size,
       cost: item.cost, price: item.price,
-      qty: item.qty, subtotal: idx === 0 ? item.subtotal + shippingFee : item.subtotal
+      qty: item.qty, subtotal: item.subtotal  // subtotal 不含運費，運費另存 fee
     }));
 
     isSubmitting = true;
