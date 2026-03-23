@@ -405,9 +405,17 @@
       (s.productCode || '').toLowerCase().includes(kw)
     );
     if (stockFilter === 'available') {
-      list = list.filter(s => s.status === '可售' || s.status === '含樣品');
+      list = list.filter(s => {
+        const total = parseInt(s.stock) || 0;
+        const avail = s.isSample ? Math.max(0, total - 1) : total;
+        return avail > 0;
+      });
     } else if (stockFilter === 'sold') {
-      list = list.filter(s => s.status === '售完' || s.status === '下架');
+      list = list.filter(s => {
+        const total = parseInt(s.stock) || 0;
+        const avail = s.isSample ? Math.max(0, total - 1) : total;
+        return avail <= 0;
+      });
     }
 
     if (!list.length) {
@@ -619,10 +627,14 @@
         }
       }
 
-      const available = stockList.filter(s => parseInt(s.stock) > 0);
+      const available = stockList.map(s => {
+        const total = parseInt(s.stock) || 0;
+        const avail = s.isSample ? Math.max(0, total - 1) : total;
+        return { ...s, availStock: avail };
+      }).filter(s => s.availStock > 0);
       if (available.length) {
         sel.innerHTML = `<option value="">選擇商品</option>` +
-          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${parseInt(s.stock)}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
+          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${s.availStock}">${s.style} ${s.size}（可售${s.availStock}件）</option>`).join('');
       } else if (!gasUrl) {
         sel.innerHTML = `<option value="">請先在設定綁定 GAS 網址</option>`;
       } else {
@@ -683,9 +695,13 @@
         const freshRes = await gasCall({ action: 'clothes_getStock' });
         if (freshRes?.success) { stockList = freshRes.data || []; saveLocal('clothes_stock', stockList); }
       }
-      const available = stockList.filter(s => parseInt(s.stock) > 0);
+      const available = stockList.map(s => {
+        const total = parseInt(s.stock) || 0;
+        const avail = s.isSample ? Math.max(0, total - 1) : total;
+        return { ...s, availStock: avail };
+      }).filter(s => s.availStock > 0);
       sel.innerHTML = `<option value="">選擇商品</option>` +
-        available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${parseInt(s.stock)}">${s.style} ${s.size}（庫存${s.stock}件）</option>`).join('');
+        available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${s.availStock}">${s.style} ${s.size}（可售${s.availStock}件）</option>`).join('');
     }
     renderOutboundCart();
   };
