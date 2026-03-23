@@ -422,14 +422,20 @@
     if (stockFilter === 'available') {
       list = list.filter(s => {
         const total = parseInt(s.stock) || 0;
-        const avail = s.isSample ? Math.max(0, total - 1) : total;
+        const avail = s.isSample ? total - 1 : total;
         return avail > 0;
       });
     } else if (stockFilter === 'sold') {
       list = list.filter(s => {
         const total = parseInt(s.stock) || 0;
-        const avail = s.isSample ? Math.max(0, total - 1) : total;
-        return avail <= 0;
+        const avail = s.isSample ? total - 1 : total;
+        return avail === 0;
+      });
+    } else if (stockFilter === 'reorder') {
+      list = list.filter(s => {
+        const total = parseInt(s.stock) || 0;
+        const avail = s.isSample ? total - 1 : total;
+        return avail < 0;
       });
     }
 
@@ -447,11 +453,11 @@
     let html = '';
     list.forEach(row => {
       const totalStock   = parseInt(row.stock) || 0;
-      const displayStock = row.isSample ? Math.max(0, totalStock - 1) : totalStock;
+      const displayStock = row.isSample ? totalStock - 1 : totalStock; // 允許顯示負數（代表追加）
       const statusClass  = displayStock > 0 ? 'cl-badge-done' : 'cl-badge-empty';
       const statusLabel  = row.isSample
-        ? (displayStock > 0 ? '含樣品' : '售完')
-        : (displayStock > 0 ? '可售' : '售完');
+        ? (displayStock > 0 ? '含樣品' : (displayStock < 0 ? '追加' : '售完'))
+        : (displayStock > 0 ? '可售'   : (displayStock < 0 ? '追加' : '售完'));
       html += `
       <div class="cl-card cl-card-collapse">
         <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
@@ -1040,7 +1046,7 @@
       ? filtered.map(s => {
           const total = parseInt(s.stock) || 0;
           const avail = s.isSample ? Math.max(0, total - 1) : total;
-          const stockLabel = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
+          const stockLabel = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `追加${Math.abs(avail)}件` : '售完');
           const label = `${s.style || '—'} ${s.size || ''}`;
           return `<div class="cl-dropdown-item${s.productCode === selectedProductCode ? ' active' : ''}" onmousedown="clSelectProduct('${s.productCode}', '${label.replace(/'/g,"\'")}')">
             <span class="cl-dropdown-item-name">${s.style || '—'} <span style="opacity:0.55;font-weight:400;font-size:12px">${s.size || ''}</span></span>
