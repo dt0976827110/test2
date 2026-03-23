@@ -1240,6 +1240,21 @@
     document.getElementById('cl-ob-add-item')?.addEventListener('click', clAddToCart);
     document.getElementById('cl-ob-submit')?.addEventListener('click', submitOutbound);
 
+    // ── 自製下拉搜尋 ──
+    document.addEventListener('input', e => {
+      if (e.target.id === 'cl-ob-search') {
+        clRenderDropdownList(e.target.value.trim().toLowerCase());
+      }
+    });
+    // 點外面關閉下拉
+    document.addEventListener('click', e => {
+      const dd = document.getElementById('cl-ob-dropdown');
+      if (dd && !dd.contains(e.target)) {
+        const panel = document.getElementById('cl-ob-panel');
+        if (panel) panel.style.display = 'none';
+      }
+    }, true);
+
     // ── 盈餘 ──
     document.getElementById('cl-deposit-btn')?.addEventListener('click', () => {
       const m = document.getElementById('cl-deposit-modal');
