@@ -547,7 +547,7 @@
             <div class="cl-card-sub">${formatDate(order.date)}${order.shipping ? ' ・ ' + order.shipping : ''}</div>
           </div>
           <div class="cl-card-toggle-right">
-            <span class="cl-card-summary">NT$ ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+            <span class="cl-card-summary">NT$ ${(total + (parseFloat(order.fee)||0)).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
             <span class="cl-badge ${statusClass}">${order.status || '已出貨'}</span>
             <span class="cl-chevron">›</span>
           </div>
