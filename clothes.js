@@ -34,7 +34,6 @@
     try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
   }
 
-  async function gasCallWithStatus(params) { return gasCall(params); } // alias，向後相容
   async function gasCall(params) {
     const url = getGasUrl();
     if (!url) return null;
@@ -56,7 +55,7 @@
 
   // ── 資料載入 ──────────────────────────────────
   async function loadStaging() {
-    const res = await gasCallWithStatus({ action: 'clothes_getStagingList' });
+    const res = await gasCall({ action: 'clothes_getStagingList' });
     if (res?.success) stagingList = res.data || [];
     else stagingList = JSON.parse(localStorage.getItem('clothes_staging') || '[]');
     stagingList.sort((a, b) => {
@@ -69,7 +68,7 @@
   }
 
   async function loadInbound() {
-    const res = await gasCallWithStatus({ action: 'clothes_getInbound' });
+    const res = await gasCall({ action: 'clothes_getInbound' });
     if (res?.success) inboundList = res.data || [];
     else inboundList = JSON.parse(localStorage.getItem('clothes_inbound') || '[]');
     inboundList.sort((a, b) => {
@@ -87,7 +86,7 @@
   }
 
   async function loadStock() {
-    const res = await gasCallWithStatus({ action: 'clothes_getStock' });
+    const res = await gasCall({ action: 'clothes_getStock' });
     if (res?.success) stockList = res.data || [];
     else stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
     dropdownStockList = stockList;
@@ -95,7 +94,7 @@
   }
 
   async function loadOutbound() {
-    const res = await gasCallWithStatus({ action: 'clothes_getOutbound' });
+    const res = await gasCall({ action: 'clothes_getOutbound' });
     if (res?.success) outboundList = res.data || [];
     else outboundList = JSON.parse(localStorage.getItem('clothes_outbound') || '[]');
     outboundList.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -103,7 +102,7 @@
   }
 
   async function loadSurplus() {
-    const res = await gasCallWithStatus({ action: 'clothes_getSurplus' });
+    const res = await gasCall({ action: 'clothes_getSurplus' });
     if (res?.success) surplusData = res.data || { deposits: [], expenses: [] };
     else surplusData = JSON.parse(localStorage.getItem('clothes_surplus') || '{"deposits":[],"expenses":[]}');
     renderSurplus();
@@ -243,7 +242,7 @@
 
   window.clRefundStaging = function(id) {
     showClConfirm('確定標記為廠商退款？', async () => {
-      const res = await gasCallWithStatus({ action: 'clothes_voidStaging', id });
+      const res = await gasCall({ action: 'clothes_voidStaging', id });
       const local = stagingList.find(r => r.id === id);
       if (local) local.status = '廠商退款';
       saveLocal('clothes_staging', stagingList);
@@ -278,7 +277,7 @@
         inboundAt: new Date().toISOString()
       };
 
-      const res = await gasCallWithStatus({
+      const res = await gasCall({
         action: 'clothes_commitInbound',
         data: JSON.stringify(inboundRow)
       });
@@ -590,7 +589,9 @@
       if (totalEl) totalEl.textContent = 'NT$ 0';
       return;
     }
-    const total = outboundCart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const shippingFee = parseFloat(document.getElementById('cl-ob-shipping-fee')?.value) || 0;
+    const itemTotal = outboundCart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const total = itemTotal + shippingFee;
     el.innerHTML = outboundCart.map((item, idx) => `
       <div class="cl-cart-row">
         <div class="cl-cart-info">
@@ -616,10 +617,16 @@
     selectedProductCode = '';
     const searchInput = document.getElementById('cl-ob-search');
     if (searchInput) searchInput.value = '';
+    const feeEl = document.getElementById('cl-ob-shipping-fee');
+    if (feeEl) feeEl.value = '';
     const hiddenInput = document.getElementById('cl-ob-product');
     if (hiddenInput) hiddenInput.value = '';
     const panel = document.getElementById('cl-ob-panel');
     if (panel) panel.style.display = 'none';
+    const feeSelect = document.getElementById('cl-ob-fee-select');
+    const feeInput  = document.getElementById('cl-ob-fee');
+    if (feeSelect) feeSelect.value = '100';
+    if (feeInput)  { feeInput.style.display = 'none'; feeInput.value = ''; }
     const obBtn = document.getElementById('cl-ob-submit');
     if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     const modal = document.getElementById('cl-outbound-modal');
@@ -646,7 +653,7 @@
         // GAS URL 未設定，直接用本機快取
         stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
       } else {
-        const freshRes = await gasCallWithStatus({ action: 'clothes_getStock' });
+        const freshRes = await gasCall({ action: 'clothes_getStock' });
         if (freshRes?.success) {
           stockList = freshRes.data || [];
           saveLocal('clothes_stock', stockList);
@@ -696,6 +703,19 @@
     modal.querySelector('#cl-ob-address').value  = order.address || '';
     modal.querySelector('#cl-ob-shipping').value = order.shipping || '7-11';
     modal.querySelector('#cl-ob-bank').value     = order.bank || '';
+    const feeSelectEl = modal.querySelector('#cl-ob-fee-select');
+    const feeInputEl  = modal.querySelector('#cl-ob-fee');
+    const feeVal = order.fee || 0;
+    if (feeSelectEl && feeInputEl) {
+      if (['100','60','0'].includes(String(feeVal))) {
+        feeSelectEl.value = String(feeVal);
+        feeInputEl.style.display = 'none';
+      } else {
+        feeSelectEl.value = 'custom';
+        feeInputEl.style.display = '';
+        feeInputEl.value = feeVal;
+      }
+    }
     modal.querySelector('#cl-ob-date').value     = order.date || today();
     modal.style.display = 'flex';
     modal.querySelector('#cl-ob-status').value   = order.status || '待出貨';
@@ -706,7 +726,7 @@
     if (sel) {
       const gasUrl = getGasUrl();
       if (gasUrl) {
-        const freshRes = await gasCallWithStatus({ action: 'clothes_getStock' });
+        const freshRes = await gasCall({ action: 'clothes_getStock' });
         if (freshRes?.success) { stockList = freshRes.data || []; dropdownStockList = stockList; saveLocal('clothes_stock', stockList); }
       }
       dropdownStockList = stockList;
@@ -729,7 +749,7 @@
       });
       saveLocal('clothes_outbound', outboundList);
       // 同步 GAS
-      await gasCallWithStatus({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
+      await gasCall({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
       showClToast('✅ 已標記為已出貨');
       renderOutbound();
     });
@@ -854,7 +874,7 @@
     const saveBtn = document.getElementById('cl-staging-save');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '儲存中…'; }
     try {
-      await gasCallWithStatus({ action: 'clothes_addStaging', data: JSON.stringify(row) });
+      await gasCall({ action: 'clothes_addStaging', data: JSON.stringify(row) });
     } finally {
       isSubmitting = false;
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
@@ -887,7 +907,7 @@
     const saveBtn = document.getElementById('cl-stock-save');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '更新中…'; }
     try {
-      await gasCallWithStatus({ action: 'clothes_updateProduct', data: JSON.stringify(row) });
+      await gasCall({ action: 'clothes_updateProduct', data: JSON.stringify(row) });
       saveLocal('clothes_stock', stockList);
       modal.style.display = 'none';
       showClToast('✅ 已更新');
@@ -908,6 +928,9 @@
     const address  = modal.querySelector('#cl-ob-address').value.trim();
     const shipping = modal.querySelector('#cl-ob-shipping').value;
     const bank     = modal.querySelector('#cl-ob-bank').value.trim();
+    const feeSelect = modal.querySelector('#cl-ob-fee-select');
+    const feeInput  = modal.querySelector('#cl-ob-fee');
+    const fee       = feeSelect?.value === 'custom' ? (parseFloat(feeInput?.value) || 0) : (parseFloat(feeSelect?.value) || 0);
     const date     = modal.querySelector('#cl-ob-date').value || today();
     const status   = modal.querySelector('#cl-ob-status').value || '待出貨';
     const editOrderId = modal.dataset.editOrderId || null;
@@ -918,13 +941,15 @@
     const batchId = editOrderId || genId(); // 唯一批次 ID（每張訂單唯一）
     const orderId = batchId;         // B欄存唯一ID，IG帳號另存 ig 欄
 
-    const rows = outboundCart.map(item => ({
+    const shippingFee = parseFloat(modal.querySelector('#cl-ob-shipping-fee')?.value) || 0;
+    const rows = outboundCart.map((item, idx) => ({
       id: genId(), orderId, batchId, date, status,
-      ig, name, phone, address, shipping, bank,
+      ig, name, phone, address, shipping, bank, fee,
+      shippingFee: idx === 0 ? shippingFee : 0, // 運費只記錄在第一筆
       productCode: item.productCode,
       style: item.style, size: item.size,
       cost: item.cost, price: item.price,
-      qty: item.qty, subtotal: item.subtotal
+      qty: item.qty, subtotal: idx === 0 ? item.subtotal + shippingFee : item.subtotal
     }));
 
     isSubmitting = true;
@@ -933,10 +958,10 @@
     try {
       if (editOrderId) {
         // 編輯模式：先刪 Sheet 舊資料，再移除本機舊資料
-        await gasCallWithStatus({ action: 'clothes_deleteOutboundBatch', batchId: editOrderId });
+        await gasCall({ action: 'clothes_deleteOutboundBatch', batchId: editOrderId });
         outboundList = outboundList.filter(r => (r.batchId || r.orderId || r.id) !== editOrderId);
       }
-      await gasCallWithStatus({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
+      await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
     } finally {
       isSubmitting = false;
       if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
@@ -974,7 +999,7 @@
     if (depBtn) { depBtn.disabled = true; depBtn.textContent = '儲存中…'; }
     const row = { id: genId(), date, ntd, rate };
     try {
-      await gasCallWithStatus({ action: 'clothes_addDeposit', data: JSON.stringify(row) });
+      await gasCall({ action: 'clothes_addDeposit', data: JSON.stringify(row) });
     } finally {
       isSubmitting = false;
       if (depBtn) { depBtn.disabled = false; depBtn.textContent = '儲存'; }
@@ -1001,7 +1026,7 @@
     if (expBtn) { expBtn.disabled = true; expBtn.textContent = '儲存中…'; }
     const row = { id: genId(), date, product, agency, shipping, total, note };
     try {
-      await gasCallWithStatus({ action: 'clothes_addExpense', data: JSON.stringify(row) });
+      await gasCall({ action: 'clothes_addExpense', data: JSON.stringify(row) });
     } finally {
       isSubmitting = false;
       if (expBtn) { expBtn.disabled = false; expBtn.textContent = '儲存'; }
@@ -1031,8 +1056,7 @@
       h.dataset.size  = item.size  || '';
       h.dataset.cost  = item.cost  || 0;
       h.dataset.price = item.price || '';
-      const total = parseInt(item.stock) || 0;
-      h.dataset.avail = item.isSample ? total - 1 : total;
+      h.dataset.avail = getDisplayStock(item);
     }
   };
 
@@ -1047,8 +1071,7 @@
       : dropdownStockList;
     list.innerHTML = filtered.length
       ? filtered.map(s => {
-          const total = parseInt(s.stock) || 0;
-          const avail = s.isSample ? total - 1 : total;
+          const avail = getDisplayStock(s);
           const stockLabel = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `追加${Math.abs(avail)}件` : '售完');
           const label = `${s.style || '—'} ${s.size || ''}`;
           return `<div class="cl-dropdown-item${s.productCode === selectedProductCode ? ' active' : ''}" onmousedown="clSelectProduct('${s.productCode}', '${label.replace(/'/g,"\'")}')">
@@ -1060,6 +1083,19 @@
   }
 
   // ── 尺寸下拉切換 ──────────────────────────────────
+  window.clHandleShippingFee = function(sel) {
+    const input = document.getElementById('cl-ob-fee');
+    if (!input) return;
+    if (sel.value === 'custom') {
+      input.style.display = '';
+      input.value = '';
+      input.focus();
+    } else {
+      input.style.display = 'none';
+      input.value = sel.value;
+    }
+  };
+
   window.clHandleSizeSelect = function(sel) {
     const input = document.getElementById('cl-s-size');
     if (!input) return;
@@ -1249,6 +1285,7 @@
     document.getElementById('cl-ob-submit')?.addEventListener('click', submitOutbound);
 
     // ── 自製下拉搜尋（仿 app.js 模式）──
+    document.getElementById('cl-ob-shipping-fee')?.addEventListener('input', () => renderOutboundCart());
     document.getElementById('cl-ob-search')?.addEventListener('focus', function() {
       if (!dropdownStockList.length) return;
       clRenderDropdownList(this.value.trim().toLowerCase());

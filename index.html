@@ -1392,6 +1392,18 @@ function doGet(e) {
             <input id="cl-ob-bank" type="text" placeholder="12345" maxlength="5" class="cl-input"/>
           </div>
         </div>
+        <div class="cl-form-row">
+          <label>運費（NT$）</label>
+          <div class="cl-size-input-wrap">
+            <select id="cl-ob-fee-select" class="cl-input cl-select cl-input-sm" onchange="clHandleShippingFee(this)">
+              <option value="100">100</option>
+              <option value="60">60</option>
+              <option value="0">免運</option>
+              <option value="custom">自行輸入</option>
+            </select>
+            <input id="cl-ob-fee" type="number" placeholder="輸入金額" class="cl-input cl-input-sm" style="display:none"/>
+          </div>
+        </div>
         <div class="cl-form-row-group">
           <div class="cl-form-row">
             <label>出貨日期</label>
@@ -1429,8 +1441,15 @@ function doGet(e) {
         <button class="cl-btn cl-btn-outline" id="cl-ob-add-item">＋ 加入清單</button>
         <div class="cl-divider">出貨清單</div>
         <div id="cl-ob-cart-items"></div>
+        <div class="cl-form-row-group cl-form-row-group-2" style="margin-top:8px">
+          <div class="cl-form-row">
+            <label>運費（NT$）</label>
+            <input id="cl-ob-shipping-fee" type="number" placeholder="0" min="0" class="cl-input"/>
+          </div>
+          <div></div>
+        </div>
         <div class="cl-cart-total-row">
-          <span>合計</span>
+          <span>合計（含運）</span>
           <span id="cl-ob-cart-total">NT$ 0</span>
         </div>
       </div>
