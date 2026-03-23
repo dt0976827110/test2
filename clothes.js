@@ -150,14 +150,16 @@
     });
 
     // 右上角按鈕控制
-    const stagingBtn  = document.getElementById('cl-staging-add-btn');
-    const outboundBtn = document.getElementById('cl-outbound-add-btn');
-    const depositBtn  = document.getElementById('cl-deposit-btn');
-    const expenseBtn  = document.getElementById('cl-expense-btn');
-    if (stagingBtn)  stagingBtn.style.display  = tab === 'staging'  ? '' : 'none';
-    if (outboundBtn) outboundBtn.style.display = tab === 'outbound' ? '' : 'none';
-    if (depositBtn)  depositBtn.style.display  = tab === 'surplus'  ? '' : 'none';
-    if (expenseBtn)  expenseBtn.style.display  = tab === 'surplus'  ? '' : 'none';
+    const stagingBtn   = document.getElementById('cl-staging-add-btn');
+    const stagingClrBtn= document.getElementById('cl-staging-clear-btn');
+    const outboundBtn  = document.getElementById('cl-outbound-add-btn');
+    const depositBtn   = document.getElementById('cl-deposit-btn');
+    const expenseBtn   = document.getElementById('cl-expense-btn');
+    if (stagingBtn)    stagingBtn.style.display    = tab === 'staging'  ? '' : 'none';
+    if (stagingClrBtn) stagingClrBtn.style.display = tab === 'staging'  ? '' : 'none';
+    if (outboundBtn)   outboundBtn.style.display   = tab === 'outbound' ? '' : 'none';
+    if (depositBtn)    depositBtn.style.display     = tab === 'surplus'  ? '' : 'none';
+    if (expenseBtn)    expenseBtn.style.display     = tab === 'surplus'  ? '' : 'none';
 
     // 載入資料
     if (tab === 'staging')  loadStaging();
