@@ -1678,3 +1678,112 @@ body.dark  .cl-filter-btn.active { background: #7c3aed; color: #fff; border-colo
   padding: 6px 16px 0;
 }
 .cl-custom-date-range .cl-input-sm { flex: 1; }
+
+/* ── 3. 下拉選單風格 ── */
+.cl-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px !important;
+  min-height: 42px;
+  cursor: pointer;
+}
+
+/* ── 5. placeholder 變淡 ── */
+.cl-input::placeholder {
+  opacity: 0.35;
+}
+
+/* ── 2. 搜尋選商品 ── */
+.cl-search-select-wrap {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cl-search-select-input { flex-shrink: 0; }
+.cl-search-select-list {
+  flex: 1;
+  min-height: 42px;
+  max-height: 160px;
+}
+
+/* ── 4. 尺寸輸入包裹 ── */
+.cl-size-input-wrap {
+  display: flex; gap: 8px; align-items: center;
+}
+.cl-size-input-wrap select { flex: 1; }
+.cl-size-input-wrap input  { flex: 1; }
+
+/* ── 6. 盈餘記錄排版 ── */
+.cl-surplus-item-card {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 12px 0; border-bottom: 0.5px solid;
+  gap: 12px;
+}
+body.light .cl-surplus-item-card { border-color: #f0f0f0; }
+body.dark  .cl-surplus-item-card { border-color: #2a2a2a; }
+
+.cl-surplus-item-left {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.cl-surplus-item-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+}
+.cl-surplus-item-date {
+  font-size: 13px; font-weight: 600;
+}
+body.light .cl-surplus-item-date { color: #1E2A38; }
+body.dark  .cl-surplus-item-date { color: #eee; }
+
+.cl-surplus-item-rate,
+.cl-surplus-item-note {
+  font-size: 11px;
+}
+body.light .cl-surplus-item-rate,
+body.light .cl-surplus-item-note { color: #aaa; }
+body.dark  .cl-surplus-item-rate,
+body.dark  .cl-surplus-item-note { color: #555; }
+
+.cl-surplus-item-krw {
+  font-size: 14px; font-weight: 700;
+}
+body.light .cl-surplus-item-krw { color: #1E2A38; }
+body.dark  .cl-surplus-item-krw { color: #eee; }
+
+.cl-surplus-item-ntd {
+  font-size: 11px;
+}
+body.light .cl-surplus-item-ntd { color: #888; }
+body.dark  .cl-surplus-item-ntd { color: #666; }
+
+.cl-surplus-item-sub {
+  font-size: 11px;
+}
+body.light .cl-surplus-item-sub { color: #aaa; }
+body.dark  .cl-surplus-item-sub { color: #555; }
+
+/* ── 7. 自訂日期浮窗風格 ── */
+.cl-custom-date-range {
+  background: var(--color-background-primary, #fff);
+  border-radius: 10px; margin: 0 16px 4px;
+  padding: 8px 12px;
+}
+body.light .cl-custom-date-range { border: 0.5px solid #e8e8e8; }
+body.dark  .cl-custom-date-range { border: 0.5px solid #2a2a2a; }
+
+input[type="date"].cl-input,
+input[type="date"].cl-input-sm {
+  min-height: 42px;
+  color-scheme: light dark;
+}
+
+/* ── 8. 售價欄不超出 ── */
+.cl-form-row-group-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cl-form-row-group-2 .cl-input {
+  width: 100%;
+  box-sizing: border-box;
+}

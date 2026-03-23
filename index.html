@@ -1273,11 +1273,21 @@ function doGet(e) {
         </div>
         <div class="cl-form-row">
           <label>尺寸</label>
-          <input id="cl-s-size" type="text" placeholder="F / S / M / L" class="cl-input cl-input-sm"/>
+          <div class="cl-size-input-wrap">
+            <select id="cl-s-size-select" class="cl-input cl-select cl-input-sm" onchange="clHandleSizeSelect(this)">
+              <option value="F">F</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="custom">自行輸入</option>
+            </select>
+            <input id="cl-s-size" type="text" placeholder="輸入尺寸" class="cl-input cl-input-sm" style="display:none"/>
+          </div>
         </div>
         <div class="cl-form-row">
           <label>訂購方式</label>
-          <select id="cl-s-source" class="cl-input cl-input-sm">
+          <select id="cl-s-source" class="cl-input cl-input-sm cl-select">
             <option value="振興">振興（3%）</option>
             <option value="網站">網站（4%）</option>
           </select>
@@ -1321,7 +1331,7 @@ function doGet(e) {
         </div>
         <div class="cl-form-row">
           <label>狀態</label>
-          <select id="cl-st-status" class="cl-input cl-input-sm">
+          <select id="cl-st-status" class="cl-input cl-input-sm cl-select">
             <option value="可售">可售</option>
             <option value="售完">售完</option>
             <option value="下架">下架</option>
@@ -1368,7 +1378,7 @@ function doGet(e) {
         <div class="cl-form-row-group">
           <div class="cl-form-row">
             <label>寄送方式</label>
-            <select id="cl-ob-shipping" class="cl-input">
+            <select id="cl-ob-shipping" class="cl-input cl-select">
               <option value="7-ELEVEN">7-ELEVEN</option>
               <option value="全家">全家</option>
               <option value="宅配">宅配</option>
@@ -1387,7 +1397,7 @@ function doGet(e) {
           </div>
           <div class="cl-form-row">
             <label>狀態</label>
-            <select id="cl-ob-status" class="cl-input">
+            <select id="cl-ob-status" class="cl-input cl-select">
               <option value="待出貨">待出貨</option>
               <option value="已出貨">已出貨</option>
             </select>
@@ -1396,16 +1406,19 @@ function doGet(e) {
         <div class="cl-divider">加入商品</div>
         <div class="cl-form-row">
           <label>選擇商品</label>
-          <select id="cl-ob-product" class="cl-input"></select>
+          <div class="cl-search-select-wrap">
+            <input id="cl-ob-search" type="text" placeholder="搜尋款式…" class="cl-input cl-search-select-input" autocomplete="off"/>
+            <select id="cl-ob-product" class="cl-input cl-search-select-list cl-select" size="1"></select>
+          </div>
         </div>
-        <div class="cl-form-row-group">
+        <div class="cl-form-row-group cl-form-row-group-2">
           <div class="cl-form-row">
             <label>數量</label>
-            <input id="cl-ob-qty" type="number" value="1" min="1" class="cl-input cl-input-sm"/>
+            <input id="cl-ob-qty" type="number" value="1" min="1" class="cl-input"/>
           </div>
           <div class="cl-form-row">
             <label>售價（NT$）</label>
-            <input id="cl-ob-price" type="number" placeholder="1280" class="cl-input cl-input-sm"/>
+            <input id="cl-ob-price" type="number" placeholder="1280" class="cl-input"/>
           </div>
         </div>
         <button class="cl-btn cl-btn-outline" id="cl-ob-add-item">＋ 加入清單</button>

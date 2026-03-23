@@ -314,7 +314,21 @@
     modal.querySelector('#cl-s-code').value   = f.productCode || '';
     modal.querySelector('#cl-s-stall').value  = f.stall || '';
     modal.querySelector('#cl-s-style').value  = f.style || '';
-    modal.querySelector('#cl-s-size').value   = f.size || '';
+    const sizeVal = f.size || '';
+    const sizeSelectEl = modal.querySelector('#cl-s-size-select');
+    const sizeInputEl  = modal.querySelector('#cl-s-size');
+    const predefined   = ['F','S','M','L','XL'];
+    if (sizeSelectEl && sizeInputEl) {
+      if (predefined.includes(sizeVal)) {
+        sizeSelectEl.value = sizeVal;
+        sizeInputEl.style.display = 'none';
+        sizeInputEl.value = sizeVal;
+      } else {
+        sizeSelectEl.value = 'custom';
+        sizeInputEl.style.display = '';
+        sizeInputEl.value = sizeVal;
+      }
+    }
     modal.querySelector('#cl-s-source').value = f.source || '振興';
     modal.querySelector('#cl-s-krw').value    = f.krwCost || '';
     modal.querySelector('#cl-s-rate').value   = f.rate || '';
@@ -627,23 +641,18 @@
         }
       }
 
-      const available = stockList.map(s => {
-        const total = parseInt(s.stock) || 0;
-        const avail = s.isSample ? Math.max(0, total - 1) : total;
-        return { ...s, availStock: avail };
-      }).filter(s => s.availStock > 0);
-      if (available.length) {
+      if (stockList.length) {
         sel.innerHTML = `<option value="">選擇商品</option>` +
-          available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${s.availStock}">${s.style} ${s.size}（可售${s.availStock}件）</option>`).join('');
+          stockList.map(s => {
+            const total = parseInt(s.stock) || 0;
+            const avail = s.isSample ? Math.max(0, total - 1) : total;
+            const label = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
+            return `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${avail}">${s.style} ${s.size}（${label}）</option>`;
+          }).join('');
       } else if (!gasUrl) {
         sel.innerHTML = `<option value="">請先在設定綁定 GAS 網址</option>`;
       } else {
-        // debug：印出 stockList 讓 console 可以看
-        console.log('[clothes] stockList:', JSON.stringify(stockList));
-        const msg = stockList.length === 0
-          ? '讀取失敗，請重試'
-          : '目前無可售庫存';
-        sel.innerHTML = `<option value="">${msg}</option>`;
+        sel.innerHTML = `<option value="">讀取失敗，請重試</option>`;
       }
     } else {
       modal.style.display = 'flex';
@@ -695,13 +704,13 @@
         const freshRes = await gasCall({ action: 'clothes_getStock' });
         if (freshRes?.success) { stockList = freshRes.data || []; saveLocal('clothes_stock', stockList); }
       }
-      const available = stockList.map(s => {
-        const total = parseInt(s.stock) || 0;
-        const avail = s.isSample ? Math.max(0, total - 1) : total;
-        return { ...s, availStock: avail };
-      }).filter(s => s.availStock > 0);
       sel.innerHTML = `<option value="">選擇商品</option>` +
-        available.map(s => `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${s.availStock}">${s.style} ${s.size}（可售${s.availStock}件）</option>`).join('');
+        stockList.map(s => {
+          const total = parseInt(s.stock) || 0;
+          const avail = s.isSample ? Math.max(0, total - 1) : total;
+          const label = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
+          return `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${avail}">${s.style} ${s.size}（${label}）</option>`;
+        }).join('');
     }
     renderOutboundCart();
   };
@@ -735,7 +744,7 @@
     const opt   = sel.options[sel.selectedIndex];
     const avail = parseInt(opt.dataset.avail) || 0;
     const inCart = outboundCart.filter(i => i.productCode === sel.value).reduce((s,i) => s+i.qty, 0);
-    if (avail > 0 && qty + inCart > avail) return showClToast(`庫存只剩 ${avail - inCart} 件`);
+    // 不限制庫存，允許追加預購
     outboundCart.push({
       productCode: sel.value,
       style: opt.dataset.style,
@@ -790,11 +799,15 @@
     if (depList) {
       depList.innerHTML = !deps.length ? '<div class="cl-empty-small">尚無入金紀錄</div>' :
         deps.map(d => `
-        <div class="cl-surplus-row">
-          <span class="cl-surplus-date">${formatDate(d.date)}</span>
-          <span>NT$ ${(parseFloat(d.ntd)||0).toLocaleString()}</span>
-          <span class="cl-surplus-rate">匯率 ${d.rate}</span>
-          <span class="cl-surplus-krw">₩${Math.round((parseFloat(d.ntd)||0)*(parseFloat(d.rate)||1)).toLocaleString()}</span>
+        <div class="cl-surplus-item-card">
+          <div class="cl-surplus-item-left">
+            <span class="cl-surplus-item-date">${formatDate(d.date)}</span>
+            <span class="cl-surplus-item-rate">匯率 ${d.rate}</span>
+          </div>
+          <div class="cl-surplus-item-right">
+            <span class="cl-surplus-item-ntd">NT$ ${(parseFloat(d.ntd)||0).toLocaleString()}</span>
+            <span class="cl-surplus-item-krw">₩${Math.round((parseFloat(d.ntd)||0)*(parseFloat(d.rate)||1)).toLocaleString()}</span>
+          </div>
         </div>`).join('');
     }
 
@@ -803,13 +816,17 @@
     if (expList) {
       expList.innerHTML = !exps.length ? '<div class="cl-empty-small">尚無支出紀錄</div>' :
         exps.map(e => `
-        <div class="cl-surplus-row">
-          <span class="cl-surplus-date">${formatDate(e.date)}</span>
-          <span class="cl-surplus-label">${e.note || '支出'}</span>
-          <span>商品 ₩${(parseFloat(e.product)||0).toLocaleString()}</span>
-          <span>代購 ₩${(parseFloat(e.agency)||0).toLocaleString()}</span>
-          <span>運費 ₩${(parseFloat(e.shipping)||0).toLocaleString()}</span>
-          <span class="cl-surplus-total">= ₩${(parseFloat(e.total)||0).toLocaleString()}</span>
+        <div class="cl-surplus-item-card">
+          <div class="cl-surplus-item-left">
+            <span class="cl-surplus-item-date">${formatDate(e.date)}</span>
+            <span class="cl-surplus-item-note">${e.note || '支出'}</span>
+          </div>
+          <div class="cl-surplus-item-right">
+            ${e.product ? `<span class="cl-surplus-item-sub">商品 ₩${(parseFloat(e.product)||0).toLocaleString()}</span>` : ''}
+            ${e.agency  ? `<span class="cl-surplus-item-sub">代購 ₩${(parseFloat(e.agency)||0).toLocaleString()}</span>`  : ''}
+            ${e.shipping? `<span class="cl-surplus-item-sub">運費 ₩${(parseFloat(e.shipping)||0).toLocaleString()}</span>`: ''}
+            <span class="cl-surplus-item-krw">₩${(parseFloat(e.total)||0).toLocaleString()}</span>
+          </div>
         </div>`).join('');
     }
   }
@@ -995,6 +1012,20 @@
     showClToast('✅ 已記錄');
     renderSurplus();
   }
+
+  // ── 尺寸下拉切換 ──────────────────────────────────
+  window.clHandleSizeSelect = function(sel) {
+    const input = document.getElementById('cl-s-size');
+    if (!input) return;
+    if (sel.value === 'custom') {
+      input.style.display = '';
+      input.value = '';
+      input.focus();
+    } else {
+      input.style.display = 'none';
+      input.value = sel.value;
+    }
+  };
 
   // ── 時間篩選工具 ──────────────────────────────────
   function filterByDays(list, dateKey, days, from, to) {
