@@ -82,6 +82,7 @@
     const res = await gasCall({ action: 'clothes_getStock' });
     if (res?.success) stockList = res.data || [];
     else stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
+    dropdownStockList = stockList;
     renderStock();
   }
 
@@ -604,8 +605,12 @@
   async function openOutboundForm() {
     outboundCart = [];
     isSubmitting = false; // 每次開啟都重置提交鎖
-    const searchEl = document.getElementById('cl-ob-search');
-    if (searchEl) searchEl.value = '';
+    selectedProductCode = '';
+    const triggerText = document.getElementById('cl-ob-trigger-text');
+    if (triggerText) triggerText.textContent = '選擇商品';
+    const hiddenInput = document.getElementById('cl-ob-product');
+    if (hiddenInput) hiddenInput.value = '';
+    document.getElementById('cl-ob-panel')?.style && (document.getElementById('cl-ob-panel').style.display = 'none');
     const obBtn = document.getElementById('cl-ob-submit');
     if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     const modal = document.getElementById('cl-outbound-modal');
@@ -643,19 +648,8 @@
         }
       }
 
-      if (stockList.length) {
-        sel.innerHTML = `<option value="">選擇商品</option>` +
-          stockList.map(s => {
-            const total = parseInt(s.stock) || 0;
-            const avail = s.isSample ? Math.max(0, total - 1) : total;
-            const label = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
-            return `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${avail}">${s.style} ${s.size}（${label}）</option>`;
-          }).join('');
-      } else if (!gasUrl) {
-        sel.innerHTML = `<option value="">請先在設定綁定 GAS 網址</option>`;
-      } else {
-        sel.innerHTML = `<option value="">讀取失敗，請重試</option>`;
-      }
+      dropdownStockList = stockList;
+      clRenderDropdownList('');
     } else {
       modal.style.display = 'flex';
     }
@@ -704,15 +698,10 @@
       const gasUrl = getGasUrl();
       if (gasUrl) {
         const freshRes = await gasCall({ action: 'clothes_getStock' });
-        if (freshRes?.success) { stockList = freshRes.data || []; saveLocal('clothes_stock', stockList); }
+        if (freshRes?.success) { stockList = freshRes.data || []; dropdownStockList = stockList; saveLocal('clothes_stock', stockList); }
       }
-      sel.innerHTML = `<option value="">選擇商品</option>` +
-        stockList.map(s => {
-          const total = parseInt(s.stock) || 0;
-          const avail = s.isSample ? Math.max(0, total - 1) : total;
-          const label = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
-          return `<option value="${s.productCode}" data-style="${s.style}" data-size="${s.size}" data-cost="${s.cost}" data-price="${s.price||''}" data-avail="${avail}">${s.style} ${s.size}（${label}）</option>`;
-        }).join('');
+      dropdownStockList = stockList;
+      clRenderDropdownList('');
     }
     renderOutboundCart();
   };
@@ -738,26 +727,25 @@
   };
 
     window.clAddToCart = function() {
-    const modal = document.getElementById('cl-outbound-modal');
-    const sel   = modal.querySelector('#cl-ob-product');
-    const qty   = parseInt(modal.querySelector('#cl-ob-qty').value) || 1;
-    const price = parseFloat(modal.querySelector('#cl-ob-price').value) || 0;
-    if (!sel.value) return showClToast('請選擇商品');
-    const opt   = sel.options[sel.selectedIndex];
-    const avail = parseInt(opt.dataset.avail) || 0;
-    const inCart = outboundCart.filter(i => i.productCode === sel.value).reduce((s,i) => s+i.qty, 0);
-    // 不限制庫存，允許追加預購
+    const modal   = document.getElementById('cl-outbound-modal');
+    const hidden  = modal.querySelector('#cl-ob-product');
+    const qty     = parseInt(modal.querySelector('#cl-ob-qty').value) || 1;
+    const price   = parseFloat(modal.querySelector('#cl-ob-price').value) || 0;
+    if (!hidden.value) return showClToast('請選擇商品');
     outboundCart.push({
-      productCode: sel.value,
-      style: opt.dataset.style,
-      size: opt.dataset.size,
-      cost: parseFloat(opt.dataset.cost) || 0,
-      price,
-      qty,
+      productCode: hidden.value,
+      style: hidden.dataset.style || '',
+      size:  hidden.dataset.size  || '',
+      cost:  parseFloat(hidden.dataset.cost) || 0,
+      price, qty,
       subtotal: price * qty
     });
-    modal.querySelector('#cl-ob-product').value = '';
-    modal.querySelector('#cl-ob-qty').value = '1';
+    // 重置下拉
+    hidden.value = '';
+    selectedProductCode = '';
+    const triggerText = document.getElementById('cl-ob-trigger-text');
+    if (triggerText) triggerText.textContent = '選擇商品';
+    modal.querySelector('#cl-ob-qty').value   = '1';
     modal.querySelector('#cl-ob-price').value = '';
     renderOutboundCart();
   };
@@ -1013,6 +1001,72 @@
     modal.style.display = 'none';
     showClToast('✅ 已記錄');
     renderSurplus();
+  }
+
+  // ── 自製商品下拉 ──────────────────────────────────
+  let dropdownStockList = [];
+  let selectedProductCode = '';
+
+  window.clToggleDropdown = function() {
+    const panel = document.getElementById('cl-ob-panel');
+    if (!panel) return;
+    const isOpen = panel.style.display !== 'none';
+    if (isOpen) {
+      panel.style.display = 'none';
+    } else {
+      panel.style.display = 'block';
+      const search = document.getElementById('cl-ob-search');
+      if (search) { search.value = ''; search.focus(); }
+      clRenderDropdownList('');
+    }
+  };
+
+  window.clSelectProduct = function(code, text) {
+    selectedProductCode = code;
+    document.getElementById('cl-ob-product').value = code;
+    document.getElementById('cl-ob-trigger-text').textContent = text;
+    document.getElementById('cl-ob-panel').style.display = 'none';
+    // 自動帶入售價
+    const item = dropdownStockList.find(s => s.productCode === code);
+    if (item && item.price) {
+      const priceEl = document.getElementById('cl-ob-price');
+      if (priceEl && !priceEl.value) priceEl.value = item.price;
+    }
+    // 更新 data attributes 供 clAddToCart 使用
+    document.getElementById('cl-ob-product').dataset.style = item?.style || '';
+    document.getElementById('cl-ob-product').dataset.size  = item?.size  || '';
+    document.getElementById('cl-ob-product').dataset.cost  = item?.cost  || 0;
+    document.getElementById('cl-ob-product').dataset.price = item?.price || '';
+    document.getElementById('cl-ob-product').dataset.avail = (() => {
+      if (!item) return 0;
+      const total = parseInt(item.stock) || 0;
+      return item.isSample ? Math.max(0, total - 1) : total;
+    })();
+  };
+
+  function clRenderDropdownList(kw) {
+    const list = document.getElementById('cl-ob-list');
+    if (!list) return;
+    const filtered = kw
+      ? dropdownStockList.filter(s =>
+          (s.style || '').toLowerCase().includes(kw) ||
+          (s.productCode || '').toLowerCase().includes(kw) ||
+          (s.size || '').toLowerCase().includes(kw))
+      : dropdownStockList;
+    if (!filtered.length) {
+      list.innerHTML = '<div class="cl-dropdown-empty">無符合商品</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(s => {
+      const total = parseInt(s.stock) || 0;
+      const avail = s.isSample ? Math.max(0, total - 1) : total;
+      const stockLabel = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `欠貨${Math.abs(avail)}件` : '售完');
+      const isActive = s.productCode === selectedProductCode ? ' active' : '';
+      return `<div class="cl-dropdown-item${isActive}" onclick="clSelectProduct('${s.productCode}', '${(s.style||'').replace(/'/g,"\'")} ${s.size||''}')">
+        <span class="cl-dropdown-item-name">${s.style || '—'} <span style="opacity:0.6;font-weight:400">${s.size || ''}</span></span>
+        <span class="cl-dropdown-item-stock">${stockLabel}</span>
+      </div>`;
+    }).join('');
   }
 
   // ── 尺寸下拉切換 ──────────────────────────────────
