@@ -48,7 +48,7 @@
 
   // ── 資料載入 ──────────────────────────────────
   async function loadStaging() {
-    const res = await gasCall({ action: 'clothes_getStagingList' });
+    const res = await gasCallWithStatus({ action: 'clothes_getStagingList' });
     if (res?.success) stagingList = res.data || [];
     else stagingList = JSON.parse(localStorage.getItem('clothes_staging') || '[]');
     stagingList.sort((a, b) => {
@@ -61,7 +61,7 @@
   }
 
   async function loadInbound() {
-    const res = await gasCall({ action: 'clothes_getInbound' });
+    const res = await gasCallWithStatus({ action: 'clothes_getInbound' });
     if (res?.success) inboundList = res.data || [];
     else inboundList = JSON.parse(localStorage.getItem('clothes_inbound') || '[]');
     inboundList.sort((a, b) => {
@@ -79,7 +79,7 @@
   }
 
   async function loadStock() {
-    const res = await gasCall({ action: 'clothes_getStock' });
+    const res = await gasCallWithStatus({ action: 'clothes_getStock' });
     if (res?.success) stockList = res.data || [];
     else stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
     dropdownStockList = stockList;
@@ -87,7 +87,7 @@
   }
 
   async function loadOutbound() {
-    const res = await gasCall({ action: 'clothes_getOutbound' });
+    const res = await gasCallWithStatus({ action: 'clothes_getOutbound' });
     if (res?.success) outboundList = res.data || [];
     else outboundList = JSON.parse(localStorage.getItem('clothes_outbound') || '[]');
     outboundList.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -95,7 +95,7 @@
   }
 
   async function loadSurplus() {
-    const res = await gasCall({ action: 'clothes_getSurplus' });
+    const res = await gasCallWithStatus({ action: 'clothes_getSurplus' });
     if (res?.success) surplusData = res.data || { deposits: [], expenses: [] };
     else surplusData = JSON.parse(localStorage.getItem('clothes_surplus') || '{"deposits":[],"expenses":[]}');
     renderSurplus();
@@ -235,7 +235,7 @@
 
   window.clRefundStaging = function(id) {
     showClConfirm('確定標記為廠商退款？', async () => {
-      const res = await gasCall({ action: 'clothes_voidStaging', id });
+      const res = await gasCallWithStatus({ action: 'clothes_voidStaging', id });
       const local = stagingList.find(r => r.id === id);
       if (local) local.status = '廠商退款';
       saveLocal('clothes_staging', stagingList);
@@ -270,7 +270,7 @@
         inboundAt: new Date().toISOString()
       };
 
-      const res = await gasCall({
+      const res = await gasCallWithStatus({
         action: 'clothes_commitInbound',
         data: JSON.stringify(inboundRow)
       });
@@ -644,7 +644,7 @@
         // GAS URL 未設定，直接用本機快取
         stockList = JSON.parse(localStorage.getItem('clothes_stock') || '[]');
       } else {
-        const freshRes = await gasCall({ action: 'clothes_getStock' });
+        const freshRes = await gasCallWithStatus({ action: 'clothes_getStock' });
         if (freshRes?.success) {
           stockList = freshRes.data || [];
           saveLocal('clothes_stock', stockList);
@@ -704,7 +704,7 @@
     if (sel) {
       const gasUrl = getGasUrl();
       if (gasUrl) {
-        const freshRes = await gasCall({ action: 'clothes_getStock' });
+        const freshRes = await gasCallWithStatus({ action: 'clothes_getStock' });
         if (freshRes?.success) { stockList = freshRes.data || []; dropdownStockList = stockList; saveLocal('clothes_stock', stockList); }
       }
       dropdownStockList = stockList;
@@ -727,7 +727,7 @@
       });
       saveLocal('clothes_outbound', outboundList);
       // 同步 GAS
-      await gasCall({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
+      await gasCallWithStatus({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
       showClToast('✅ 已標記為已出貨');
       renderOutbound();
     });
@@ -852,7 +852,7 @@
     const saveBtn = document.getElementById('cl-staging-save');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '儲存中…'; }
     try {
-      await gasCall({ action: 'clothes_addStaging', data: JSON.stringify(row) });
+      await gasCallWithStatus({ action: 'clothes_addStaging', data: JSON.stringify(row) });
     } finally {
       isSubmitting = false;
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
@@ -885,7 +885,7 @@
     const saveBtn = document.getElementById('cl-stock-save');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '更新中…'; }
     try {
-      await gasCall({ action: 'clothes_updateProduct', data: JSON.stringify(row) });
+      await gasCallWithStatus({ action: 'clothes_updateProduct', data: JSON.stringify(row) });
       saveLocal('clothes_stock', stockList);
       modal.style.display = 'none';
       showClToast('✅ 已更新');
@@ -931,10 +931,10 @@
     try {
       if (editOrderId) {
         // 編輯模式：先刪 Sheet 舊資料，再移除本機舊資料
-        await gasCall({ action: 'clothes_deleteOutboundBatch', batchId: editOrderId });
+        await gasCallWithStatus({ action: 'clothes_deleteOutboundBatch', batchId: editOrderId });
         outboundList = outboundList.filter(r => (r.batchId || r.orderId || r.id) !== editOrderId);
       }
-      await gasCall({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
+      await gasCallWithStatus({ action: 'clothes_addOutbound', data: JSON.stringify(rows) });
     } finally {
       isSubmitting = false;
       if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
@@ -945,8 +945,8 @@
     rows.forEach(row => {
       const s = stockList.find(s => s.productCode === row.productCode);
       if (s) {
-        s.stock = Math.max(0, (parseInt(s.stock)||0) - row.qty);
-        s.status = s.stock > 0 ? '可售' : '售完';
+        s.stock = (parseInt(s.stock)||0) - row.qty;
+        s.status = s.stock > 0 ? '可售' : (s.stock < 0 ? '追加' : '售完');
       }
     });
     outboundList.unshift(...rows);
@@ -971,7 +971,7 @@
     if (depBtn) { depBtn.disabled = true; depBtn.textContent = '儲存中…'; }
     const row = { id: genId(), date, ntd, rate };
     try {
-      await gasCall({ action: 'clothes_addDeposit', data: JSON.stringify(row) });
+      await gasCallWithStatus({ action: 'clothes_addDeposit', data: JSON.stringify(row) });
     } finally {
       isSubmitting = false;
       if (depBtn) { depBtn.disabled = false; depBtn.textContent = '儲存'; }
@@ -998,7 +998,7 @@
     if (expBtn) { expBtn.disabled = true; expBtn.textContent = '儲存中…'; }
     const row = { id: genId(), date, product, agency, shipping, total, note };
     try {
-      await gasCall({ action: 'clothes_addExpense', data: JSON.stringify(row) });
+      await gasCallWithStatus({ action: 'clothes_addExpense', data: JSON.stringify(row) });
     } finally {
       isSubmitting = false;
       if (expBtn) { expBtn.disabled = false; expBtn.textContent = '儲存'; }
@@ -1085,6 +1085,40 @@
       }
       return true;
     });
+  }
+
+  // ── 同步狀態 ─────────────────────────────────────
+  let syncTimer = null;
+  function setSyncStatus(state, msg) {
+    const el = document.getElementById('cl-sync-status');
+    if (!el) return;
+    el.className = 'cl-sync-status ' + (state || '');
+    el.textContent = msg || '';
+    if (state === 'done' || state === 'error') {
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => {
+        el.className = 'cl-sync-status';
+        el.textContent = '';
+      }, 2000);
+    }
+  }
+
+  // gasCall 包裝：自動顯示同步狀態
+  const _origGasCall = gasCall;
+  async function gasCallWithStatus(params) {
+    setSyncStatus('syncing', '同步中…');
+    try {
+      const res = await _origGasCall(params);
+      if (res?.success !== false) {
+        setSyncStatus('done', '✓ 已同步');
+      } else {
+        setSyncStatus('error', '⚠ 同步失敗');
+      }
+      return res;
+    } catch(e) {
+      setSyncStatus('error', '⚠ 同步失敗');
+      throw e;
+    }
   }
 
   // ── 摺疊卡片 ─────────────────────────────────────

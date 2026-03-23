@@ -1821,3 +1821,18 @@ body.dark  .cl-dropdown-item.active { background: #2a1f4a; color: #a78bfa; }
 .cl-dropdown-item-name { font-weight: 500; }
 .cl-dropdown-item-stock { font-size: 11px; opacity: 0.6; }
 .cl-dropdown-empty { padding: 16px; text-align: center; font-size: 13px; opacity: 0.5; }
+
+/* ── 同步狀態 ── */
+.cl-sync-status {
+  font-size: 12px; font-weight: 500;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+body.light .cl-sync-status { color: #aaa; }
+body.dark  .cl-sync-status { color: #555; }
+body.light .cl-sync-status.syncing { color: #7c3aed; }
+body.dark  .cl-sync-status.syncing { color: #a78bfa; }
+body.light .cl-sync-status.done    { color: #1D9E75; }
+body.dark  .cl-sync-status.done    { color: #5DCAA5; }
+body.light .cl-sync-status.error   { color: #D85A30; }
+body.dark  .cl-sync-status.error   { color: #F0997B; }
