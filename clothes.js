@@ -417,6 +417,12 @@
   // ══════════════════════════════════════════════
   //  三、庫存管理
   // ══════════════════════════════════════════════
+  function getDisplayStock(s) {
+    const total = parseInt(s.stock) || 0;
+    const isSample = s.isSample === true || s.isSample === 'true' || s.isSample === '是' || s.isSample === 1;
+    return isSample ? total - 1 : total;
+  }
+
   function renderStock(filter) {
     const container = document.getElementById('cl-stock-list');
     if (!container) return;
@@ -428,30 +434,15 @@
       (s.productCode || '').toLowerCase().includes(kw)
     );
     if (stockFilter === 'available') {
-      list = list.filter(s => {
-        const total = parseInt(s.stock) || 0;
-        const isSample = s.isSample === true || s.isSample === 'true' || s.isSample === '是' || s.isSample === 1;
-        const avail = isSample ? total - 1 : total;
-        return avail > 0;
-      });
+      list = list.filter(s => getDisplayStock(s) > 0);
     } else if (stockFilter === 'sold') {
-      list = list.filter(s => {
-        const total = parseInt(s.stock) || 0;
-        const isSample = s.isSample === true || s.isSample === 'true' || s.isSample === '是' || s.isSample === 1;
-        const avail = isSample ? total - 1 : total;
-        return avail === 0;
-      });
+      list = list.filter(s => getDisplayStock(s) === 0);
     } else if (stockFilter === 'reorder') {
-      list = list.filter(s => {
-        const total = parseInt(s.stock) || 0;
-        const isSample = s.isSample === true || s.isSample === 'true' || s.isSample === '是' || s.isSample === 1;
-        const avail = isSample ? total - 1 : total;
-        return avail < 0;
-      });
+      list = list.filter(s => getDisplayStock(s) < 0);
     }
 
     // 統計（先更新，不受篩選影響）
-    const inStock  = stockList.filter(s => { const d = parseInt(s.stock)||0; return (s.isSample ? d-1 : d) > 0; }).length;
+    const inStock  = stockList.filter(s => getDisplayStock(s) > 0).length;
     const total    = stockList.length;
     const statEl   = document.getElementById('cl-stock-stat');
     if (statEl) statEl.textContent = `共 ${total} 款・${inStock} 款有庫存`;
@@ -464,7 +455,7 @@
     let html = '';
     list.forEach(row => {
       const totalStock   = parseInt(row.stock) || 0;
-      const displayStock = row.isSample ? totalStock - 1 : totalStock;
+      const displayStock = getDisplayStock(row);
       let statusLabel, statusClass;
       if (displayStock > 0)      { statusLabel = row.isSample ? '含樣品' : '可售'; statusClass = 'cl-badge-done'; }
       else if (displayStock < 0) { statusLabel = '追加'; statusClass = 'cl-badge-reorder'; }
