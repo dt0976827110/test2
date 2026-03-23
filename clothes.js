@@ -464,7 +464,7 @@
       const displayStock = row.isSample ? totalStock - 1 : totalStock;
       const statusClass  = displayStock > 0 ? 'cl-badge-done' : (displayStock < 0 ? 'cl-badge-reorder' : 'cl-badge-empty');
       const statusLabel  = row.isSample
-        ? (displayStock > 0 ? '含樣品' : '售完')
+        ? (displayStock > 0 ? '含樣品' : (totalStock < 0 ? '追加' : '售完'))
         : (displayStock > 0 ? '可售' : (displayStock < 0 ? '追加' : '售完'));
       html += `
       <div class="cl-card cl-card-collapse">
