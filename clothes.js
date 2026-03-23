@@ -1288,6 +1288,7 @@
     document.getElementById('cl-ob-add-item')?.addEventListener('click', clAddToCart);
     document.getElementById('cl-ob-fee-select')?.addEventListener('change', renderOutboundCart);
     document.getElementById('cl-ob-fee')?.addEventListener('input', renderOutboundCart);
+    document.getElementById('cl-ob-fee')?.addEventListener('change', renderOutboundCart);
     document.getElementById('cl-ob-submit')?.addEventListener('click', submitOutbound);
 
     // ── 自製下拉搜尋（仿 app.js 模式）──
