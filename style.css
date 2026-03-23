@@ -1675,7 +1675,7 @@ body.dark  .cl-filter-btn.active { background: #7c3aed; color: #fff; border-colo
 
 .cl-custom-date-range {
   display: flex; align-items: center; gap: 6px;
-  padding: 6px 16px 0;
+  padding: 0;
 }
 .cl-custom-date-range .cl-input-sm { flex: 1; }
 
@@ -1697,14 +1697,8 @@ body.dark  .cl-filter-btn.active { background: #7c3aed; color: #fff; border-colo
 }
 
 /* ── 2. 搜尋選商品 ── */
-.cl-search-select-wrap {
-  display: flex; flex-direction: column; gap: 6px;
-}
-.cl-search-select-input { flex-shrink: 0; }
-.cl-search-select-list {
-  flex: 1;
-  min-height: 42px;
-  max-height: 160px;
+#cl-ob-search {
+  margin-bottom: 6px;
 }
 
 /* ── 4. 尺寸輸入包裹 ── */
@@ -1764,18 +1758,22 @@ body.dark  .cl-surplus-item-sub { color: #555; }
 
 /* ── 7. 自訂日期浮窗風格 ── */
 .cl-custom-date-range {
-  background: var(--color-background-primary, #fff);
   border-radius: 10px; margin: 0 16px 4px;
   padding: 8px 12px;
+  background: transparent;
 }
-body.light .cl-custom-date-range { border: 0.5px solid #e8e8e8; }
-body.dark  .cl-custom-date-range { border: 0.5px solid #2a2a2a; }
 
 input[type="date"].cl-input,
 input[type="date"].cl-input-sm {
   min-height: 42px;
+  height: 42px;
   color-scheme: light dark;
+  -webkit-appearance: none;
 }
+body.light input[type="date"].cl-input,
+body.light input[type="date"].cl-input-sm { color-scheme: light; }
+body.dark  input[type="date"].cl-input,
+body.dark  input[type="date"].cl-input-sm { color-scheme: dark; }
 
 /* ── 8. 售價欄不超出 ── */
 .cl-form-row-group-2 {

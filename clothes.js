@@ -604,6 +604,8 @@
   async function openOutboundForm() {
     outboundCart = [];
     isSubmitting = false; // 每次開啟都重置提交鎖
+    const searchEl = document.getElementById('cl-ob-search');
+    if (searchEl) searchEl.value = '';
     const obBtn = document.getElementById('cl-ob-submit');
     if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     const modal = document.getElementById('cl-outbound-modal');
