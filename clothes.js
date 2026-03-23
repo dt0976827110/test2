@@ -442,7 +442,7 @@
     } else if (stockFilter === 'reorder') {
       list = list.filter(s => {
         const total = parseInt(s.stock) || 0;
-        const avail = s.isSample ? Math.max(0, total - 1) : total;
+        const avail = s.isSample ? total - 1 : total;
         return avail < 0;
       });
     }
@@ -453,7 +453,7 @@
     }
 
     // 統計
-    const inStock  = stockList.filter(s => parseInt(s.stock) > 0).length;
+    const inStock  = stockList.filter(s => { const d = parseInt(s.stock)||0; return (s.isSample ? d-1 : d) > 0; }).length;
     const total    = stockList.length;
     const statEl   = document.getElementById('cl-stock-stat');
     if (statEl) statEl.textContent = `共 ${total} 款・${inStock} 款有庫存`;
@@ -1038,7 +1038,7 @@
       h.dataset.cost  = item.cost  || 0;
       h.dataset.price = item.price || '';
       const total = parseInt(item.stock) || 0;
-      h.dataset.avail = item.isSample ? Math.max(0, total - 1) : total;
+      h.dataset.avail = item.isSample ? total - 1 : total;
     }
   };
 
@@ -1054,7 +1054,7 @@
     list.innerHTML = filtered.length
       ? filtered.map(s => {
           const total = parseInt(s.stock) || 0;
-          const avail = s.isSample ? Math.max(0, total - 1) : total;
+          const avail = s.isSample ? total - 1 : total;
           const stockLabel = avail > 0 ? `庫存${avail}件` : (avail < 0 ? `追加${Math.abs(avail)}件` : '售完');
           const label = `${s.style || '—'} ${s.size || ''}`;
           return `<div class="cl-dropdown-item${s.productCode === selectedProductCode ? ' active' : ''}" onmousedown="clSelectProduct('${s.productCode}', '${label.replace(/'/g,"\'")}')">
