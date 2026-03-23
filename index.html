@@ -1392,6 +1392,19 @@ function doGet(e) {
             <input id="cl-ob-bank" type="text" placeholder="12345" maxlength="5" class="cl-input"/>
           </div>
         </div>
+        <div class="cl-form-row-group">
+          <div class="cl-form-row">
+            <label>建立日期</label>
+            <input id="cl-ob-date" type="date" class="cl-input"/>
+          </div>
+          <div class="cl-form-row">
+            <label>狀態</label>
+            <select id="cl-ob-status" class="cl-input cl-select">
+              <option value="待出貨">待出貨</option>
+              <option value="已出貨">已出貨</option>
+            </select>
+          </div>
+        </div>
         <div class="cl-form-row">
           <label>運費（NT$）</label>
           <div class="cl-size-input-wrap">
@@ -1402,19 +1415,6 @@ function doGet(e) {
               <option value="custom">自行輸入</option>
             </select>
             <input id="cl-ob-fee" type="number" placeholder="輸入金額" class="cl-input cl-input-sm" style="display:none"/>
-          </div>
-        </div>
-        <div class="cl-form-row-group">
-          <div class="cl-form-row">
-            <label>出貨日期</label>
-            <input id="cl-ob-date" type="date" class="cl-input"/>
-          </div>
-          <div class="cl-form-row">
-            <label>狀態</label>
-            <select id="cl-ob-status" class="cl-input cl-select">
-              <option value="待出貨">待出貨</option>
-              <option value="已出貨">已出貨</option>
-            </select>
           </div>
         </div>
         <div class="cl-divider">加入商品</div>
@@ -1441,13 +1441,7 @@ function doGet(e) {
         <button class="cl-btn cl-btn-outline" id="cl-ob-add-item">＋ 加入清單</button>
         <div class="cl-divider">出貨清單</div>
         <div id="cl-ob-cart-items"></div>
-        <div class="cl-form-row-group cl-form-row-group-2" style="margin-top:8px">
-          <div class="cl-form-row">
-            <label>運費（NT$）</label>
-            <input id="cl-ob-shipping-fee" type="number" placeholder="0" min="0" class="cl-input"/>
-          </div>
-          <div></div>
-        </div>
+
         <div class="cl-cart-total-row">
           <span>合計（含運）</span>
           <span id="cl-ob-cart-total">NT$ 0</span>

@@ -589,7 +589,11 @@
       if (totalEl) totalEl.textContent = 'NT$ 0';
       return;
     }
-    const shippingFee = parseFloat(document.getElementById('cl-ob-shipping-fee')?.value) || 0;
+    const feeSelectEl = document.getElementById('cl-ob-fee-select');
+    const feeInputEl  = document.getElementById('cl-ob-fee');
+    const shippingFee = feeSelectEl?.value === 'custom'
+      ? (parseFloat(feeInputEl?.value) || 0)
+      : (parseFloat(feeSelectEl?.value) || 0);
     const itemTotal = outboundCart.reduce((s, i) => s + (i.price * i.qty), 0);
     const total = itemTotal + shippingFee;
     el.innerHTML = outboundCart.map((item, idx) => `
@@ -1282,6 +1286,8 @@
       document.getElementById('cl-outbound-modal').style.display = 'none';
     });
     document.getElementById('cl-ob-add-item')?.addEventListener('click', clAddToCart);
+    document.getElementById('cl-ob-fee-select')?.addEventListener('change', renderOutboundCart);
+    document.getElementById('cl-ob-fee')?.addEventListener('input', renderOutboundCart);
     document.getElementById('cl-ob-submit')?.addEventListener('click', submitOutbound);
 
     // ── 自製下拉搜尋（仿 app.js 模式）──
