@@ -1096,6 +1096,7 @@ function doGet(e) {
     <!-- 動態右側按鈕（由 JS 控制顯示） -->
     <div class="cl-topbar-right">
       <span id="cl-sync-status" class="cl-sync-status"></span>
+      <button class="cl-topbar-btn" id="cl-staging-clear-btn" style="display:none">清空</button>
       <button class="cl-topbar-btn" id="cl-staging-add-btn" style="display:none">＋</button>
       <button class="cl-topbar-btn" id="cl-outbound-add-btn" style="display:none">＋</button>
       <button class="cl-topbar-btn" id="cl-deposit-btn" style="display:none">入金</button>
@@ -1149,6 +1150,11 @@ function doGet(e) {
   <!-- ④ 出貨明細 -->
   <div class="cl-page" data-page="outbound" id="tab-outbound" style="display:none">
     <div class="cl-filter-bar">
+      <button class="cl-filter-btn active" data-ob-status="all">全部</button>
+      <button class="cl-filter-btn" data-ob-status="待出貨">待出貨</button>
+      <button class="cl-filter-btn" data-ob-status="已出貨">已出貨</button>
+    </div>
+    <div class="cl-filter-bar" style="padding-top:2px">
       <button class="cl-filter-btn active" data-days="0">全部</button>
       <button class="cl-filter-btn" data-days="7">7天</button>
       <button class="cl-filter-btn" data-days="30">30天</button>
@@ -1449,6 +1455,38 @@ function doGet(e) {
       </div>
       <div class="cl-modal-footer">
         <button class="cl-btn cl-btn-primary" id="cl-ob-submit">新增訂單</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal：清空核對單 ── -->
+  <div id="cl-clear-staging-modal" class="cl-modal-overlay" style="display:none">
+    <div class="cl-modal">
+      <div class="cl-modal-header">
+        <span class="cl-modal-title">清空核對單</span>
+        <button class="cl-modal-close" id="cl-clear-staging-close">✕</button>
+      </div>
+      <div class="cl-modal-body">
+        <div class="cl-form-row" style="margin-bottom:4px">
+          <label style="font-size:13px;opacity:0.6">選擇要刪除的狀態</label>
+        </div>
+        <div class="cl-form-row" style="gap:12px;flex-direction:column">
+          <label class="cl-checkbox-row">
+            <input type="checkbox" id="cl-clear-pending" checked/>
+            <span>待入庫</span>
+          </label>
+          <label class="cl-checkbox-row">
+            <input type="checkbox" id="cl-clear-done" checked/>
+            <span>已入庫</span>
+          </label>
+          <label class="cl-checkbox-row">
+            <input type="checkbox" id="cl-clear-refund" checked/>
+            <span>廠商退款</span>
+          </label>
+        </div>
+      </div>
+      <div class="cl-modal-footer">
+        <button class="cl-btn cl-btn-danger" id="cl-clear-staging-confirm">確認清空</button>
       </div>
     </div>
   </div>

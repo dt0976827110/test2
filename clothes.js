@@ -21,6 +21,7 @@
   let inboundFrom     = '';
   let inboundTo       = '';
   let outboundDays    = 0;       // 出貨時間篩選
+  let outboundStatusFilter = 'all'; // 出貨狀態篩選
   let outboundFrom    = '';
   let outboundTo      = '';
   let surplusDays     = 0;       // 盈餘時間篩選
@@ -522,8 +523,12 @@
       return;
     }
 
+    // 狀態篩選
+    let filteredByStatus = outboundStatusFilter === 'all'
+      ? outboundList
+      : outboundList.filter(r => r.status === outboundStatusFilter);
     // 時間篩選
-    const filteredOutbound = filterByDays(outboundList, 'date', outboundDays, outboundFrom, outboundTo);
+    const filteredOutbound = filterByDays(filteredByStatus, 'date', outboundDays, outboundFrom, outboundTo);
     // 依批次 ID 分組（batchId = 每次新增產生的唯一 ID）
     const orders = {};
     filteredOutbound.forEach(row => {
@@ -1387,6 +1392,37 @@
     bindTimFilter('#tab-inbound  [data-days]', 'cl-inbound-custom-range',  'cl-inbound-date-from',  'cl-inbound-date-to',  'inbound',  '', '', renderInbound);
     bindTimFilter('#tab-outbound [data-days]', 'cl-outbound-custom-range', 'cl-outbound-date-from', 'cl-outbound-date-to', 'outbound', '', '', renderOutbound);
     bindTimFilter('#tab-surplus  [data-days]', 'cl-surplus-custom-range',  'cl-surplus-date-from',  'cl-surplus-date-to',  'surplus',  '', '', renderSurplus);
+
+    // ── 清空核對單 ──
+    document.getElementById('cl-staging-clear-btn')?.addEventListener('click', () => {
+      document.getElementById('cl-clear-staging-modal').style.display = 'flex';
+    });
+    document.getElementById('cl-clear-staging-close')?.addEventListener('click', () => {
+      document.getElementById('cl-clear-staging-modal').style.display = 'none';
+    });
+    document.getElementById('cl-clear-staging-confirm')?.addEventListener('click', async () => {
+      const statuses = [];
+      if (document.getElementById('cl-clear-pending').checked)  statuses.push('待入庫');
+      if (document.getElementById('cl-clear-done').checked)     statuses.push('已入庫');
+      if (document.getElementById('cl-clear-refund').checked)   statuses.push('廠商退款');
+      if (!statuses.length) return showClToast('請至少選擇一個狀態');
+      document.getElementById('cl-clear-staging-modal').style.display = 'none';
+      await gasCall({ action: 'clothes_clearStaging', statuses: JSON.stringify(statuses) });
+      stagingList = stagingList.filter(r => !statuses.includes(r.status));
+      saveLocal('clothes_staging', stagingList);
+      renderStaging();
+      showClToast('✅ 清空完成');
+    });
+
+    // ── 出貨狀態篩選 ──
+    document.querySelectorAll('[data-ob-status]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-ob-status]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        outboundStatusFilter = btn.dataset.obStatus;
+        renderOutbound();
+      });
+    });
 
     // 服飾管理入口
     document.getElementById('wsOpenClothesBtn')?.addEventListener('click', showClothesSystem);

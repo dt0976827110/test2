@@ -1839,3 +1839,20 @@ body.dark  .cl-sync-status.error   { color: #F0997B; }
 
 body.light .cl-badge-reorder { background: #FAEEDA; color: #854F0B; }
 body.dark  .cl-badge-reorder { background: #412402; color: #FAC775; }
+
+/* ── Checkbox row ── */
+.cl-checkbox-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 15px; cursor: pointer;
+}
+.cl-checkbox-row input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: #7c3aed; cursor: pointer;
+}
+
+/* ── Danger 按鈕 ── */
+.cl-btn-danger {
+  background: #D85A30; color: #fff; border: none;
+  border-radius: 10px; padding: 12px; font-size: 15px;
+  font-weight: 600; width: 100%; cursor: pointer;
+}
+.cl-btn-danger:active { opacity: 0.85; }
