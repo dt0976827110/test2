@@ -1860,7 +1860,7 @@ const SYMBOL_TYPE_MAP = {
   '1301':'stock','1303':'stock','1326':'stock','2002':'stock','2207':'stock','2301':'stock',
   '2357':'stock','2379':'stock','2395':'stock','2408':'stock','2474':'stock','2475':'stock',
   '3034':'stock','3037':'stock','3045':'stock','3711':'stock','4904':'stock','4938':'stock',
-  '5854':'stock','6415':'stock','6505':'stock','8046','5314':'stock',
+  '5854':'stock','6415':'stock','6505':'stock','8046':'stock','5314':'stock',
   // 貴金屬（TWO 交易所）
   'AU9901':'metal_two','AU9902':'metal_two',
   // 黃金存摺（台銀牌價 NT$/克）
