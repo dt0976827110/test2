@@ -1856,3 +1856,8 @@ body.dark  .cl-badge-reorder { background: #412402; color: #FAC775; }
   font-weight: 600; width: 100%; cursor: pointer;
 }
 .cl-btn-danger:active { opacity: 0.85; }
+
+.cl-topbar-btn-icon {
+  padding: 5px 8px;
+  display: flex; align-items: center; justify-content: center;
+}

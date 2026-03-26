@@ -98,7 +98,7 @@
     const res = await gasCall({ action: 'clothes_getOutbound' });
     if (res?.success) outboundList = res.data || [];
     else outboundList = JSON.parse(localStorage.getItem('clothes_outbound') || '[]');
-    outboundList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    outboundList.reverse(); // 最後key入的在最上
     renderOutbound();
   }
 
@@ -543,7 +543,7 @@
     });
 
     let html = '';
-    Object.values(orders).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(order => {
+    Object.values(orders).forEach(order => {
       const total = order.items.reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0);
       const statusClass = order.status === '已出貨' ? 'cl-badge-done' : 'cl-badge-pending';
       html += `
