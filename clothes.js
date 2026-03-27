@@ -98,7 +98,15 @@
     const res = await gasCall({ action: 'clothes_getOutbound' });
     if (res?.success) outboundList = res.data || [];
     else outboundList = JSON.parse(localStorage.getItem('clothes_outbound') || '[]');
-    outboundList.reverse(); // 最後key入的在最上
+    
+    // 按 batchId (時間戳) 排序，最新訂單在最上
+    outboundList.sort((a, b) => {
+      const aId = a.batchId || a.orderId || a.id || '';
+      const bId = b.batchId || b.orderId || b.id || '';
+      // batchId 是時間戳 (越大越新)，降序排列
+      return String(bId).localeCompare(String(aId));
+    });
+    
     renderOutbound();
   }
 
@@ -537,13 +545,28 @@
       // 新資料：orderId 是 batchId（唯一ID）；舊資料：orderId 是 IG 帳號（含@或舊格式）→ 用 id 讓每列獨立
       const isOldFormat = (row.orderId || '').startsWith('@') || (row.orderId || '').includes('sds') || (row.orderId || '').includes('cyn');
       const key = isOldFormat ? row.id : (row.batchId || row.orderId || row.id);
-      if (!orders[key]) orders[key] = { batchId: key, orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '', fee: row.fee || 0 };
-      else orders[key].status = row.status;
+      if (!orders[key]) {
+        orders[key] = { 
+          batchId: key, orderId: row.orderId || '—', date: row.date, 
+          items: [], status: row.status, 
+          ig: row.ig || '', name: row.name || '', phone: row.phone || '', 
+          address: row.address || '', shipping: row.shipping || '', 
+          bank: row.bank || '', fee: 0  // 初始化為 0，之後累加
+        };
+      } else {
+        orders[key].status = row.status;
+      }
+      // 累加運費（每筆商品的 fee 欄位都可能有值）
+      orders[key].fee = (orders[key].fee || 0) + (parseFloat(row.fee) || 0);
       orders[key].items.push(row);
     });
 
     let html = '';
-    Object.values(orders).forEach(order => {
+    // 將 orders 物件轉為陣列並按 batchId 排序（最新在前）
+    const sortedOrders = Object.values(orders).sort((a, b) => {
+      return String(b.batchId).localeCompare(String(a.batchId));
+    });
+    sortedOrders.forEach(order => {
       const total = order.items.reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0);
       const statusClass = order.status === '已出貨' ? 'cl-badge-done' : 'cl-badge-pending';
       html += `
