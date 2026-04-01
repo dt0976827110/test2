@@ -673,10 +673,13 @@
           items: [], status: row.status, 
           ig: row.ig || '', name: row.name || '', phone: row.phone || '', 
           address: row.address || '', shipping: row.shipping || '', 
-          bank: row.bank || '', fee: 0  // 初始化為 0，之後累加
+          bank: row.bank || '', fee: 0,  // 初始化為 0，之後累加
+          shippingCode: row.shippingCode || ''  // 新增物流單號
         };
       } else {
         orders[key].status = row.status;
+        // 更新物流單號（如果有的話）
+        if (row.shippingCode) orders[key].shippingCode = row.shippingCode;
       }
       // 累加運費（每筆商品的 fee 欄位都可能有值）
       orders[key].fee = (orders[key].fee || 0) + (parseFloat(row.fee) || 0);
