@@ -802,6 +802,17 @@
     if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     const modal = document.getElementById('cl-outbound-modal');
     if (!modal) return;
+    
+    // 清空門市標籤和資料
+    const storeTag = document.getElementById('cl-ob-store-tag');
+    const addressInput = document.getElementById('cl-ob-address');
+    const storeCodeInput = document.getElementById('cl-ob-store-code');
+    const storeNameInput = document.getElementById('cl-ob-store-name');
+    if (storeTag) storeTag.style.display = 'none';
+    if (addressInput) addressInput.style.display = 'block';
+    if (storeCodeInput) storeCodeInput.value = '';
+    if (storeNameInput) storeNameInput.value = '';
+    
     modal.querySelector('#cl-ob-ig').value       = '';
     modal.querySelector('#cl-ob-name').value     = '';
     modal.querySelector('#cl-ob-phone').value    = '';
@@ -927,6 +938,13 @@
     addressInput.removeEventListener('input', handleAddressInput);
     addressInput.addEventListener('input', handleAddressInput);
     
+    // 綁定清除門市標籤按鈕
+    const storeTagClose = document.getElementById('cl-ob-store-tag-close');
+    if (storeTagClose) {
+      storeTagClose.removeEventListener('click', clClearStoreTag);
+      storeTagClose.addEventListener('click', clClearStoreTag);
+    }
+    
     // 初始化時執行一次
     handleShippingChange();
   }
@@ -964,11 +982,36 @@
     const storePanel = document.getElementById('cl-ob-store-panel');
     const storeCodeInput = document.getElementById('cl-ob-store-code');
     const storeNameInput = document.getElementById('cl-ob-store-name');
+    const storeTag = document.getElementById('cl-ob-store-tag');
+    const storeTagText = document.getElementById('cl-ob-store-tag-text');
     
+    // 存儲資料
     if (addressInput) addressInput.value = address;
     if (storeCodeInput) storeCodeInput.value = code;
     if (storeNameInput) storeNameInput.value = name;
+    
+    // 顯示標籤，隱藏輸入框和下拉選單
+    if (storeTagText) storeTagText.textContent = name;
+    if (storeTag) storeTag.style.display = 'flex';
+    if (addressInput) addressInput.style.display = 'none';
     if (storePanel) storePanel.style.display = 'none';
+  };
+  
+  // 清除門市選擇
+  window.clClearStoreTag = function() {
+    const addressInput = document.getElementById('cl-ob-address');
+    const storeCodeInput = document.getElementById('cl-ob-store-code');
+    const storeNameInput = document.getElementById('cl-ob-store-name');
+    const storeTag = document.getElementById('cl-ob-store-tag');
+    
+    // 清空資料
+    if (addressInput) addressInput.value = '';
+    if (storeCodeInput) storeCodeInput.value = '';
+    if (storeNameInput) storeNameInput.value = '';
+    
+    // 隱藏標籤，顯示輸入框
+    if (storeTag) storeTag.style.display = 'none';
+    if (addressInput) addressInput.style.display = 'block';
   };
 
   window.clEditOutbound = async function(orderId) {
@@ -1024,8 +1067,23 @@
     // 載入門市資料
     const storeCodeInput = document.getElementById('cl-ob-store-code');
     const storeNameInput = document.getElementById('cl-ob-store-name');
+    const storeTag = document.getElementById('cl-ob-store-tag');
+    const storeTagText = document.getElementById('cl-ob-store-tag-text');
+    const addressInput = document.getElementById('cl-ob-address');
+    
     if (storeCodeInput) storeCodeInput.value = order.storeCode || '';
     if (storeNameInput) storeNameInput.value = order.storeName || '';
+    
+    // 如果有門市資料，顯示標籤並隱藏輸入框
+    if (order.storeCode && order.storeName) {
+      if (storeTagText) storeTagText.textContent = order.storeName;
+      if (storeTag) storeTag.style.display = 'flex';
+      if (addressInput) addressInput.style.display = 'none';
+    } else {
+      // 沒有門市資料，隱藏標籤並顯示輸入框
+      if (storeTag) storeTag.style.display = 'none';
+      if (addressInput) addressInput.style.display = 'block';
+    }
 
     // 填庫存選單
     const sel = modal.querySelector('#cl-ob-product');

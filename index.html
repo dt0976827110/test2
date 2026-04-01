@@ -1383,6 +1383,11 @@ function doGet(e) {
         </div>
         <div class="cl-form-row">
           <label id="cl-ob-address-label">地址</label>
+          <!-- 門市標籤（選擇門市後顯示） -->
+          <div id="cl-ob-store-tag" style="display:none;padding:10px 12px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+            <span id="cl-ob-store-tag-text" style="color:#a78bfa;font-size:14px;flex:1"></span>
+            <button type="button" id="cl-ob-store-tag-close" style="background:none;border:none;color:#a78bfa;cursor:pointer;font-size:18px;padding:0 0 0 12px;line-height:1">×</button>
+          </div>
           <input id="cl-ob-address" type="text" placeholder="完整地址" class="cl-input"/>
           <!-- 門市搜尋下拉選單 -->
           <div id="cl-ob-store-panel" class="cl-dropdown-panel" style="display:none;max-height:240px;overflow-y:auto;margin-top:8px"></div>
