@@ -855,11 +855,6 @@
     
     if (!shippingSelect || !addressInput) return;
     
-    // 清空門市資料
-    if (storeCodeInput) storeCodeInput.value = '';
-    if (storeNameInput) storeNameInput.value = '';
-    if (storePanel) storePanel.style.display = 'none';
-    
     // 監聽寄送方式變更
     const handleShippingChange = () => {
       const shipping = shippingSelect.value;
@@ -867,13 +862,14 @@
       if (shipping === '7-ELEVEN' || shipping === '全家') {
         // 切換為門市搜尋模式
         addressInput.placeholder = '輸入門市名稱搜尋...';
-        addressInput.value = '';
-        if (storeCodeInput) storeCodeInput.value = '';
-        if (storeNameInput) storeNameInput.value = '';
+        // 只在沒有門市資料時才清空地址
+        if (!storeCodeInput?.value) {
+          addressInput.value = '';
+        }
       } else {
         // 切換回地址輸入模式
         addressInput.placeholder = '完整地址';
-        addressInput.value = '';
+        // 只清空門市資料，不清空地址
         if (storePanel) storePanel.style.display = 'none';
         if (storeCodeInput) storeCodeInput.value = '';
         if (storeNameInput) storeNameInput.value = '';
@@ -883,6 +879,14 @@
     // 綁定寄送方式變更事件
     shippingSelect.removeEventListener('change', handleShippingChange);
     shippingSelect.addEventListener('change', handleShippingChange);
+    
+    // 初始化時設定正確的 placeholder（不清空地址）
+    const currentShipping = shippingSelect.value;
+    if (currentShipping === '7-ELEVEN' || currentShipping === '全家') {
+      addressInput.placeholder = '輸入門市名稱搜尋...';
+    } else {
+      addressInput.placeholder = '完整地址';
+    }
     
     // 監聽地址輸入框變化（門市搜尋）
     let searchTimeout;
@@ -911,8 +915,8 @@
             keyword: keyword
           });
           
-          if (res?.success && res.data) {
-            clRenderStoreResults(res.data);
+          if (res?.success && res.stores) {
+            clRenderStoreResults(res.stores);
           }
         } catch (err) {
           console.error('門市搜尋失敗:', err);
