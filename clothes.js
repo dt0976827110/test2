@@ -695,8 +695,14 @@
       const total = order.items.reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0);
       const statusClass = order.status === '已出貨' ? 'cl-badge-done' : 'cl-badge-pending';
       
-      // 判斷是否顯示操作按鈕（待出貨且沒有物流單號才顯示）
-      const canEdit = order.status !== '已出貨' && !order.shippingCode;
+      // 按鈕顯示邏輯：
+      // - 已出貨：不顯示任何按鈕
+      // - 待出貨 + 沒有物流單號：顯示「編輯」「刪除」「已出貨」
+      // - 待出貨 + 有物流單號：只顯示「已出貨」
+      const isShipped = order.status === '已出貨';
+      const hasShippingCode = !!order.shippingCode;
+      const canEdit = !isShipped && !hasShippingCode;
+      const canMarkDone = !isShipped;
       
       html += `
       <div class="cl-card cl-card-collapse">
@@ -729,11 +735,11 @@
           <div class="cl-card-row cl-card-row-highlight">
             <span>訂單合計</span><span>NT$ ${(total + (parseFloat(order.fee)||0)).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
           </div>
-          ${canEdit ? `
+          ${canMarkDone ? `
           <div class="cl-card-actions">
-            <button class="cl-btn cl-btn-ghost" onclick="clEditOutbound('${order.batchId}')">編輯</button>
-            <button class="cl-btn cl-btn-danger" onclick="clDeleteOutbound('${order.batchId}')">刪除</button>
-            <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.batchId}')">標記為已出貨</button>
+            ${canEdit ? `<button class="cl-btn cl-btn-ghost" onclick="clEditOutbound('${order.batchId}')">編輯</button>` : ''}
+            ${canEdit ? `<button class="cl-btn cl-btn-danger" onclick="clDeleteOutbound('${order.batchId}')">刪除</button>` : ''}
+            <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.batchId}')">已出貨</button>
           </div>` : ''}
         </div>
       </div>`;
