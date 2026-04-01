@@ -1096,6 +1096,7 @@ function doGet(e) {
     <!-- 動態右側按鈕（由 JS 控制顯示） -->
     <div class="cl-topbar-right">
       <span id="cl-sync-status" class="cl-sync-status"></span>
+      <button class="cl-topbar-btn" id="cl-staging-commit-all-btn" style="display:none">全部入庫</button>
       <button class="cl-topbar-btn cl-topbar-btn-icon" id="cl-staging-clear-btn" style="display:none" title="清空">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
       </button>
@@ -1112,7 +1113,6 @@ function doGet(e) {
       <button class="cl-filter-btn active" data-filter="all">全部</button>
       <button class="cl-filter-btn" data-filter="待入庫">待入庫</button>
       <button class="cl-filter-btn" data-filter="已入庫">已入庫</button>
-      <button class="cl-filter-btn" data-filter="廠商退款">廠商退款</button>
     </div>
     <div id="cl-staging-list" class="cl-list-wrap"></div>
   </div>
@@ -1382,8 +1382,13 @@ function doGet(e) {
           </div>
         </div>
         <div class="cl-form-row">
-          <label>地址</label>
+          <label id="cl-ob-address-label">地址</label>
           <input id="cl-ob-address" type="text" placeholder="完整地址" class="cl-input"/>
+          <!-- 門市搜尋下拉選單 -->
+          <div id="cl-ob-store-panel" class="cl-dropdown-panel" style="display:none;max-height:240px;overflow-y:auto;margin-top:8px"></div>
+          <!-- 隱藏欄位：存儲門市代號和名稱 -->
+          <input type="hidden" id="cl-ob-store-code"/>
+          <input type="hidden" id="cl-ob-store-name"/>
         </div>
         <div class="cl-form-row-group">
           <div class="cl-form-row">
@@ -1480,10 +1485,6 @@ function doGet(e) {
           <label class="cl-checkbox-row">
             <input type="checkbox" id="cl-clear-done" checked/>
             <span>已入庫</span>
-          </label>
-          <label class="cl-checkbox-row">
-            <input type="checkbox" id="cl-clear-refund" checked/>
-            <span>廠商退款</span>
           </label>
         </div>
       </div>
