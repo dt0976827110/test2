@@ -917,8 +917,17 @@
         return;
       }
       
-      // Debounce: 300ms 後才搜尋
+      // Debounce: 150ms 後才搜尋（與電腦版一致）
       searchTimeout = setTimeout(async () => {
+        // 顯示 loading 狀態
+        if (storePanel) {
+          storePanel.innerHTML = '<div style="padding:12px;text-align:center;opacity:0.5;font-size:13px">搜尋中...</div>';
+          storePanel.style.display = 'block';
+        }
+        
+        // 記錄這次搜尋的關鍵字
+        const currentKeyword = keyword;
+        
         try {
           const res = await gasCall({
             action: 'searchStores',
@@ -926,13 +935,25 @@
             keyword: keyword
           });
           
+          // 檢查是否是最新的搜尋（避免舊請求覆蓋新結果）
+          if (addressInput.value.trim() !== currentKeyword) {
+            return; // 使用者已經輸入新內容了，忽略這個舊結果
+          }
+          
           if (res?.success && res.stores) {
             clRenderStoreResults(res.stores);
+          } else {
+            if (storePanel) {
+              storePanel.innerHTML = '<div style="padding:12px;text-align:center;opacity:0.5;font-size:13px">查無門市</div>';
+            }
           }
         } catch (err) {
           console.error('門市搜尋失敗:', err);
+          if (addressInput.value.trim() === currentKeyword && storePanel) {
+            storePanel.innerHTML = '<div style="padding:12px;text-align:center;opacity:0.5;font-size:13px">搜尋失敗</div>';
+          }
         }
-      }, 300);
+      }, 150);
     };
     
     addressInput.removeEventListener('input', handleAddressInput);
