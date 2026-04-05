@@ -98,15 +98,7 @@
     const res = await gasCall({ action: 'clothes_getOutbound' });
     if (res?.success) outboundList = res.data || [];
     else outboundList = JSON.parse(localStorage.getItem('clothes_outbound') || '[]');
-    
-    // 按 batchId (時間戳) 排序，最新訂單在最上
-    outboundList.sort((a, b) => {
-      const aId = a.batchId || a.orderId || a.id || '';
-      const bId = b.batchId || b.orderId || b.id || '';
-      // batchId 是時間戳 (越大越新)，降序排列
-      return String(bId).localeCompare(String(aId));
-    });
-    
+    outboundList.reverse(); // 最後key入的在最上
     renderOutbound();
   }
 
@@ -158,18 +150,16 @@
     });
 
     // 右上角按鈕控制
-    const stagingBtn       = document.getElementById('cl-staging-add-btn');
-    const stagingClrBtn    = document.getElementById('cl-staging-clear-btn');
-    const stagingCommitAll = document.getElementById('cl-staging-commit-all-btn');
-    const outboundBtn      = document.getElementById('cl-outbound-add-btn');
-    const depositBtn       = document.getElementById('cl-deposit-btn');
-    const expenseBtn       = document.getElementById('cl-expense-btn');
-    if (stagingBtn)        stagingBtn.style.display        = tab === 'staging'  ? '' : 'none';
-    if (stagingClrBtn)     stagingClrBtn.style.display     = tab === 'staging'  ? '' : 'none';
-    if (stagingCommitAll)  stagingCommitAll.style.display  = tab === 'staging'  ? '' : 'none';
-    if (outboundBtn)       outboundBtn.style.display       = tab === 'outbound' ? '' : 'none';
-    if (depositBtn)        depositBtn.style.display        = tab === 'surplus'  ? '' : 'none';
-    if (expenseBtn)        expenseBtn.style.display        = tab === 'surplus'  ? '' : 'none';
+    const stagingBtn   = document.getElementById('cl-staging-add-btn');
+    const stagingClrBtn= document.getElementById('cl-staging-clear-btn');
+    const outboundBtn  = document.getElementById('cl-outbound-add-btn');
+    const depositBtn   = document.getElementById('cl-deposit-btn');
+    const expenseBtn   = document.getElementById('cl-expense-btn');
+    if (stagingBtn)    stagingBtn.style.display    = tab === 'staging'  ? '' : 'none';
+    if (stagingClrBtn) stagingClrBtn.style.display = tab === 'staging'  ? '' : 'none';
+    if (outboundBtn)   outboundBtn.style.display   = tab === 'outbound' ? '' : 'none';
+    if (depositBtn)    depositBtn.style.display     = tab === 'surplus'  ? '' : 'none';
+    if (expenseBtn)    expenseBtn.style.display     = tab === 'surplus'  ? '' : 'none';
 
     // 載入資料
     if (tab === 'staging')  loadStaging();
@@ -191,19 +181,19 @@
       return;
     }
 
-    // 依篩選+狀態分組顯示（移除廠商退款）
+    // 依篩選+狀態分組顯示
     const filtered = stagingFilter === 'all' ? stagingList : stagingList.filter(r => r.status === stagingFilter);
-    const groups = { '待入庫': [], '已入庫': [] };
+    const groups = { '待入庫': [], '已入庫': [], '廠商退款': [] };
     filtered.forEach(row => { (groups[row.status] || groups['待入庫']).push(row); });
 
     let html = '';
-    ['待入庫', '已入庫'].forEach(status => {
+    ['待入庫', '已入庫', '廠商退款'].forEach(status => {
       const items = groups[status];
       if (!items.length) return;
       html += `<div class="cl-section-label">${status}（${items.length}）</div>`;
       items.forEach(row => {
         const calc = calcStaging(row);
-        const statusClass = status === '待入庫' ? 'cl-badge-pending' : 'cl-badge-done';
+        const statusClass = status === '待入庫' ? 'cl-badge-pending' : status === '已入庫' ? 'cl-badge-done' : 'cl-badge-refund';
         html += `
         <div class="cl-card cl-card-collapse" data-id="${row.id}">
           <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
@@ -236,6 +226,7 @@
             ${row.status === '待入庫' ? `
             <div class="cl-card-actions">
               <button class="cl-btn cl-btn-ghost" onclick="clEditStaging('${row.id}')">編輯</button>
+              <button class="cl-btn cl-btn-danger" onclick="clRefundStaging('${row.id}')">廠商退款</button>
               <button class="cl-btn cl-btn-primary" onclick="clCommitStaging('${row.id}')">入庫</button>
             </div>` : ''}
           </div>
@@ -323,83 +314,6 @@
       isSubmitting = false;
       showClToast('✅ 已入庫');
       renderStaging();
-    });
-  };
-
-  // 全部入庫
-  window.clCommitAllStaging = async function() {
-    const pendingItems = stagingList.filter(r => r.status === '待入庫');
-    
-    if (pendingItems.length === 0) {
-      showClToast('沒有待入庫的項目');
-      return;
-    }
-    
-    showClConfirm(`確認入庫 ${pendingItems.length} 筆資料？`, async () => {
-      setSyncStatus('syncing', `正在入庫 ${pendingItems.length} 筆資料...`);
-      
-      try {
-        for (const row of pendingItems) {
-          const calc = calcStaging(row);
-          const inboundRow = {
-            id: row.id,
-            orderDate: row.date,
-            productCode: row.productCode || '',
-            stall: row.stall,
-            style: row.style,
-            size: row.size,
-            source: row.source,
-            krwCost: row.krwCost,
-            totalKrw: calc.totalKrw,
-            totalNtd: calc.totalNtd,
-            fee: calc.fee,
-            rate: row.rate,
-            unitCost: calc.unitCost,
-            unitNtPrice: calc.unitNtPrice,
-            qty: row.qty,
-            subtotal: calc.subtotal,
-            inboundAt: new Date().toISOString()
-          };
-          
-          await gasCall({
-            action: 'clothes_commitInbound',
-            data: JSON.stringify(inboundRow)
-          });
-          
-          // 本機更新
-          row.status = '已入庫';
-          inboundList.unshift(inboundRow);
-          
-          // 更新庫存
-          const existing = stockList.find(s => s.productCode === row.productCode);
-          if (existing) {
-            existing.stock = (parseInt(existing.stock) || 0) + parseInt(row.qty);
-            existing.status = existing.stock > 0 ? '可售' : '售完';
-          } else if (row.productCode) {
-            stockList.unshift({
-              productCode: row.productCode,
-              style: row.style,
-              size: row.size,
-              cost: calc.unitNtPrice,
-              price: '',
-              stock: parseInt(row.qty),
-              status: '可售',
-              isSample: false
-            });
-          }
-        }
-        
-        saveLocal('clothes_staging', stagingList);
-        saveLocal('clothes_inbound', inboundList);
-        saveLocal('clothes_stock', stockList);
-        
-        renderStaging();
-        setSyncStatus('done', '✓ 已同步');
-        showClToast(`✅ 成功入庫 ${pendingItems.length} 筆資料`);
-      } catch (error) {
-        setSyncStatus('error', '⚠ 同步失敗');
-        showClToast('❌ 入庫過程發生錯誤：' + error.message);
-      }
     });
   };
 
@@ -496,55 +410,11 @@
           <div class="cl-card-row">
             <span>入庫時間</span><span>${formatDateTime(row.inboundAt)}</span>
           </div>
-          <div class="cl-card-actions">
-            <button class="cl-btn cl-btn-danger" onclick="clDeleteInbound('${row.id}', ${row.qty}, '${row.productCode}')">刪除</button>
-          </div>
         </div>
       </div>`;
     });
     container.innerHTML = html;
   }
-
-  // 刪除進貨紀錄
-  window.clDeleteInbound = function(id, qty, productCode) {
-    const record = inboundList.find(r => r.id === id);
-    if (!record) return;
-    
-    showClConfirm(`確認刪除此進貨紀錄？將從庫存扣除 ${qty} 件。`, async () => {
-      setSyncStatus('syncing', '刪除進貨紀錄中...');
-      
-      try {
-        // 呼叫 GAS 刪除進貨並自動扣庫存
-        await gasCall({
-          action: 'clothes_deleteInbound',
-          id: id,
-          productCode: productCode,
-          qty: qty
-        });
-        
-        // 更新本地資料
-        inboundList = inboundList.filter(r => r.id !== id);
-        saveLocal('clothes_inbound', inboundList);
-        
-        // 更新本地庫存
-        const stockItem = stockList.find(s => s.productCode === productCode);
-        if (stockItem) {
-          stockItem.stock = (parseInt(stockItem.stock) || 0) - parseInt(qty);
-          stockItem.status = stockItem.stock > 0 ? '可售' : '售完';
-          saveLocal('clothes_stock', stockList);
-        }
-        
-        // 重新渲染列表
-        renderInbound();
-        
-        setSyncStatus('done', '✓ 已同步');
-        showClToast('✅ 進貨紀錄已刪除，庫存已扣除');
-      } catch (err) {
-        setSyncStatus('error', '⚠ 同步失敗');
-        showClToast('❌ 刪除失敗：' + err.message);
-      }
-    });
-  };
 
   // ══════════════════════════════════════════════
   //  三、庫存管理
@@ -667,43 +537,15 @@
       // 新資料：orderId 是 batchId（唯一ID）；舊資料：orderId 是 IG 帳號（含@或舊格式）→ 用 id 讓每列獨立
       const isOldFormat = (row.orderId || '').startsWith('@') || (row.orderId || '').includes('sds') || (row.orderId || '').includes('cyn');
       const key = isOldFormat ? row.id : (row.batchId || row.orderId || row.id);
-      if (!orders[key]) {
-        orders[key] = { 
-          batchId: key, orderId: row.orderId || '—', date: row.date, 
-          items: [], status: row.status, 
-          ig: row.ig || '', name: row.name || '', phone: row.phone || '', 
-          address: row.address || '', shipping: row.shipping || '', 
-          bank: row.bank || '', fee: 0,  // 初始化為 0，之後累加
-          shippingCode: row.shippingCode || ''  // 新增物流單號
-        };
-      } else {
-        orders[key].status = row.status;
-        // 更新物流單號（如果有的話）
-        if (row.shippingCode) orders[key].shippingCode = row.shippingCode;
-      }
-      // 累加運費（每筆商品的 fee 欄位都可能有值）
-      orders[key].fee = (orders[key].fee || 0) + (parseFloat(row.fee) || 0);
+      if (!orders[key]) orders[key] = { batchId: key, orderId: row.orderId || '—', date: row.date, items: [], status: row.status, ig: row.ig || '', name: row.name || '', phone: row.phone || '', address: row.address || '', shipping: row.shipping || '', bank: row.bank || '', fee: row.fee || 0 };
+      else orders[key].status = row.status;
       orders[key].items.push(row);
     });
 
     let html = '';
-    // 將 orders 物件轉為陣列並按 batchId 排序（最新在前）
-    const sortedOrders = Object.values(orders).sort((a, b) => {
-      return String(b.batchId).localeCompare(String(a.batchId));
-    });
-    sortedOrders.forEach(order => {
+    Object.values(orders).forEach(order => {
       const total = order.items.reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0);
       const statusClass = order.status === '已出貨' ? 'cl-badge-done' : 'cl-badge-pending';
-      
-      // 按鈕顯示邏輯：
-      // - 已出貨：不顯示任何按鈕
-      // - 待出貨 + 沒有物流單號：顯示「編輯」「刪除」「已出貨」
-      // - 待出貨 + 有物流單號：只顯示「已出貨」
-      const isShipped = order.status === '已出貨';
-      const hasShippingCode = !!order.shippingCode;
-      const canEdit = !isShipped && !hasShippingCode;
-      const canMarkDone = !isShipped;
-      
       html += `
       <div class="cl-card cl-card-collapse">
         <div class="cl-card-header cl-card-toggle" onclick="clToggleCard(this)">
@@ -723,7 +565,6 @@
           ${order.phone ? `<div class="cl-card-row"><span>電話</span><span>${order.phone}</span></div>` : ''}
           ${order.address ? `<div class="cl-card-row"><span>地址</span><span>${order.address}</span></div>` : ''}
           ${order.shipping ? `<div class="cl-card-row"><span>寄送方式</span><span>${order.shipping}</span></div>` : ''}
-          <div class="cl-card-row"><span>物流單號</span><span>${order.shippingCode || '尚未建立出貨單'}</span></div>
           ${order.bank ? `<div class="cl-card-row"><span>銀行後五碼</span><span>${order.bank}</span></div>` : ''}
           <div class="cl-card-row" style="border-top:1px dashed var(--color-border-tertiary);margin-top:4px;padding-top:8px"></div>
           ${order.items.map(item => `
@@ -735,11 +576,10 @@
           <div class="cl-card-row cl-card-row-highlight">
             <span>訂單合計</span><span>NT$ ${(total + (parseFloat(order.fee)||0)).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
           </div>
-          ${canMarkDone ? `
+          ${order.status !== '已出貨' ? `
           <div class="cl-card-actions">
-            ${canEdit ? `<button class="cl-btn cl-btn-ghost" onclick="clEditOutbound('${order.batchId}')">編輯</button>` : ''}
-            ${canEdit ? `<button class="cl-btn cl-btn-danger" onclick="clDeleteOutbound('${order.batchId}')">刪除</button>` : ''}
-            <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.batchId}')">已出貨</button>
+            <button class="cl-btn cl-btn-ghost" onclick="clEditOutbound('${order.batchId}')">編輯</button>
+            <button class="cl-btn cl-btn-primary" onclick="clMarkOutboundDone('${order.batchId}')">標記為已出貨</button>
           </div>` : ''}
         </div>
       </div>`;
@@ -802,17 +642,6 @@
     if (obBtn) { obBtn.disabled = false; obBtn.textContent = '新增訂單'; }
     const modal = document.getElementById('cl-outbound-modal');
     if (!modal) return;
-    
-    // 清空門市標籤和資料
-    const storeTag = document.getElementById('cl-ob-store-tag');
-    const addressInput = document.getElementById('cl-ob-address');
-    const storeCodeInput = document.getElementById('cl-ob-store-code');
-    const storeNameInput = document.getElementById('cl-ob-store-name');
-    if (storeTag) storeTag.style.display = 'none';
-    if (addressInput) addressInput.style.display = 'block';
-    if (storeCodeInput) storeCodeInput.value = '';
-    if (storeNameInput) storeNameInput.value = '';
-    
     modal.querySelector('#cl-ob-ig').value       = '';
     modal.querySelector('#cl-ob-name').value     = '';
     modal.querySelector('#cl-ob-phone').value    = '';
@@ -851,189 +680,7 @@
     } else {
       modal.style.display = 'flex';
     }
-    
-    // 初始化門市搜尋
-    clInitStoreSearch();
   }
-
-  // 門市搜尋初始化
-  function clInitStoreSearch() {
-    const shippingSelect = document.getElementById('cl-ob-shipping');
-    const addressInput = document.getElementById('cl-ob-address');
-    const storePanel = document.getElementById('cl-ob-store-panel');
-    const storeCodeInput = document.getElementById('cl-ob-store-code');
-    const storeNameInput = document.getElementById('cl-ob-store-name');
-    
-    if (!shippingSelect || !addressInput) return;
-    
-    // 監聽寄送方式變更
-    const handleShippingChange = () => {
-      const shipping = shippingSelect.value;
-      
-      if (shipping === '7-ELEVEN' || shipping === '全家') {
-        // 切換為門市搜尋模式
-        addressInput.placeholder = '輸入門市名稱搜尋...';
-        // 只在沒有門市資料時才清空地址
-        if (!storeCodeInput?.value) {
-          addressInput.value = '';
-        }
-      } else {
-        // 切換回地址輸入模式
-        addressInput.placeholder = '完整地址';
-        // 只清空門市資料，不清空地址
-        if (storePanel) storePanel.style.display = 'none';
-        if (storeCodeInput) storeCodeInput.value = '';
-        if (storeNameInput) storeNameInput.value = '';
-      }
-    };
-    
-    // 綁定寄送方式變更事件
-    shippingSelect.removeEventListener('change', handleShippingChange);
-    shippingSelect.addEventListener('change', handleShippingChange);
-    
-    // 初始化時設定正確的 placeholder（不清空地址）
-    const currentShipping = shippingSelect.value;
-    if (currentShipping === '7-ELEVEN' || currentShipping === '全家') {
-      addressInput.placeholder = '輸入門市名稱搜尋...';
-    } else {
-      addressInput.placeholder = '完整地址';
-    }
-    
-    // 監聽地址輸入框變化（門市搜尋）
-    let searchTimeout;
-    const handleAddressInput = () => {
-      const shipping = shippingSelect.value;
-      
-      // 只有 7-11 或全家才啟用門市搜尋
-      if (shipping !== '7-ELEVEN' && shipping !== '全家') return;
-      
-      const keyword = addressInput.value.trim();
-      
-      // 清除之前的 timeout
-      clearTimeout(searchTimeout);
-      
-      if (!keyword) {
-        if (storePanel) storePanel.style.display = 'none';
-        return;
-      }
-      
-      // Debounce: 150ms 後才搜尋（與電腦版一致）
-      searchTimeout = setTimeout(async () => {
-        // 顯示 loading 狀態
-        if (storePanel) {
-          storePanel.innerHTML = '<div style="padding:12px;text-align:center;opacity:0.5;font-size:13px">搜尋中...</div>';
-          storePanel.style.display = 'block';
-        }
-        
-        // 記錄這次搜尋的關鍵字
-        const currentKeyword = keyword;
-        
-        try {
-          const res = await gasCall({
-            action: 'searchStores',
-            type: shipping,
-            keyword: keyword
-          });
-          
-          // 檢查是否是最新的搜尋（避免舊請求覆蓋新結果）
-          if (addressInput.value.trim() !== currentKeyword) {
-            return; // 使用者已經輸入新內容了，忽略這個舊結果
-          }
-          
-          if (res?.success && res.stores) {
-            clRenderStoreResults(res.stores);
-          } else {
-            if (storePanel) {
-              storePanel.innerHTML = '<div style="padding:12px;text-align:center;opacity:0.5;font-size:13px">查無門市</div>';
-            }
-          }
-        } catch (err) {
-          console.error('門市搜尋失敗:', err);
-          if (addressInput.value.trim() === currentKeyword && storePanel) {
-            storePanel.innerHTML = '<div style="padding:12px;text-align:center;opacity:0.5;font-size:13px">搜尋失敗</div>';
-          }
-        }
-      }, 150);
-    };
-    
-    addressInput.removeEventListener('input', handleAddressInput);
-    addressInput.addEventListener('input', handleAddressInput);
-    
-    // 綁定清除門市標籤按鈕
-    const storeTagClose = document.getElementById('cl-ob-store-tag-close');
-    if (storeTagClose) {
-      storeTagClose.removeEventListener('click', clClearStoreTag);
-      storeTagClose.addEventListener('click', clClearStoreTag);
-    }
-    
-    // 初始化時執行一次
-    handleShippingChange();
-  }
-  
-  // 渲染門市搜尋結果
-  function clRenderStoreResults(stores) {
-    const storePanel = document.getElementById('cl-ob-store-panel');
-    if (!storePanel) return;
-    
-    if (!stores || stores.length === 0) {
-      storePanel.innerHTML = '<div style="padding:12px;text-align:center;opacity:0.5;font-size:13px">查無門市</div>';
-      storePanel.style.display = 'block';
-      return;
-    }
-    
-    let html = '';
-    stores.slice(0, 20).forEach(store => {
-      html += `
-        <div class="cl-dropdown-item" onclick="clSelectStore('${store.code}', '${store.name}', '${store.address}')">
-          <div>
-            <div style="font-weight:500">${store.name}</div>
-            <div style="font-size:12px;opacity:0.6;margin-top:2px">${store.address}</div>
-          </div>
-        </div>
-      `;
-    });
-    
-    storePanel.innerHTML = html;
-    storePanel.style.display = 'block';
-  }
-  
-  // 選擇門市
-  window.clSelectStore = function(code, name, address) {
-    const addressInput = document.getElementById('cl-ob-address');
-    const storePanel = document.getElementById('cl-ob-store-panel');
-    const storeCodeInput = document.getElementById('cl-ob-store-code');
-    const storeNameInput = document.getElementById('cl-ob-store-name');
-    const storeTag = document.getElementById('cl-ob-store-tag');
-    const storeTagText = document.getElementById('cl-ob-store-tag-text');
-    
-    // 存儲資料
-    if (addressInput) addressInput.value = address;
-    if (storeCodeInput) storeCodeInput.value = code;
-    if (storeNameInput) storeNameInput.value = name;
-    
-    // 顯示標籤，隱藏輸入框和下拉選單
-    if (storeTagText) storeTagText.textContent = name;
-    if (storeTag) storeTag.style.display = 'flex';
-    if (addressInput) addressInput.style.display = 'none';
-    if (storePanel) storePanel.style.display = 'none';
-  };
-  
-  // 清除門市選擇
-  window.clClearStoreTag = function() {
-    const addressInput = document.getElementById('cl-ob-address');
-    const storeCodeInput = document.getElementById('cl-ob-store-code');
-    const storeNameInput = document.getElementById('cl-ob-store-name');
-    const storeTag = document.getElementById('cl-ob-store-tag');
-    
-    // 清空資料
-    if (addressInput) addressInput.value = '';
-    if (storeCodeInput) storeCodeInput.value = '';
-    if (storeNameInput) storeNameInput.value = '';
-    
-    // 隱藏標籤，顯示輸入框
-    if (storeTag) storeTag.style.display = 'none';
-    if (addressInput) addressInput.style.display = 'block';
-  };
 
   window.clEditOutbound = async function(orderId) {
     // 用 batchId 分組（跟 renderOutbound 一致）
@@ -1084,27 +731,6 @@
     modal.style.display = 'flex';
     modal.querySelector('#cl-ob-status').value   = order.status || '待出貨';
     modal.dataset.editOrderId = orderId; // 記錄編輯中的 orderId
-    
-    // 載入門市資料
-    const storeCodeInput = document.getElementById('cl-ob-store-code');
-    const storeNameInput = document.getElementById('cl-ob-store-name');
-    const storeTag = document.getElementById('cl-ob-store-tag');
-    const storeTagText = document.getElementById('cl-ob-store-tag-text');
-    const addressInput = document.getElementById('cl-ob-address');
-    
-    if (storeCodeInput) storeCodeInput.value = order.storeCode || '';
-    if (storeNameInput) storeNameInput.value = order.storeName || '';
-    
-    // 如果有門市資料，顯示標籤並隱藏輸入框
-    if (order.storeCode && order.storeName) {
-      if (storeTagText) storeTagText.textContent = order.storeName;
-      if (storeTag) storeTag.style.display = 'flex';
-      if (addressInput) addressInput.style.display = 'none';
-    } else {
-      // 沒有門市資料，隱藏標籤並顯示輸入框
-      if (storeTag) storeTag.style.display = 'none';
-      if (addressInput) addressInput.style.display = 'block';
-    }
 
     // 填庫存選單
     const sel = modal.querySelector('#cl-ob-product');
@@ -1118,9 +744,6 @@
       clRenderDropdownList('');
     }
     renderOutboundCart();
-    
-    // 初始化門市搜尋
-    clInitStoreSearch();
   };
 
   window.clMarkOutboundDone = function(orderId) {
@@ -1140,35 +763,6 @@
       await gasCall({ action: 'clothes_updateOutboundStatus', orderId, status: '已出貨' });
       showClToast('✅ 已標記為已出貨');
       renderOutbound();
-    });
-  };
-
-  // 刪除出貨訂單
-  window.clDeleteOutbound = function(batchId) {
-    // 計算總數量（用於提示訊息）
-    const items = outboundList.filter(r => (r.batchId || r.orderId || r.id) === batchId);
-    const totalQty = items.reduce((sum, item) => sum + (parseInt(item.qty) || 0), 0);
-    
-    showClConfirm(`確認刪除此訂單？將還原庫存 ${totalQty} 件商品。`, async () => {
-      setSyncStatus('syncing', '刪除訂單中...');
-      
-      try {
-        // 呼叫 GAS 刪除訂單並自動還原庫存
-        await gasCall({ action: 'clothes_deleteOutboundBatch', batchId: batchId });
-        
-        // 更新本地資料
-        outboundList = outboundList.filter(r => (r.batchId || r.orderId || r.id) !== batchId);
-        saveLocal('clothes_outbound', outboundList);
-        
-        // 重新渲染列表
-        renderOutbound();
-        
-        setSyncStatus('done', '✓ 已同步');
-        showClToast('✅ 訂單已刪除，庫存已還原');
-      } catch (err) {
-        setSyncStatus('error', '⚠ 同步失敗');
-        showClToast('❌ 刪除失敗：' + err.message);
-      }
     });
   };
 
@@ -1345,8 +939,6 @@
     const address  = modal.querySelector('#cl-ob-address').value.trim();
     const shipping = modal.querySelector('#cl-ob-shipping').value;
     const bank     = modal.querySelector('#cl-ob-bank').value.trim();
-    const storeCode = document.getElementById('cl-ob-store-code')?.value || '';
-    const storeName = document.getElementById('cl-ob-store-name')?.value || '';
     const feeSelect = modal.querySelector('#cl-ob-fee-select');
     const feeInput  = modal.querySelector('#cl-ob-fee');
     const fee       = feeSelect?.value === 'custom' ? (parseFloat(feeInput?.value) || 0) : (parseFloat(feeSelect?.value) || 0);
@@ -1363,7 +955,6 @@
     const rows = outboundCart.map((item, idx) => ({
       id: genId(), orderId, batchId, date, status,
       ig, name, phone, address, shipping, bank,
-      storeCode, storeName,  // 新增門市代號和名稱
       fee: idx === 0 ? fee : 0, // 運費只記錄在第一筆
       productCode: item.productCode,
       style: item.style, size: item.size,
@@ -1804,11 +1395,6 @@
     bindTimFilter('#tab-outbound [data-days]', 'cl-outbound-custom-range', 'cl-outbound-date-from', 'cl-outbound-date-to', 'outbound', '', '', renderOutbound);
     bindTimFilter('#tab-surplus  [data-days]', 'cl-surplus-custom-range',  'cl-surplus-date-from',  'cl-surplus-date-to',  'surplus',  '', '', renderSurplus);
 
-    // ── 全部入庫 ──
-    document.getElementById('cl-staging-commit-all-btn')?.addEventListener('click', () => {
-      clCommitAllStaging();
-    });
-
     // ── 清空核對單 ──
     document.getElementById('cl-staging-clear-btn')?.addEventListener('click', () => {
       document.getElementById('cl-clear-staging-modal').style.display = 'flex';
@@ -1820,6 +1406,7 @@
       const statuses = [];
       if (document.getElementById('cl-clear-pending').checked)  statuses.push('待入庫');
       if (document.getElementById('cl-clear-done').checked)     statuses.push('已入庫');
+      if (document.getElementById('cl-clear-refund').checked)   statuses.push('廠商退款');
       if (!statuses.length) return showClToast('請至少選擇一個狀態');
       document.getElementById('cl-clear-staging-modal').style.display = 'none';
       await gasCall({ action: 'clothes_clearStaging', statuses: JSON.stringify(statuses) });

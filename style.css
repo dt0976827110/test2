@@ -1802,15 +1802,6 @@ body.dark  .cl-dropdown-trigger { background: #111; border: 1px solid #2a2a2a; c
   border-radius: 12px; overflow: hidden; z-index: 999;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
-
-/* 門市搜尋下拉選單：靜態定位 */
-#cl-ob-store-panel {
-  position: static;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-}
-
 body.light .cl-dropdown-panel { background: #fff; border: 1px solid #e8e8e8; }
 body.dark  .cl-dropdown-panel { background: #1a1a1a; border: 1px solid #2a2a2a; }
 
