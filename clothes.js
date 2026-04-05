@@ -982,30 +982,19 @@
       return;
     }
     
-    // 清空並重新建立
-    storePanel.innerHTML = '';
-    
+    let html = '';
     stores.slice(0, 20).forEach(store => {
-      const item = document.createElement('div');
-      item.className = 'cl-dropdown-item';
-      item.dataset.storeCode = store.code || '';
-      item.dataset.storeName = store.name || '';
-      item.dataset.storeAddress = store.address || '';
-      
-      item.innerHTML = `
-        <div>
-          <div style="font-weight:500">${store.name || ''}</div>
-          <div style="font-size:12px;opacity:0.6;margin-top:2px">${store.address || ''}</div>
+      html += `
+        <div class="cl-dropdown-item" onclick="clSelectStore('${store.code}', '${store.name}', '${store.address}')">
+          <div>
+            <div style="font-weight:500">${store.name}</div>
+            <div style="font-size:12px;opacity:0.6;margin-top:2px">${store.address}</div>
+          </div>
         </div>
       `;
-      
-      item.addEventListener('click', () => {
-        clSelectStore(item.dataset.storeCode, item.dataset.storeName, item.dataset.storeAddress);
-      });
-      
-      storePanel.appendChild(item);
     });
     
+    storePanel.innerHTML = html;
     storePanel.style.display = 'block';
   }
   
