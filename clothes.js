@@ -32,7 +32,8 @@
 
   // ── GAS 通訊 ─────────────────────────────────
   function getGasUrl() {
-    try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
+    // Firebase Functions API
+    return 'https://us-central1-acs-database-5fb57.cloudfunctions.net/api';
   }
 
   async function gasCall(params) {
@@ -981,19 +982,30 @@
       return;
     }
     
-    let html = '';
+    // 清空並重新建立
+    storePanel.innerHTML = '';
+    
     stores.slice(0, 20).forEach(store => {
-      html += `
-        <div class="cl-dropdown-item" onclick="clSelectStore('${store.code}', '${store.name}', '${store.address}')">
-          <div>
-            <div style="font-weight:500">${store.name}</div>
-            <div style="font-size:12px;opacity:0.6;margin-top:2px">${store.address}</div>
-          </div>
+      const item = document.createElement('div');
+      item.className = 'cl-dropdown-item';
+      item.dataset.storeCode = store.code || '';
+      item.dataset.storeName = store.name || '';
+      item.dataset.storeAddress = store.address || '';
+      
+      item.innerHTML = `
+        <div>
+          <div style="font-weight:500">${store.name || ''}</div>
+          <div style="font-size:12px;opacity:0.6;margin-top:2px">${store.address || ''}</div>
         </div>
       `;
+      
+      item.addEventListener('click', () => {
+        clSelectStore(item.dataset.storeCode, item.dataset.storeName, item.dataset.storeAddress);
+      });
+      
+      storePanel.appendChild(item);
     });
     
-    storePanel.innerHTML = html;
     storePanel.style.display = 'block';
   }
   
