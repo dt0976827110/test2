@@ -1132,10 +1132,11 @@ document.getElementById('gs-copy-btn').addEventListener('click', () => {
 });
 
 // ===== Google Sheet 綁定 =====
-let gsScriptUrl = '';
+let gsScriptUrl = 'https://us-central1-acs-database-5fb57.cloudfunctions.net/api';
 
 function loadGsUrl() {
-  try { gsScriptUrl = localStorage.getItem('acs_gs_url') || ''; } catch(e) {}
+  // Firebase Functions API - 直接使用固定網址
+  gsScriptUrl = 'https://us-central1-acs-database-5fb57.cloudfunctions.net/api';
   updateGsUI();
 }
 
@@ -2165,7 +2166,8 @@ if ('serviceWorker' in navigator) {
     return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`;
   }
   function getGasUrl() {
-    try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
+    // Firebase Functions API
+    return 'https://us-central1-acs-database-5fb57.cloudfunctions.net/api';
   }
   async function gasCall(params) {
     const url = getGasUrl(); if (!url) return null;
@@ -2355,7 +2357,8 @@ if ('serviceWorker' in navigator) {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
   function getGasUrl() {
-    try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
+    // Firebase Functions API
+    return 'https://us-central1-acs-database-5fb57.cloudfunctions.net/api';
   }
   async function gasCall(params) {
     const url = getGasUrl(); if (!url) return null;

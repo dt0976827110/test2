@@ -32,7 +32,8 @@
 
   // ── GAS 通訊 ─────────────────────────────────
   function getGasUrl() {
-    try { return localStorage.getItem('acs_gs_url') || ''; } catch { return ''; }
+    // Firebase Functions API
+    return 'https://us-central1-acs-database-5fb57.cloudfunctions.net/api';
   }
 
   async function gasCall(params) {
